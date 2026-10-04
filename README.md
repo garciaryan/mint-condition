@@ -124,7 +124,10 @@ Dockerfile, fly.toml   Fly.io deployment
 
 ## Roadmap
 
-- Collection mode: price a whole lot with keyboard-first entry, bulk paste and running totals
+- **Collection mode** (in progress): price a whole lot at once. Add records by typing, USB scanner, phone camera or
+  pasting a list; pressings that need a choice wait in a "to pick" queue while lookups carry on in the background;
+  saved lots show a running low / suggested / high total and can be finished on another device.
+  Design: [docs/superpowers/specs/2026-10-04-collection-mode-design.md](docs/superpowers/specs/2026-10-04-collection-mode-design.md)
 - Offer calculator for buying collections
 - Price cache and a settings page
 - CSV export and a printable buy sheet
