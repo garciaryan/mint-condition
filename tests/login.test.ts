@@ -1,0 +1,101 @@
+import { test, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { hashPassword } from "../lib/password.ts";
+import { POST as login } from "../app/api/login/route.ts";
+import { POST as logout } from "../app/api/logout/route.ts";
+
+const saved = { ...process.env };
+before(() => {
+  process.env.APP_PASSWORD_HASH = hashPassword("right password 1");
+  process.env.SESSION_SECRET = "test-secret";
+  delete (process.env as Record<string, string | undefined>).NODE_ENV;
+});
+after(() => {
+  for (const k of ["APP_PASSWORD_HASH", "SESSION_SECRET", "NODE_ENV"]) {
+    if (saved[k] === undefined) delete process.env[k];
+    else process.env[k] = saved[k];
+  }
+});
+
+const post = (body: unknown, ip: string, raw = false) =>
+  login(new Request("http://localhost/api/login", {
+    method: "POST",
+    headers: { "content-type": "application/json", "fly-client-ip": ip },
+    body: raw ? String(body) : JSON.stringify(body),
+  }));
+
+test("wrong password: 401, no cookie", async () => {
+  const r = await post({ password: "nope" }, "10.0.0.1");
+  assert.equal(r.status, 401);
+  assert.equal(r.headers.get("set-cookie"), null);
+  assert.equal((await r.json()).kind, "auth");
+});
+
+test("right password: 200 and a hardened session cookie", async () => {
+  const r = await post({ password: "right password 1" }, "10.0.0.2");
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), { ok: true });
+  const c = r.headers.get("set-cookie") ?? "";
+  for (const part of ["mc_session=", "HttpOnly", "SameSite=Lax", "Max-Age=2592000", "Path=/"]) assert.ok(c.includes(part), part);
+  assert.ok(!c.includes("Secure"));
+});
+
+test("bad bodies get 400", async () => {
+  assert.equal((await post("not json", "10.0.0.3", true)).status, 400);
+  assert.equal((await post({}, "10.0.0.3")).status, 400);
+  assert.equal((await post({ password: 5 }, "10.0.0.3")).status, 400);
+});
+
+test("sixth wrong attempt from one IP is 429 with retryAfterMinutes", async () => {
+  for (let i = 0; i < 5; i++) assert.equal((await post({ password: "bad" }, "10.0.0.4")).status, 401);
+  const r = await post({ password: "bad" }, "10.0.0.4");
+  assert.equal(r.status, 429);
+  assert.equal((await r.json()).retryAfterMinutes, 15);
+  assert.equal((await post({ password: "right password 1" }, "10.0.0.4")).status, 429);
+});
+
+test("a correct login clears the IP's failure count", async () => {
+  const ip = "10.0.0.5";
+  for (let i = 0; i < 4; i++) assert.equal((await post({ password: "bad" }, ip)).status, 401);
+  assert.equal((await post({ password: "right password 1" }, ip)).status, 200);
+  for (let i = 0; i < 4; i++) assert.equal((await post({ password: "bad" }, ip)).status, 401);
+  assert.equal((await post({ password: "bad" }, ip)).status, 401);
+});
+
+test("production without APP_PASSWORD_HASH gives 503", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const prev = { h: env.APP_PASSWORD_HASH, n: env.NODE_ENV };
+  delete env.APP_PASSWORD_HASH;
+  env.NODE_ENV = "production";
+  try {
+    const r = await post({ password: "x" }, "10.0.0.6");
+    assert.equal(r.status, 503);
+    assert.equal((await r.json()).kind, "missing-env");
+  } finally {
+    env.APP_PASSWORD_HASH = prev.h;
+    if (prev.n === undefined) delete env.NODE_ENV;
+    else env.NODE_ENV = prev.n;
+  }
+});
+
+test("login is disabled (400) when auth is off", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const prev = { h: env.APP_PASSWORD_HASH, s: env.SESSION_SECRET };
+  delete env.APP_PASSWORD_HASH;
+  delete env.SESSION_SECRET;
+  try {
+    const r = await post({ password: "x" }, "10.0.0.7");
+    assert.equal(r.status, 400);
+    assert.equal((await r.json()).message, "Login is disabled locally.");
+  } finally {
+    env.APP_PASSWORD_HASH = prev.h;
+    env.SESSION_SECRET = prev.s;
+  }
+});
+
+test("logout clears the cookie", async () => {
+  const r = await logout();
+  assert.equal(r.status, 200);
+  const c = r.headers.get("set-cookie") ?? "";
+  assert.ok(c.includes("mc_session=") && c.includes("Max-Age=0"));
+});
