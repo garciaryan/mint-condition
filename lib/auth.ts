@@ -68,7 +68,12 @@ export function isPublicPath(path: string): boolean {
 }
 
 export function safeNext(next: string | null): string {
-  return next && /^\/(?![/\\])/.test(next) && !next.includes("\\") ? next : "/";
+  if (!next || !/^\/(?![/\\])/.test(next) || next.includes("\\") || /[\x00-\x1f\x7f]/.test(next)) return "/";
+  try {
+    return new URL(next, "http://x").origin === "http://x" ? next : "/";
+  } catch {
+    return "/";
+  }
 }
 
 export type LoginLimiter = {

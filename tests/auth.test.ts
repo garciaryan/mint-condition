@@ -38,7 +38,8 @@ test("isPublicPath matches exact public paths only", () => {
 });
 test("safeNext only allows same-origin relative paths", () => {
   assert.equal(safeNext("/collection?id=3"), "/collection?id=3");
-  for (const bad of [null, "", "//evil.com", "/\\evil.com", "https://evil.com", "javascript:alert(1)", "%2F%2Fevil.com", "evil"])
+  for (const bad of [null, "", "//evil.com", "/\\evil.com", "https://evil.com", "javascript:alert(1)", "%2F%2Fevil.com", "evil",
+    "/\t/evil.com", "/\n/evil.com", "/\r\n/evil.com", "/\x00/x"])
     assert.equal(safeNext(bad), "/", String(bad));
 });
 test("limiter blocks after 5 failures, resets after the window and on success, per IP", () => {
