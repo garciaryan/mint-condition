@@ -47,6 +47,37 @@ body {
   color: var(--muted);
 }
 
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.masthead-text {
+  min-width: 0;
+}
+
+.login-card {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-card h2 {
+  margin: 0;
+}
+
+.password-row {
+  display: flex;
+  gap: 8px;
+}
+
+.password-row button {
+  min-width: 72px;
+}
+
 h2 {
   margin: 0 0 8px;
   font-size: 18px;
@@ -559,6 +590,10 @@ a {
 
   .field.year {
     grid-column: 1 / -1;
+  }
+
+  .login-card button[type="submit"] {
+    width: 100%;
   }
 
   .form-row button[type="submit"] {

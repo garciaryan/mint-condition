@@ -1,0 +1,9 @@
+node_modules
+.next
+.env*
+data
+.git
+.claude
+docs
+tests
+tsconfig.tsbuildinfo

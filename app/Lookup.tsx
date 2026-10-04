@@ -72,7 +72,12 @@ export default function Lookup() {
         body: JSON.stringify(body),
         signal: ctrl.signal,
       });
-      return (await r.json()) as LookupResponse;
+      const res = (await r.json()) as LookupResponse;
+      if (res.status === "error" && res.kind === "auth") {
+        location.assign("/login?next=/");
+        return null;
+      }
+      return res;
     } catch (e) {
       if (ctrl.signal.aborted) return null;
       return { status: "error", kind: "upstream", message: `Could not reach the local server (${e instanceof Error ? e.message : e}).` };
@@ -345,12 +350,14 @@ function ErrorCard({ res, onRetry }: { res: LookupError; onRetry: () => void }) 
     "bad-token": "Discogs rejected the token",
     "rate-limited": "Rate-limited by Discogs",
     upstream: "Lookup failed",
+    auth: "Signed out",
+    forbidden: "Request blocked",
   };
   const retryable = res.kind === "rate-limited" || res.kind === "upstream";
   return (
     <div className="card error" role="alert">
       <h2 tabIndex={-1} data-focus>
-        {titles[res.kind]}
+        {titles[res.kind] ?? "Lookup failed"}
       </h2>
       <p>{res.message}</p>
       {retryable && (

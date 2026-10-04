@@ -9,3 +9,4 @@ data/
 .env*.local
 .claude/settings.local.json
 .DS_Store
+.superpowers/

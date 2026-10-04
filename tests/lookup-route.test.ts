@@ -1,0 +1,52 @@
+import { test, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { signSession } from "../lib/auth.ts";
+import { POST as lookup } from "../app/api/lookup/route.ts";
+
+const KEYS = ["APP_PASSWORD_HASH", "SESSION_SECRET", "DISCOGS_TOKEN", "DISCOGS_USER_AGENT"];
+const saved = { ...process.env };
+const env = process.env as Record<string, string | undefined>;
+before(() => {
+  env.APP_PASSWORD_HASH = "scrypt$16384$8$1$x$y";
+  env.SESSION_SECRET = "test-secret";
+  delete env.DISCOGS_TOKEN;
+  delete env.DISCOGS_USER_AGENT;
+});
+after(() => {
+  for (const k of KEYS) {
+    if (saved[k] === undefined) delete env[k];
+    else env[k] = saved[k];
+  }
+});
+
+const call = (cookie?: string) =>
+  lookup(new Request("http://localhost/api/lookup", {
+    method: "POST",
+    headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}) },
+    body: "{}",
+  }));
+
+test("lookup route rejects a request without a valid session (401 auth)", async () => {
+  const r = await call();
+  assert.equal(r.status, 401);
+  assert.equal((await r.json()).kind, "auth");
+  assert.equal((await call("mc_session=1.bad")).status, 401);
+});
+
+test("lookup route lets a signed session through to the env check", async () => {
+  const v = await signSession("test-secret", Date.now());
+  const r = await call(`other=1; mc_session=${v}`);
+  assert.equal(r.status, 500);
+  assert.equal((await r.json()).kind, "missing-env");
+});
+
+test("lookup route 503s when auth is misconfigured", async () => {
+  delete env.SESSION_SECRET;
+  try {
+    const r = await call();
+    assert.equal(r.status, 503);
+    assert.equal((await r.json()).kind, "missing-env");
+  } finally {
+    env.SESSION_SECRET = "test-secret";
+  }
+});

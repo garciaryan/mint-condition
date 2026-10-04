@@ -11,9 +11,18 @@ pressing on Discogs and gives you three numbers:
 
 > Discogs figures are asking prices and price suggestions, not confirmed sales. Treat them as a guide.
 
+## Hosted version
+
+The app runs at **https://mint-condition.fly.dev** behind a single password, so it works from a phone on-site.
+Log in once and the session lasts 30 days; **Log out** is in the page header. After 5 wrong passwords from the same
+connection, logins pause for 15 minutes.
+
+Every push to `main` is tested and then deployed automatically. Setup, secrets, changing the password, logs and
+backups are covered in [DEPLOY.md](DEPLOY.md).
+
 ## Requirements
 
-- Node.js 22.6 or newer
+- Node.js 22.13 or newer
 - A Discogs **seller** account and a personal access token from
   [discogs.com/settings/developers](https://www.discogs.com/settings/developers). Price suggestions are only
   returned for seller accounts with their seller settings (including a payment method) completed.
@@ -38,7 +47,8 @@ Then start the app:
 npm run dev
 ```
 
-and open http://localhost:3000.
+and open http://localhost:3000. Locally there's no login unless you set `APP_PASSWORD_HASH` and `SESSION_SECRET`
+in `.env.local` too (see [DEPLOY.md](DEPLOY.md)).
 
 ## Using it
 
@@ -82,30 +92,38 @@ When several pressings match, it lists them with their release ids so you can re
 ## Development
 
 ```sh
-npm test            # unit tests (Node's built-in test runner, no extra dependencies)
-npm run typecheck   # TypeScript, no emit
+npm test               # unit tests (Node's built-in test runner, no extra dependencies)
+npm run typecheck      # TypeScript, no emit
+npm run hash-password  # make an APP_PASSWORD_HASH for the login (interactive)
 ```
 
 ```
 app/                   Next.js App Router UI
   page.tsx             page shell
   Lookup.tsx           form, pressing picker, result card
+  login/               login page
   api/lookup/route.ts  POST /api/lookup: the only place Discogs is called from
+  api/login, logout    session cookie in and out
+  api/health           public health check (database + which config is set)
+middleware.ts          runs the login gate on every request
 lib/
   discogs.ts           Discogs client: throttled, retries on 429, catno variants, barcode detection
   pricing.ts           pricing logic (pure functions)
   lookup.ts            request validation, search-or-price flow, error mapping
   form.ts              client-side form checks and picker grouping
+  auth.ts, password.ts session cookies, login limiter, password hashing
+  gate.ts              decides who gets through (pure function)
+  db.ts, migrations.ts SQLite on the Fly volume, versioned migrations
   settings.ts          settings.json loader and validator
   types.ts             grades and shared types
-scripts/lookup.ts      the command-line lookup
+scripts/               command-line lookup, password hashing
 tests/                 unit tests
 settings.json          pricing tunables
+Dockerfile, fly.toml   Fly.io deployment
 ```
 
 ## Roadmap
 
-- Hosted version with a password login, so it can be used from a phone on-site (in progress)
 - Collection mode: price a whole lot with keyboard-first entry, bulk paste and running totals
 - Offer calculator for buying collections
 - Price cache and a settings page
