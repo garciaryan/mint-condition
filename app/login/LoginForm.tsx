@@ -26,7 +26,7 @@ export default function LoginForm({ next }: { next: string }) {
         return;
       }
       if (r.status === 401) setError("Wrong password.");
-      else if (r.status === 429) setError(`Too many attempts. Try again in ${data.retryAfterMinutes ?? 15} minutes.`);
+      else if (r.status === 429) setError(`Too many attempts. Try again in ${data.retryAfterMinutes ?? 15} ${(data.retryAfterMinutes ?? 15) === 1 ? "minute" : "minutes"}.`);
       else setError(data.message ?? "Could not log in.");
     } catch {
       setError("Could not reach the server.");

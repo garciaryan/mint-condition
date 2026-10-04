@@ -9,7 +9,8 @@ export async function GET(): Promise<Response> {
   try {
     getDb().prepare("select 1").get();
   } catch (e) {
-    db = e instanceof Error ? e.message : String(e);
+    db = "error";
+    console.error("health: db check failed:", e instanceof Error ? e.message : String(e));
   }
   const config = configStatus(process.env);
   const ok = db === "ok" && config.ok;

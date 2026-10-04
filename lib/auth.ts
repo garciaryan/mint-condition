@@ -1,4 +1,4 @@
-// Web Crypto only: this module is imported by Next middleware (edge runtime).
+// Web Crypto only, so the module stays runtime-agnostic (middleware currently runs on nodejs).
 
 export const SESSION_COOKIE = "mc_session";
 export const SESSION_MAX_AGE_S = 2592000;

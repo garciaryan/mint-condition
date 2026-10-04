@@ -351,12 +351,13 @@ function ErrorCard({ res, onRetry }: { res: LookupError; onRetry: () => void }) 
     "rate-limited": "Rate-limited by Discogs",
     upstream: "Lookup failed",
     auth: "Signed out",
+    forbidden: "Request blocked",
   };
   const retryable = res.kind === "rate-limited" || res.kind === "upstream";
   return (
     <div className="card error" role="alert">
       <h2 tabIndex={-1} data-focus>
-        {titles[res.kind]}
+        {titles[res.kind] ?? "Lookup failed"}
       </h2>
       <p>{res.message}</p>
       {retryable && (

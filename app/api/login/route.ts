@@ -9,6 +9,8 @@ const g = globalThis as typeof globalThis & { __loginLimiter?: LoginLimiter };
 const limiter = (): LoginLimiter => (g.__loginLimiter ??= createLoginLimiter());
 
 const FAIL_DELAY_MS = 500;
+const MAX_BODY_BYTES = 4096;
+const MAX_PASSWORD_CHARS = 1024;
 
 const err = (status: number, kind: string, message: string, extra: Record<string, unknown> = {}): Response =>
   Response.json({ status: "error", kind, message, ...extra }, { status });
@@ -18,9 +20,13 @@ export async function POST(request: Request): Promise<Response> {
   if (auth.mode === "off") return err(400, "bad-request", "Login is disabled locally.");
   if (auth.mode === "misconfigured") return err(503, "missing-env", `Login not configured: missing ${auth.missing.join(" and ")}`);
 
+  const declared = request.headers.get("content-length");
+  if (declared !== null && Number(declared) > MAX_BODY_BYTES) return err(400, "bad-request", "Request too large.");
+
   const body: unknown = await request.json().catch(() => null);
   const password = body && typeof body === "object" ? (body as Record<string, unknown>).password : undefined;
   if (typeof password !== "string" || password === "") return err(400, "bad-request", "Enter the password.");
+  if (password.length > MAX_PASSWORD_CHARS) return err(400, "bad-request", "Password is too long.");
 
   // No await between check and fail/reset (verifyPassword is synchronous), so concurrent requests cannot interleave.
   const ip = clientIp(request.headers);
@@ -28,7 +34,7 @@ export async function POST(request: Request): Promise<Response> {
   const checked = lim.check(ip, Date.now());
   if (!checked.ok) {
     const retryAfterMinutes = Math.ceil(checked.retryAfterMs / 60_000);
-    return err(429, "rate-limited", `Too many attempts. Try again in ${retryAfterMinutes} minutes.`, { retryAfterMinutes });
+    return err(429, "rate-limited", `Too many attempts. Try again in ${retryAfterMinutes} ${retryAfterMinutes === 1 ? "minute" : "minutes"}.`, { retryAfterMinutes });
   }
 
   if (!verifyPassword(password, auth.passwordHash)) {

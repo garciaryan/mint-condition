@@ -106,3 +106,36 @@ test("logout clears the cookie", async () => {
   const c = r.headers.get("set-cookie") ?? "";
   assert.ok(c.includes("mc_session=") && c.includes("Max-Age=0"));
 });
+
+test("oversized content-length gets 400 before the body is read", async () => {
+  const r = await login(new Request("http://localhost/api/login", {
+    method: "POST",
+    headers: { "content-type": "application/json", "fly-client-ip": "10.0.1.1", "content-length": "5000" },
+    body: JSON.stringify({ password: "x" }),
+  }));
+  assert.equal(r.status, 400);
+  assert.equal((await r.json()).message, "Request too large.");
+});
+
+test("1025-char password gets 400 and does not use a limiter attempt", async () => {
+  const ip = "10.0.1.2";
+  const r = await post({ password: "a".repeat(1025) }, ip);
+  assert.equal(r.status, 400);
+  assert.equal((await r.json()).message, "Password is too long.");
+  for (let i = 0; i < 5; i++) assert.equal((await post({ password: "bad" }, ip)).status, 401);
+  assert.equal((await post({ password: "bad" }, ip)).status, 429);
+});
+
+test("session cookie is Secure in production", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const prev = env.NODE_ENV;
+  env.NODE_ENV = "production";
+  try {
+    const r = await post({ password: "right password 1" }, "10.0.1.3");
+    assert.equal(r.status, 200);
+    assert.ok((r.headers.get("set-cookie") ?? "").includes("; Secure"));
+  } finally {
+    if (prev === undefined) delete env.NODE_ENV;
+    else env.NODE_ENV = prev;
+  }
+});
