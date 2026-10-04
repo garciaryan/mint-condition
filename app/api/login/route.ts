@@ -18,6 +18,11 @@ export async function POST(request: Request): Promise<Response> {
   if (auth.mode === "off") return err(400, "bad-request", "Login is disabled locally.");
   if (auth.mode === "misconfigured") return err(503, "missing-env", `Login not configured: missing ${auth.missing.join(" and ")}`);
 
+  const body: unknown = await request.json().catch(() => null);
+  const password = body && typeof body === "object" ? (body as Record<string, unknown>).password : undefined;
+  if (typeof password !== "string" || password === "") return err(400, "bad-request", "Enter the password.");
+
+  // No await between check and fail/reset (verifyPassword is synchronous), so concurrent requests cannot interleave.
   const ip = clientIp(request.headers);
   const lim = limiter();
   const checked = lim.check(ip, Date.now());
@@ -25,10 +30,6 @@ export async function POST(request: Request): Promise<Response> {
     const retryAfterMinutes = Math.ceil(checked.retryAfterMs / 60_000);
     return err(429, "rate-limited", `Too many attempts. Try again in ${retryAfterMinutes} minutes.`, { retryAfterMinutes });
   }
-
-  const body: unknown = await request.json().catch(() => null);
-  const password = body && typeof body === "object" ? (body as Record<string, unknown>).password : undefined;
-  if (typeof password !== "string" || password === "") return err(400, "bad-request", "Enter the password.");
 
   if (!verifyPassword(password, auth.passwordHash)) {
     lim.fail(ip, Date.now());

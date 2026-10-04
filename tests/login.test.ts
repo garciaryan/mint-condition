@@ -54,6 +54,13 @@ test("sixth wrong attempt from one IP is 429 with retryAfterMinutes", async () =
   assert.equal((await post({ password: "right password 1" }, "10.0.0.4")).status, 429);
 });
 
+test("concurrent wrong attempts cannot exceed the cap", async () => {
+  const rs = await Promise.all(Array.from({ length: 10 }, () => post({ password: "bad" }, "10.0.0.8")));
+  const codes = rs.map((r) => r.status);
+  assert.ok(codes.filter((c) => c === 429).length >= 5, codes.join(","));
+  assert.ok(!codes.includes(200));
+});
+
 test("a correct login clears the IP's failure count", async () => {
   const ip = "10.0.0.5";
   for (let i = 0; i < 4; i++) assert.equal((await post({ password: "bad" }, ip)).status, 401);
