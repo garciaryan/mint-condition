@@ -1,0 +1,26 @@
+{
+  "sleeveMultipliers": {
+    "M": 1.0,
+    "NM": 1.0,
+    "VG+": 0.95,
+    "VG": 0.85,
+    "G+": 0.75,
+    "G": 0.6,
+    "F": 0.6,
+    "P": 0.6
+  },
+  "sell": {
+    "undercutPercent": 3,
+    "floor": 1
+  },
+  "local": {
+    "discogsFeePercent": 9,
+    "localDiscountMultiplier": 0.8,
+    "defaultRegionMultiplier": 1.0,
+    "regionMultipliers": {}
+  },
+  "discogs": {
+    "currency": "USD",
+    "cacheHours": 24
+  }
+}
