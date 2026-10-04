@@ -36,6 +36,53 @@ body {
   padding: 32px var(--gutter) 64px;
 }
 
+/* Site header: brand, nav, optional log out, one row on desktop. */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px 18px;
+  padding: 8px var(--gutter);
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-weight: 700;
+  margin-right: auto;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+}
+
+.nav a:hover {
+  color: var(--ink);
+}
+
+.nav a.active {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+.topbar button.secondary {
+  min-height: 36px;
+  padding: 4px 14px;
+  font-size: 14px;
+}
+
 .masthead h1 {
   margin: 0;
   font-size: 28px;
@@ -550,10 +597,94 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
+/* Lots list */
+.new-lot h2 {
+  margin-bottom: 12px;
+}
+
+.new-lot-fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.new-lot .field-error {
+  margin-top: 12px;
+}
+
+.lots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px 20px;
+  min-height: 64px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+@media (hover: hover) {
+  .lot-row:hover {
+    background: var(--bg);
+  }
+}
+
+.lot-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.lot-meta {
+  display: flex;
+  gap: 4px 20px;
+}
+
+.lot-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 90px;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lot-total small {
+  font-size: 12px;
+  font-weight: 400;
+}
+
 /* Tablet: two-column form, prices stack under market value. */
 @media (max-width: 768px) {
   .form {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .new-lot-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .new-lot-fields .field:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .new-lot-fields button {
+    grid-column: 1 / -1;
   }
 
   .field.catno {
@@ -586,6 +717,31 @@ a {
 
   .card {
     padding: 16px;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .nav a,
+  .topbar button.secondary {
+    min-height: var(--control-h);
+  }
+
+  .lot-row {
+    flex-wrap: wrap;
+  }
+
+  .lot-name {
+    flex-basis: 60%;
+  }
+
+  .lot-meta {
+    order: 3;
+    flex-basis: 100%;
+    flex-direction: column;
   }
 
   .field.year {
