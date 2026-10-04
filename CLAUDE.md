@@ -9,6 +9,8 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   `SESSION_SECRET`), no OAuth. Discogs access uses a **personal access token** from the user's seller account
   (needed for `/marketplace/price_suggestions`), stored as a Fly secret (`.env.local` for local dev). With neither
   APP_* var set outside production, login is off; only one set = misconfigured (503). Never run more than one machine.
+- Every push to `main` deploys: `.github/workflows/fly-deploy.yml` runs test, typecheck and build, then
+  `flyctl deploy --remote-only` (`FLY_API_TOKEN` repo secret, deploy-scoped, expires 2027-10-04). Keep `main` green.
 - Never expose `DISCOGS_TOKEN` to the browser. All Discogs calls go through Next route handlers or server actions.
 - Discogs requires a descriptive `User-Agent` (`DISCOGS_USER_AGENT`).
 - Keep `lib/pricing.ts` and `lib/offer.ts` as **pure functions** (no network, no fs, no DB). All tunables come from
@@ -35,7 +37,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - `lib/auth.ts` (session signing, authMode, limiter, health config) · `lib/password.ts` (hashing) · `lib/gate.ts` +
   `middleware.ts` (login gate) · `lib/db.ts` + `lib/migrations.ts` (SQLite, versioned migrations)
 - `app/login/`, `app/api/login|logout|health` · `scripts/hash-password.ts` · `Dockerfile`, `docker-entrypoint.sh`,
-  `fly.toml`, `DEPLOY.md`
+  `fly.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`
 
 ## Status
 - Phase 1 (Discogs client) and phase 2 (pricing module): done. Verified against the live API (2026-10-04):
@@ -52,8 +54,10 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   check digit). Searched via Discogs `barcode=` first, then falls back to catno variants. Verified live: Discogs
   normalises spacing and UPC-A vs EAN-13 itself. Shared barcodes often return bootlegs ("Unofficial Release" in
   format). 55 tests passing.
-- Go online (2026-10-04): built and verified locally in production mode; Fly deploy pending. Phase 4 (collection
-  mode) gets its own spec next and will build on `lib/db.ts` migrations.
+- Go online (2026-10-04): deployed to https://mint-condition.fly.dev (app `mint-condition`, region `sjc`, one
+  machine, volume `mint_data`). Remote image build OK; smoke checks pass (health 200, `/` → login, API 401 without
+  cookie, foreign Origin 403). Phone check on mobile data pending. Phase 4 (collection mode) gets its own spec next
+  and will build on `lib/db.ts` migrations.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns

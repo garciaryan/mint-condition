@@ -47,7 +47,7 @@ Auth modes: in production, `APP_PASSWORD_HASH` and `SESSION_SECRET` must both be
 
 ## 4. Deploying
 
-Docker is not available locally, so the image has never been built. Before the first real deploy, confirm it builds on Fly's remote builder:
+Docker is not needed locally. Before a first deploy (or after changing the Dockerfile), you can confirm the image builds on Fly's remote builder:
 
 ```sh
 fly deploy --build-only
@@ -59,10 +59,25 @@ The first deploy must pass `--ha=false`, otherwise Fly creates two machines. Thi
 fly deploy --ha=false
 ```
 
-Later deploys:
+Later deploys happen automatically (see below), or by hand:
 
 ```sh
 fly deploy
+```
+
+### Automatic deploys
+
+Every push to `main` runs `.github/workflows/fly-deploy.yml`. It runs `npm test`, `npm run typecheck` and
+`npm run build`, and only if all pass does it run `flyctl deploy --remote-only`. A failing check means nothing is
+deployed; see the run under the repo's **Actions** tab.
+
+The workflow authenticates with the `FLY_API_TOKEN` repo secret, a Fly deploy token scoped to this app that
+**expires 2027-10-04**. To renew it (or replace a leaked one):
+
+```sh
+fly tokens list                         # find the old "github-actions" token
+fly tokens revoke <token-id>
+fly tokens create deploy --name github-actions --expiry 8760h | gh secret set FLY_API_TOKEN -R garciaryan/mint-condition
 ```
 
 Verify:
