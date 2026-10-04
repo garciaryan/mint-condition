@@ -188,24 +188,28 @@ export function claimNextPending(db: DatabaseSync): ItemRow | null {
   return r ? toItem(r) : null;
 }
 
-// Writes only lookup columns, so grades/year/query edited mid-lookup survive.
+// Writes only lookup columns, so grades/year/query edited mid-lookup survive. Keys absent from the patch are left
+// untouched; an explicit null clears.
+const LOOKUP_COLUMNS = [
+  ["releaseId", "release_id", (v: unknown) => v],
+  ["release", "release_json", json],
+  ["candidates", "candidates_json", json],
+  ["suggestions", "suggestions_json", json],
+  ["stats", "stats_json", json],
+  ["pricedAt", "priced_at", (v: unknown) => v],
+  ["error", "error", (v: unknown) => v],
+] as const;
+
 export function applyLookup(db: DatabaseSync, id: number, patch: LookupPatch): boolean {
-  const res = db
-    .prepare(
-      `UPDATE items SET status = ?, release_id = ?, release_json = ?, candidates_json = ?, suggestions_json = ?,
-         stats_json = ?, priced_at = ?, error = ? WHERE id = ? AND status = 'working'`,
-    )
-    .run(
-      patch.status,
-      patch.releaseId ?? null,
-      json(patch.release),
-      json(patch.candidates),
-      json(patch.suggestions),
-      json(patch.stats),
-      patch.pricedAt ?? null,
-      patch.error ?? null,
-      id,
-    );
+  const sets = ["status = ?"];
+  const values: (string | number | null)[] = [patch.status];
+  for (const [key, col, enc] of LOOKUP_COLUMNS) {
+    if (key in patch) {
+      sets.push(`${col} = ?`);
+      values.push((enc(patch[key]) ?? null) as string | number | null);
+    }
+  }
+  const res = db.prepare(`UPDATE items SET ${sets.join(", ")} WHERE id = ? AND status = 'working'`).run(...values, id);
   return Number(res.changes) > 0;
 }
 

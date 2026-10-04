@@ -193,3 +193,31 @@ test("deleteSession cascades to items", () => {
   deleteSession(db, s.id);
   assert.equal(getItem(db, a.id), null);
 });
+
+test("applyLookup leaves omitted columns untouched and clears explicit nulls", () => {
+  const { db, s } = setup();
+  addItems(db, s.id, [{ query: "A" }], G, 1);
+  const w = claimNextPending(db)!;
+  applyLookup(db, w.id, {
+    status: "priced", releaseId: 5, release: cand(5), suggestions: { NM: 10 },
+    stats: { lowestPrice: 9, currency: "USD", numForSale: 3 }, pricedAt: 77,
+  });
+  repriceSession(db, s.id);
+  claimNextPending(db);
+  assert.equal(applyLookup(db, w.id, { status: "error", error: "x" }), true);
+  const r = getItem(db, w.id)!;
+  assert.equal(r.status, "error");
+  assert.equal(r.error, "x");
+  assert.equal(r.releaseId, 5);
+  assert.deepEqual(r.release, cand(5));
+  assert.deepEqual(r.suggestions, { NM: 10 });
+  assert.equal(r.stats!.numForSale, 3);
+  assert.equal(r.pricedAt, 77);
+  retryItem(db, w.id);
+  claimNextPending(db);
+  applyLookup(db, w.id, { status: "no-match", releaseId: null, release: null });
+  const c = getItem(db, w.id)!;
+  assert.equal(c.releaseId, null);
+  assert.equal(c.release, null);
+  assert.deepEqual(c.suggestions, { NM: 10 });
+});
