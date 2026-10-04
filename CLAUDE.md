@@ -56,7 +56,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   format). 55 tests passing.
 - Go online (2026-10-04): deployed to https://mint-condition.fly.dev (app `mint-condition`, region `sjc`, one
   machine, volume `mint_data`). Remote image build OK; smoke checks pass (health 200, `/` → login, API 401 without
-  cookie, foreign Origin 403). Phone check on mobile data pending. Phase 4 (collection mode) gets its own spec next
+  cookie, foreign Origin 403). Phone check on mobile data passed (log in, price a record). Phase 4 (collection mode) gets its own spec next
   and will build on `lib/db.ts` migrations.
 
 ## Phase 3 spec
