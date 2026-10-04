@@ -47,6 +47,12 @@ Auth modes: in production, `APP_PASSWORD_HASH` and `SESSION_SECRET` must both be
 
 ## 4. Deploying
 
+Docker is not available locally, so the image has never been built. Before the first real deploy, confirm it builds on Fly's remote builder:
+
+```sh
+fly deploy --build-only
+```
+
 The first deploy must pass `--ha=false`, otherwise Fly creates two machines. This app must run one machine only (SQLite file, in-memory login limiter and Discogs throttle).
 
 ```sh
@@ -65,7 +71,31 @@ Verify:
 curl https://<app>.fly.dev/api/health
 ```
 
-Expect 200 `{"ok":true,...}`. A 503 lists which config variable names are missing (names only, never values).
+Expect 200 `{"ok":true,...}`. A 503 means something is wrong: the `config` map shows which variables are `false` (names only, never values), and `db: "error"` means the database check failed (details are in `fly logs`).
+
+Post-deploy smoke checklist (replace `<app>` with your app name):
+
+```sh
+# 1. Health: 200 and "ok":true
+curl -s https://<app>.fly.dev/api/health
+
+# 2. Unauthenticated page: 307 redirect to /login?next=%2F
+curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://<app>.fly.dev/
+
+# 3. Lookup API without a session, same origin: 401 with kind "auth"
+curl -s -i -X POST https://<app>.fly.dev/api/lookup -H 'Origin: https://<app>.fly.dev' -H 'content-type: application/json' -d '{}'
+
+# 4. Same request from a foreign origin: 403
+curl -s -i -X POST https://<app>.fly.dev/api/lookup -H 'Origin: https://evil.example' -H 'content-type: application/json' -d '{}'
+
+# 5. Session cookie flags: Set-Cookie must contain Secure and HttpOnly (use your real password, then clear shell history)
+curl -s -i -X POST https://<app>.fly.dev/api/login -H 'Origin: https://<app>.fly.dev' -H 'content-type: application/json' -d '{"password":"your-password"}' | grep -i '^set-cookie'
+
+# 6. Exactly one machine
+fly status
+```
+
+Instead of step 5 you can log in through the browser and check in devtools that the `mc_session` cookie is Secure and HttpOnly.
 
 Troubleshooting: the container starts as root, `docker-entrypoint.sh` chowns `/data` to `node`, then runs the app as `node`. If `/api/health` reports a db error on the first deploy, check `fly logs` for an entrypoint or permission error, and confirm the volume exists (`fly volumes list`) and is mounted at `/data`.
 
@@ -120,7 +150,7 @@ curl https://<app>.fly.dev/api/health
 
 Step 3 can wait until the restore is confirmed, but then two `mint_data` volumes exist and the new machine may pick the wrong one. Confirm the snapshot id and destroy the old volume before step 4.
 
-Copy the database file off the machine for your own backup:
+Copy the database file off the machine for your own backup. The machine auto-stops when idle, so start it first (`fly machine start <machine-id>`, or request `/api/health`):
 
 ```sh
 fly ssh sftp get /data/mint.db

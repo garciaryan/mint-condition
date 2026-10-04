@@ -52,7 +52,6 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   check digit). Searched via Discogs `barcode=` first, then falls back to catno variants. Verified live: Discogs
   normalises spacing and UPC-A vs EAN-13 itself. Shared barcodes often return bootlegs ("Unofficial Release" in
   format). 55 tests passing.
-
 - Go online (2026-10-04): built and verified locally in production mode; Fly deploy pending. Phase 4 (collection
   mode) gets its own spec next and will build on `lib/db.ts` migrations.
 
