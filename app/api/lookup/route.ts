@@ -1,21 +1,11 @@
 // POST /api/lookup: search by catalog number, or price a chosen release. Server-side only (holds the token).
 import { authMode, SESSION_COOKIE, verifySession } from "../../../lib/auth.ts";
-import { DiscogsClient } from "../../../lib/discogs.ts";
+import { getDiscogsClient } from "../../../lib/discogs-client.ts";
 import { httpStatus, missingEnv, parseLookupRequest, runLookup, toErrorResponse } from "../../../lib/lookup.ts";
 import type { LookupResponse } from "../../../lib/lookup.ts";
 import { loadSettings } from "../../../lib/settings.ts";
 
 export const dynamic = "force-dynamic";
-
-// One client per server process so its throttle covers every request. Kept on globalThis to survive dev reloads.
-const g = globalThis as typeof globalThis & { __discogsClient?: DiscogsClient };
-function client(): DiscogsClient {
-  g.__discogsClient ??= new DiscogsClient({
-    token: process.env.DISCOGS_TOKEN!.trim(),
-    userAgent: process.env.DISCOGS_USER_AGENT!.trim(),
-  });
-  return g.__discogsClient;
-}
 
 function reply(res: LookupResponse): Response {
   return Response.json(res, { status: httpStatus(res) });
@@ -63,7 +53,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!parsed.ok) return reply({ status: "error", kind: "bad-request", message: parsed.message });
 
   try {
-    return reply(await runLookup(client(), parsed.value, settings));
+    return reply(await runLookup(getDiscogsClient(), parsed.value, settings));
   } catch (e) {
     return reply(toErrorResponse(e));
   }
