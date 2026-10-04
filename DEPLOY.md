@@ -94,11 +94,31 @@ fly volumes list
 fly volumes snapshots list <volume-id>
 ```
 
-Restore by creating a new volume from a snapshot, then deploying against it (the app uses the volume named `mint_data`, so remove or rename the old one first):
+Restore from a snapshot. These steps are untested; if the machine still runs, take a fresh `fly ssh sftp get` copy first (below). Volumes cannot be renamed, and a machine is bound to one volume id, so the machine has to be recreated:
 
 ```sh
-fly volumes create mint_data --snapshot-id <snapshot-id> --size 1 --region sjc
+# 1. Pick a snapshot
+fly volumes list
+fly volumes snapshots list <volume-id>
+
+# 2. Destroy the machine
+fly machine list
+fly machine destroy <machine-id> --force
+
+# 3. Destroy the old volume
+fly volumes destroy <old-volume-id>
+
+# 4. Create the replacement from the snapshot (keep the name mint_data)
+fly volumes create mint_data --snapshot-id <snapshot-id> --region sjc --size 1
+
+# 5. Redeploy (creates one machine and attaches the new volume)
+fly deploy --ha=false
+
+# 6. Verify
+curl https://<app>.fly.dev/api/health
 ```
+
+Step 3 can wait until the restore is confirmed, but then two `mint_data` volumes exist and the new machine may pick the wrong one. Confirm the snapshot id and destroy the old volume before step 4.
 
 Copy the database file off the machine for your own backup:
 
