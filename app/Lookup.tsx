@@ -116,13 +116,13 @@ export default function Lookup() {
     show(res);
   }
 
-  async function search() {
+  async function search(fresh = false) {
     const key = `${catno.trim()}|${year.trim()}`;
     const searchedYear = Number(year) || undefined;
     const area = local ? areaCode.trim() : "";
-    retry.current = () => void search();
+    retry.current = () => void search(fresh);
     pending.current = null;
-    const res = await lookup({ catno, year, record, sleeve, areaCode: area }, "search");
+    const res = await lookup({ catno, year, record, sleeve, areaCode: area, ...(fresh ? { fresh: true } : {}) }, "search");
     if (!res) return;
     setSearchedKey(res.status === "error" ? null : key);
     setCandidates(res.status === "candidates" ? { kind: "candidates", candidates: res.candidates, year: searchedYear } : null);
@@ -150,7 +150,7 @@ export default function Lookup() {
   }
 
   /** Re-prices the shown (or still-loading) pressing in place, e.g. after a grade or area code change. */
-  function reprice(opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; fresh?: boolean }) {
+  function reprice(opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; fresh?: boolean; focus?: boolean }) {
     if (busy === "search") return;
     const target = pending.current ?? (view.kind === "result" && releaseId !== null ? { id: releaseId, picked: release } : null);
     if (target) void price(target.id, target.picked, opts);
@@ -303,6 +303,12 @@ export default function Lookup() {
                   {view.year ? ` within a year of ${view.year}` : ""}. Check the catno against the label or spine (or the
                   barcode digits), or clear the year to widen the search.
                 </p>
+                <p>
+                  Added it to Discogs just now?{" "}
+                  <button type="button" className="link" onClick={() => void search(true)} disabled={busy !== null}>
+                    Search Discogs again
+                  </button>
+                </p>
               </div>
             )}
             {view.kind === "error" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
@@ -316,7 +322,7 @@ export default function Lookup() {
                 showLocal={local}
                 busy={repricing}
                 slow={repricing && slow}
-                onRefresh={() => reprice({ fresh: true })}
+                onRefresh={() => reprice({ fresh: true, focus: true })}
                 onBack={
                   candidates
                     ? () => {

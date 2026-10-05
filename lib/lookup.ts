@@ -15,7 +15,7 @@ export type LookupRequest = {
   areaCode?: string;
   /** Set once the user has picked a pressing (or to re-price one); skips the search. */
   releaseId?: number;
-  /** Re-fetch suggestions and stats from Discogs instead of the cache (only with releaseId). */
+  /** Skip the cache: re-search (without releaseId) and re-fetch suggestions and stats from Discogs. */
   fresh?: boolean;
 };
 
@@ -74,7 +74,6 @@ export function parseLookupRequest(body: unknown): Parsed {
   if (!isGrade(record) || !isGrade(sleeve)) return { ok: false, message: "Pick a record grade and a sleeve grade." };
 
   if (b.fresh !== undefined && typeof b.fresh !== "boolean") return { ok: false, message: "fresh must be true or false." };
-  if (b.fresh === true && releaseId === undefined) return { ok: false, message: "fresh needs a release id." };
 
   const areaCode = typeof b.areaCode === "string" && b.areaCode.trim() ? b.areaCode.trim() : undefined;
   return { ok: true, value: { catno, year, record, sleeve, areaCode, releaseId, ...(b.fresh === true ? { fresh: true } : {}) } };
@@ -120,7 +119,7 @@ export async function runLookup(
   let release: Candidate | null = null;
 
   if (releaseId === undefined) {
-    const { value: candidates } = await client.searchByCatno(req.catno, req.year);
+    const { value: candidates } = await client.searchByCatno(req.catno, req.year, { fresh: req.fresh });
     if (candidates.length === 0) return { status: "no-match" };
     if (candidates.length > 1) return { status: "candidates", candidates };
     release = candidates[0];

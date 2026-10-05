@@ -128,12 +128,21 @@ test("canPick follows the offer grades, not the displayed ones", () => {
 
 test("oldestPricedAt is the smallest pricedAt among priced rows", () => {
   const rows = [
-    item({ status: "priced", pricedAt: 300 }),
-    item({ status: "priced", pricedAt: 100 }),
+    item({ status: "priced", pricedAt: 300, suggestions: sugg }),
+    item({ status: "priced", pricedAt: 100, suggestions: sugg }),
     item({ status: "no-price", pricedAt: 50 }),
     item({ status: "pending" }),
   ];
   assert.equal(oldestPricedAt(rows), 100);
   assert.equal(oldestPricedAt([item({ status: "no-price", pricedAt: 5 })]), null);
   assert.equal(oldestPricedAt([]), null);
+});
+
+test("oldestPricedAt counts rows still showing an earlier price after a failed re-price", () => {
+  const rows = [
+    item({ status: "priced", pricedAt: 300, suggestions: sugg }),
+    item({ status: "error", pricedAt: 100, suggestions: sugg, error: "429" }),
+    item({ status: "pending", pricedAt: 50, suggestions: sugg }),
+  ];
+  assert.equal(oldestPricedAt(rows), 50);
 });

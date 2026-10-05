@@ -181,12 +181,20 @@ test("fetchedAt is the older of suggestions and stats", async () => {
   assert.equal(res.status === "priced" && res.fetchedAt, 1000);
 });
 
-test("parseLookupRequest accepts fresh only with a release id", () => {
+test("parseLookupRequest accepts fresh as a boolean, with or without a release id", () => {
   const b = { catno: "X", record: "NM", sleeve: "NM" };
   const ok = parseLookupRequest({ ...b, releaseId: 5, fresh: true });
   assert.equal(ok.ok && ok.value.fresh, true);
-  assert.equal(parseLookupRequest({ ...b, fresh: true }).ok, false);
+  const search = parseLookupRequest({ ...b, fresh: true });
+  assert.equal(search.ok && search.value.fresh, true);
   assert.equal(parseLookupRequest({ ...b, releaseId: 5, fresh: "yes" }).ok, false);
   const plain = parseLookupRequest({ ...b, releaseId: 5 });
   assert.equal(plain.ok && plain.value.fresh, undefined);
+});
+
+test("a fresh search skips the cache for the search and the prices", async () => {
+  const seen = { fresh: [] as (boolean | undefined)[] };
+  const { client } = fakeClient({ candidates: [mk(1)] }, () => 0, seen);
+  await runLookup(client, { ...req, fresh: true }, settings);
+  assert.deepEqual(seen.fresh, [true, true, true]);
 });
