@@ -74,7 +74,8 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   `fly.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`
 
 - `lib/settings-store.ts` (saved settings over defaults) · `lib/settings-form.ts` (form conversion, client-safe) ·
-  `lib/settings-help.ts` (what each setting changes; every field must have help, tested) ·
+  `lib/settings-help.ts` (what each setting changes; every field has help, tested; the sleeve grid shares one
+  `SLEEVE_HELP` on its heading) ·
   `app/settings/` (`SettingsForm`, `HelpTip` ⓘ toggle) · `app/api/settings/`
 - `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
   `lib/discogs-client.ts` shared client + `getLookupClient()` · `lib/discogs-cache.ts` response cache ·
