@@ -86,6 +86,8 @@ export function csvFilename(lotName: string, lotId: number): string {
 
 export type BuySheetRow = {
   id: number;
+  /** The Discogs release, printed as a reference (the sheet's stand-in for the terms' link back). */
+  releaseId: number | null;
   query: string;
   /** Release title; null when no pressing is chosen. */
   title: string | null;
@@ -121,6 +123,7 @@ export function buySheetRows(items: ItemRow[], settings: Settings, inputs: Offer
       : null;
     return {
       id: item.id,
+      releaseId: item.releaseId,
       query: item.query,
       title: item.release?.title ?? null,
       detail: [item.release?.label, item.release?.year].filter(Boolean).join(" · "),

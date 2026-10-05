@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { SessionRow } from "../../../lib/collection/types.ts";
 import { cash, offerNotes, offerSummary } from "../../../lib/collection/ui.ts";
 import type { OfferSide, OfferView } from "../../../lib/offer.ts";
+import DiscogsCredit from "../../DiscogsCredit.tsx";
 import { api } from "./api.ts";
 
 const OPEN_KEY = "offerPanelOpen";
@@ -231,9 +232,10 @@ export default function OfferPanel({
           )}
           <p className="small muted">
             Walk-away keeps a {i.marginPercent}% margin after Discogs fees and {cash(i.overheadPerRecord, currency, true)}/record
-            overhead. Change these in settings.json.
+            overhead. Change these in Settings.
           </p>
           <p className="small muted">Discogs figures are asking prices and suggestions, not sales.</p>
+          <DiscogsCredit />
         </div>
       )}
     </section>

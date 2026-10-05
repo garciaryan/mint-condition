@@ -139,6 +139,22 @@ body {
   scroll-margin-top: 16px;
 }
 
+/* "Data provided by Discogs" next to Discogs data and totals worked out from it. */
+.discogs-credit {
+  margin: 6px 0 0;
+}
+
+/* On the scanner's dark background, follow its light text rather than the page link colour. */
+.scanner .discogs-credit,
+.scanner .discogs-credit a {
+  color: inherit;
+}
+
+/* Buy sheet: the release each row was priced from (paper can't carry a link). */
+.sheet-ref {
+  display: block;
+}
+
 /* Site footer: the Discogs notice on every page. */
 .site-footer {
   width: 100%;

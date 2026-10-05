@@ -106,7 +106,7 @@ test("buy sheet row fields", () => {
   const [r] = buySheetRows([it], settings, INPUTS);
   const p = priceRecord({ suggestions: sugg, lowestListing: null, record: "VG+", sleeve: "VG", settings })!;
   assert.deepEqual(r, {
-    id: 1, query: "SD 1", title: "Blue", detail: "Atlantic · 1971", record: "VG+", sleeve: "VG",
+    id: 1, releaseId: 101, query: "SD 1", title: "Blue", detail: "Atlantic · 1971", record: "VG+", sleeve: "VG",
     suggested: marketFor(it, settings)!.suggested, sell: p.sell.price, isPick: true, statusLabel: null,
   });
   assert.equal(buySheetRows([priced({ release: rel({ label: "", year: null }) })], settings, INPUTS)[0].detail, "");

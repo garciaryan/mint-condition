@@ -41,8 +41,11 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
 - Discogs data is asking prices and suggestions, not confirmed sales. The UI should say so.
 - Discogs API terms (`lib/discogs-terms.ts`): no Discogs data shown more than 6 hours old (`MAX_CACHE_HOURS`; lot
   rows past it are hidden by `hideExpired` and re-queued by `requeueExpired` when the lot or buy sheet opens);
-  "Data provided by Discogs" linked to the release next to the data (no `nofollow`); the not-affiliated notice in
-  `app/SiteFooter.tsx` on every page. Price data is Restricted Data: no commercial use, no transfer to third parties.
+  "Data provided by Discogs" linked next to the data (no `nofollow`): the release on the result card and lot rows,
+  `app/DiscogsCredit.tsx` (Discogs search for pick lists, marketplace for totals, offers, the lots list and scanner);
+  `discogs.com/release/<id>` per buy-sheet row; the result card hides its figures past 6 hours (`dataExpired`);
+  the not-affiliated notice in `app/SiteFooter.tsx` on every page. Anything new that shows Discogs data needs a credit
+  (`tests/discogs-terms.test.ts`). Price data is Restricted Data: no commercial use, no transfer to third parties.
 
 - Released as self-hosted, MIT-licensed (`LICENSE`): each person runs their own copy (locally or their own Fly app)
   with their own Discogs token and IP rate limit; there is no shared public instance. The workflow runs the checks on PRs

@@ -8,6 +8,7 @@ import { money } from "./api.ts";
 import { Icon } from "./ItemRow.tsx";
 import { LOT_CUE_MS } from "../../../lib/camera.ts";
 import ScanFrame from "../../ScanFrame.tsx";
+import DiscogsCredit from "../../DiscogsCredit.tsx";
 import { useBarcodeCamera } from "../../useBarcodeCamera.ts";
 import { useFadeOut } from "../../useFadeOut.ts";
 import { useDialog } from "./useDialog.ts";
@@ -114,6 +115,7 @@ export default function Scanner({
       </p>
       <section className="scanner-list" aria-label="This session">
         <h2>This session ({entries.length})</h2>
+        <DiscogsCredit />
         <ul>
           {entries.map((e) => (
             <li key={e.key}>

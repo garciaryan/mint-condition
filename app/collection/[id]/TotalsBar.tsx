@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { coverageText, etaText } from "../../../lib/collection/ui.ts";
 import type { QueueState, Totals } from "../../../lib/collection/view.ts";
+import DiscogsCredit from "../../DiscogsCredit.tsx";
 import { money } from "./api.ts";
 
 export default function TotalsBar({
@@ -63,6 +64,7 @@ export default function TotalsBar({
               {queue.paused ? `Paused · ${queue.pending} waiting` : `Looking up · ${queue.pending} left · ~${etaText(queue.etaSeconds)}`}
             </span>
           )}
+          <DiscogsCredit />
         </div>
       </div>
 

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { DATA_CREDIT, releaseUrl } from "../lib/discogs-terms.ts";
+import { DATA_CREDIT, dataExpired, MAX_CACHE_HOURS, releaseUrl } from "../lib/discogs-terms.ts";
 import { clearsInputs, fieldErrors, movesToResult } from "../lib/form.ts";
 import { relativeTime } from "../lib/relative-time.ts";
 import type { FieldErrors } from "../lib/form.ts";
@@ -314,7 +314,7 @@ export default function Lookup() {
             )}
             {view.kind === "error" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
             {view.kind === "candidates" && (
-              <Picker candidates={view.candidates} year={view.year} onPick={(c) => void price(c.id, c, { focus: true, clear: true })} />
+              <Picker candidates={view.candidates} query={searchedKey?.split("|")[0] ?? catno} year={view.year} onPick={(c) => void price(c.id, c, { focus: true, clear: true })} />
             )}
             {view.kind === "result" && (
               <ResultCard
@@ -386,6 +386,17 @@ function ResultCard({
   const cur = res.status === "priced" ? res.currency : (res.stats.currency ?? "USD");
   const money = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
 
+  // Discogs terms: nothing shown more than 6 hours behind discogs.com. A card left open that long hides its figures.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    setNow(Date.now());
+    const wait = res.fetchedAt + MAX_CACHE_HOURS * 3_600_000 - Date.now() + 1000;
+    if (wait <= 0) return;
+    const t = setTimeout(() => setNow(Date.now()), wait);
+    return () => clearTimeout(t);
+  }, [res.fetchedAt]);
+  const expired = dataExpired(res.fetchedAt, now);
+
   return (
     <div className={busy ? "card result stale" : "card result"} aria-busy={busy}>
       {onBack && (
@@ -410,7 +421,7 @@ function ResultCard({
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </p>
-          {res.cached && (
+          {res.cached && !expired && (
             <p className="muted small price-age">
               {res.status === "priced" ? "Prices from" : "Checked"} {relativeTime(res.fetchedAt)} ·{" "}
               <button type="button" className="link" onClick={onRefresh} disabled={busy}>
@@ -427,7 +438,17 @@ function ResultCard({
         )}
       </div>
 
-      {res.status === "no-price" ? (
+      {expired ? (
+        <div className="notice">
+          <p>
+            These figures are more than {MAX_CACHE_HOURS} hours old, so they’re hidden (Discogs only allows showing current
+            data).{" "}
+            <button type="button" className="link" onClick={onRefresh} disabled={busy}>
+              Refresh prices
+            </button>
+          </p>
+        </div>
+      ) : res.status === "no-price" ? (
         <div className="notice">
           {res.reason === "no-suggestions" ? (
             <p>
@@ -474,16 +495,18 @@ function ResultCard({
         </div>
       )}
 
-      <dl className="stats">
-        <div>
-          <dt>Copies for sale</dt>
-          <dd>{res.stats.numForSale}</dd>
-        </div>
-        <div>
-          <dt>Lowest listing</dt>
-          <dd>{res.stats.lowestPrice === null ? "none" : money(res.stats.lowestPrice)}</dd>
-        </div>
-      </dl>
+      {!expired && (
+        <dl className="stats">
+          <div>
+            <dt>Copies for sale</dt>
+            <dd>{res.stats.numForSale}</dd>
+          </div>
+          <div>
+            <dt>Lowest listing</dt>
+            <dd>{res.stats.lowestPrice === null ? "none" : money(res.stats.lowestPrice)}</dd>
+          </div>
+        </dl>
+      )}
       <p className="muted small">
         Discogs figures are asking prices and suggestions, not confirmed sales. Treat them as a guide.
       </p>
