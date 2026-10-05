@@ -11,6 +11,8 @@ export type LotData = {
   queue: QueueState;
   /** When the oldest priced row's Discogs data was fetched; null when nothing is priced. */
   oldestPricedAt: number | null;
+  /** Rows the Discogs CSV would include, rows still looking up, and the rest (skipped). */
+  exportCounts: { exportable: number; lookingUp: number; skipped: number };
   currency: string;
 };
 

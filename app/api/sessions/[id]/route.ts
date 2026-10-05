@@ -1,5 +1,6 @@
 // GET/PATCH/DELETE /api/sessions/:id
 import { errorJson, isObject, MAX_BODY, parseAmount, parseId, parseName, readJson, withSettings } from "../../../../lib/collection/http.ts";
+import { exportCounts } from "../../../../lib/collection/export.ts";
 import { deleteSession, getSession, listItems, updateSession } from "../../../../lib/collection/store.ts";
 import { computeTotals, oldestPricedAt, queueState, toItemView } from "../../../../lib/collection/view.ts";
 import { isQueuePaused } from "../../../../lib/collection/worker.ts";
@@ -34,6 +35,7 @@ export async function GET(request: Request, { params }: Ctx): Promise<Response> 
       offer: computeOffer(items, inputs, settings),
       queue: queueState(totals.pending, isQueuePaused()),
       oldestPricedAt: oldestPricedAt(items),
+      exportCounts: exportCounts(items, settings),
       currency: settings.discogs.currency,
     });
   });
