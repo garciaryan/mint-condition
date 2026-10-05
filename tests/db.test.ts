@@ -64,3 +64,11 @@ test("migration 2 adds offer columns to a version-1 database", () => {
     { unverified: 0, pick_threshold: null, bulk_each: null, lot_overhead: 0 });
   assert.deepEqual({ ...(db.prepare("select pick from items").get() as object) }, { pick: null });
 });
+
+test("migration 3 adds a one-row settings table to a version-2 database", () => {
+  const db = new DatabaseSync(":memory:");
+  migrate(db, migrations.slice(0, 2));
+  assert.equal(migrate(db, migrations), 3);
+  db.exec("insert into settings (id, json, updated_at) values (1, '{}', 1)");
+  assert.throws(() => db.exec("insert into settings (id, json, updated_at) values (2, '{}', 1)"), /CHECK/);
+});
