@@ -6,6 +6,8 @@ import { STATUS_INFO, displayStatus } from "../../../lib/collection/ui.ts";
 import type { ItemView } from "../../../lib/collection/view.ts";
 import { money } from "./api.ts";
 import { Icon } from "./ItemRow.tsx";
+import { LOT_CUE_MS } from "../../../lib/camera.ts";
+import ScanFrame from "../../ScanFrame.tsx";
 import { useBarcodeCamera } from "../../useBarcodeCamera.ts";
 import { useDialog } from "./useDialog.ts";
 
@@ -95,7 +97,7 @@ export default function Scanner({
         <div className="scanner-view">
           <video ref={videoRef} playsInline muted autoPlay />
           {!ready && <p className="scanner-wait">Starting camera…</p>}
-          <div className="scanner-frame" aria-hidden="true" />
+          <ScanFrame last={camera.lastScan} holdMs={LOT_CUE_MS} />
         </div>
       )}
       <p className="scanner-toast" role="status" aria-live="polite">

@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { LOOKUP_HOLD_MS } from "../lib/camera.ts";
+import ScanFrame from "./ScanFrame.tsx";
 import { useDialog } from "./collection/[id]/useDialog.ts";
 import { useBarcodeCamera } from "./useBarcodeCamera.ts";
 
@@ -17,19 +19,32 @@ export default function LookupScanner({
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const done = useRef(false);
+  const [scanned, setScanned] = useState<string | null>(null);
+  const onCodeRef = useRef(onCode);
+  onCodeRef.current = onCode;
   const camera = useBarcodeCamera(
     videoRef,
     (code) => {
       if (done.current) return;
       done.current = true;
-      camera.stop();
-      onCode(code);
+      setScanned(code);
     },
     () => {
       onUnavailable();
       onClose();
     },
   );
+
+  // Hold the ✓ on screen briefly, then release the camera and hand the code back (which closes this).
+  useEffect(() => {
+    if (!scanned) return;
+    const t = setTimeout(() => {
+      camera.stop();
+      onCodeRef.current(scanned);
+    }, LOOKUP_HOLD_MS);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanned]);
 
   function close() {
     camera.stop();
@@ -61,11 +76,11 @@ export default function LookupScanner({
         <div className="scanner-view">
           <video ref={videoRef} playsInline muted autoPlay />
           {s.kind === "starting" && <p className="scanner-wait">Starting camera…</p>}
-          <div className="scanner-frame" aria-hidden="true" />
+          <ScanFrame last={camera.lastScan} holdMs={LOOKUP_HOLD_MS + 200} />
         </div>
       )}
       <p className="scanner-toast" role="status" aria-live="polite">
-        Point the camera at the barcode on the back of the sleeve.
+        {scanned ? `Scanned ${scanned}, searching…` : "Point the camera at the barcode on the back of the sleeve."}
       </p>
     </div>
   );

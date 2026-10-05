@@ -23,3 +23,17 @@ test("the lookup form clears catalog number and year once a pressing is shown, n
   assert.equal(clearsInputs("no-price"), true);
   for (const s of ["candidates", "no-match", "error"] as const) assert.equal(clearsInputs(s), false, s);
 });
+
+test("the scan ✓ shows right after a read and hides after its hold time", async () => {
+  const { scanCueVisible, LOT_CUE_MS } = await import("../lib/camera.ts");
+  assert.equal(scanCueVisible(null, 1000, LOT_CUE_MS), false);
+  assert.equal(scanCueVisible(1000, 1000, LOT_CUE_MS), true);
+  assert.equal(scanCueVisible(1000, 1000 + LOT_CUE_MS - 1, LOT_CUE_MS), true);
+  assert.equal(scanCueVisible(1000, 1000 + LOT_CUE_MS, LOT_CUE_MS), false);
+});
+
+test("the one-shot scanner holds the ✓ briefly before closing, shorter than the lot cue", async () => {
+  const { LOOKUP_HOLD_MS, LOT_CUE_MS } = await import("../lib/camera.ts");
+  assert.ok(LOOKUP_HOLD_MS >= 400 && LOOKUP_HOLD_MS <= 700);
+  assert.ok(LOT_CUE_MS >= LOOKUP_HOLD_MS);
+});

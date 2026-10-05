@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { createScanFilter } from "../lib/collection/ui.ts";
+import type { LastScan } from "./ScanFrame.tsx";
 
 const FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
 
@@ -33,13 +34,15 @@ export type CameraState =
 /**
  * Runs the rear camera into `video` and calls `onCode` for each new barcode (repeats of the same code are filtered).
  * `onUnavailable` fires when no detector can load. Call `stop` to release the camera; it also stops on unmount.
+ * `lastScan` is the latest accepted read, for the frame's ✓ cue.
  */
 export function useBarcodeCamera(
   video: RefObject<HTMLVideoElement | null>,
   onCode: (code: string) => void,
   onUnavailable: () => void,
-): { state: CameraState; stop: () => void } {
+): { state: CameraState; lastScan: LastScan | null; stop: () => void } {
   const [state, setState] = useState<CameraState>({ kind: "starting" });
+  const [lastScan, setLastScan] = useState<LastScan | null>(null);
   const onCodeRef = useRef(onCode);
   onCodeRef.current = onCode;
   const onUnavailableRef = useRef(onUnavailable);
@@ -104,6 +107,7 @@ export function useBarcodeCamera(
               const code = found[0].rawValue;
               if (accept(code, Date.now())) {
                 navigator.vibrate?.(60);
+                setLastScan((prev) => ({ code, at: Date.now(), n: (prev?.n ?? 0) + 1 }));
                 onCodeRef.current(code);
               }
             }
@@ -126,5 +130,5 @@ export function useBarcodeCamera(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { state, stop: () => stopRef.current() };
+  return { state, lastScan, stop: () => stopRef.current() };
 }

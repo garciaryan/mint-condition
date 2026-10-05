@@ -33,3 +33,8 @@ test("reduced motion turns off transitions, animations and the press shrink", ()
   assert.match(reduced, /animation: none !important;/);
   assert.match(reduced, /transform: none !important;/);
 });
+
+test("a successful scan pulses the viewfinder frame (and reduced motion stops all animation)", () => {
+  assert.match(css, /\.scanner-frame\.hit \{[^}]*border-color: var\(--fill\);[^}]*animation: scan-pulse /);
+  assert.match(css, /@keyframes scan-pulse/);
+});
