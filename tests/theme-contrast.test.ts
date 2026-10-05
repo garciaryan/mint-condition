@@ -35,6 +35,7 @@ const TEXT: [string, string][] = [
   ["--accent", "--card"], ["--accent", "--bg"], ["--accent-ink", "--accent"], ["--danger", "--card"],
   ["--danger", "--error-bg"], ["--warn", "--notice-bg"], ["--warn", "--card"], ["--accent", "--accent-soft"],
   ["--muted", "--neutral-soft"], ["--ink", "--field-bg"], ["--toast-ink", "--toast-bg"], ["--toast-link", "--toast-bg"], ["--card", "--ink"],
+  ["--fill-ink", "--fill"], ["--fill-ink", "--fill-hover"], ["--muted", "--notice-bg"], ["--accent", "--accent-tint"],
 ];
 const BORDERS: [string, string][] = [["--field-line", "--card"], ["--field-line", "--field-bg"]];
 
@@ -59,4 +60,15 @@ test("the system-dark block and the pinned-dark block define the same palette", 
 test("dark mode redefines every colour token", () => {
   const colourTokens = Object.keys(light).filter((k) => /^(#|rgba?\()/.test(light[k]));
   assert.deepEqual(colourTokens.filter((k) => !(k in darkPinned)), []);
+});
+
+test("the palette: parchment and deep-space blue pages, deep-space-blue text, cyan buttons in both themes", () => {
+  assert.equal(light["--bg"], "#f4edea");
+  assert.equal(light["--ink"], "#12263a");
+  assert.equal(dark["--bg"], "#12263a");
+  assert.equal(dark["--ink"], "#f4edea");
+  for (const theme of [light, dark]) {
+    assert.equal(theme["--fill"], "#06bcc1");
+    assert.equal(theme["--fill-ink"], "#12263a");
+  }
 });

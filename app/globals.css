@@ -1,29 +1,33 @@
 :root {
-  --bg: #f6f4ef;
+  --bg: #f4edea;
   --card: #ffffff;
-  --ink: #1d1b18;
-  --muted: #6c675f;
-  --line: #e2ddd3;
+  --ink: #12263a;
+  --muted: #4f5e6d;
+  --line: #c5d8d1;
   /* Form control borders need 3:1 against the card; --line is for dividers only. */
-  --field-line: #8f897e;
-  --accent: #1f6f5c;
+  --field-line: #6b8a80;
+  --accent: #037276;
   --accent-ink: #ffffff;
-  --warn: #9a5a00;
+  --warn: #8a4b00;
   --danger: #b42318;
   --error-bg: #fdf0ee;
   --error-line: #e9b8af;
-  --notice-bg: #fbf7ea;
+  --notice-bg: #fbeadb;
   --field-bg: #ffffff;
-  --accent-hover: #185a4a;
-  --accent-soft: #e7f2ee;
-  --accent-tint: #f3f9f6;
-  --warn-line: #ecd9a8;
-  --neutral-soft: #f1efe9;
-  --toast-bg: #1d1b18;
-  --toast-ink: #ffffff;
-  --toast-link: #9fd9c5;
-  --scrim: rgba(29, 27, 24, 0.45);
-  --shadow: rgba(0, 0, 0, 0.15);
+  --accent-hover: #025a5d;
+  --accent-soft: #e1f0f0;
+  --accent-tint: #eef6f5;
+  --warn-line: #f4d1ae;
+  --neutral-soft: #ebe3df;
+  /* Solid buttons: strong cyan with a deep-space-blue label, in both themes. */
+  --fill: #06bcc1;
+  --fill-ink: #12263a;
+  --fill-hover: #3fd0d4;
+  --toast-bg: #12263a;
+  --toast-ink: #f4edea;
+  --toast-link: #06bcc1;
+  --scrim: rgba(18, 38, 58, 0.45);
+  --shadow: rgba(18, 38, 58, 0.15);
   color-scheme: light;
   --radius: 10px;
   --control-h: 44px;
@@ -36,28 +40,31 @@
    <html data-theme>). Keep the two blocks identical; tests/theme-contrast.test.ts checks them. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #141311;
-    --card: #1d1b18;
-    --ink: #ece8e1;
-    --muted: #a59e93;
-    --line: #34312c;
-    --field-line: #807a6f;
-    --accent: #5bbfa4;
-    --accent-ink: #0d1a16;
-    --warn: #e3a548;
-    --danger: #f2836f;
-    --error-bg: #2b1815;
-    --error-line: #6e3329;
-    --notice-bg: #27231a;
-    --field-bg: #24221e;
-    --accent-hover: #74ccb4;
-    --accent-soft: #1d3a32;
-    --accent-tint: #1a2723;
-    --warn-line: #5a4a22;
-    --neutral-soft: #2a2824;
-    --toast-bg: #ece8e1;
-    --toast-ink: #1d1b18;
-    --toast-link: #1f6f5c;
+    --bg: #12263a;
+    --card: #1a3249;
+    --ink: #f4edea;
+    --muted: #a8b9c4;
+    --line: #2b4660;
+    --field-line: #7391ab;
+    --accent: #06bcc1;
+    --accent-ink: #12263a;
+    --warn: #f4d1ae;
+    --danger: #f59a88;
+    --error-bg: #3a2329;
+    --error-line: #7a3b3f;
+    --notice-bg: #2f2c2b;
+    --field-bg: #152b41;
+    --accent-hover: #3fd0d4;
+    --accent-soft: #11404f;
+    --accent-tint: #163447;
+    --warn-line: #6b5638;
+    --neutral-soft: #223b54;
+    --fill: #06bcc1;
+    --fill-ink: #12263a;
+    --fill-hover: #3fd0d4;
+    --toast-bg: #f4edea;
+    --toast-ink: #12263a;
+    --toast-link: #037276;
     --scrim: rgba(0, 0, 0, 0.6);
     --shadow: rgba(0, 0, 0, 0.5);
     color-scheme: dark;
@@ -65,28 +72,31 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #141311;
-  --card: #1d1b18;
-  --ink: #ece8e1;
-  --muted: #a59e93;
-  --line: #34312c;
-  --field-line: #807a6f;
-  --accent: #5bbfa4;
-  --accent-ink: #0d1a16;
-  --warn: #e3a548;
-  --danger: #f2836f;
-  --error-bg: #2b1815;
-  --error-line: #6e3329;
-  --notice-bg: #27231a;
-  --field-bg: #24221e;
-  --accent-hover: #74ccb4;
-  --accent-soft: #1d3a32;
-  --accent-tint: #1a2723;
-  --warn-line: #5a4a22;
-  --neutral-soft: #2a2824;
-  --toast-bg: #ece8e1;
-  --toast-ink: #1d1b18;
-  --toast-link: #1f6f5c;
+  --bg: #12263a;
+  --card: #1a3249;
+  --ink: #f4edea;
+  --muted: #a8b9c4;
+  --line: #2b4660;
+  --field-line: #7391ab;
+  --accent: #06bcc1;
+  --accent-ink: #12263a;
+  --warn: #f4d1ae;
+  --danger: #f59a88;
+  --error-bg: #3a2329;
+  --error-line: #7a3b3f;
+  --notice-bg: #2f2c2b;
+  --field-bg: #152b41;
+  --accent-hover: #3fd0d4;
+  --accent-soft: #11404f;
+  --accent-tint: #163447;
+  --warn-line: #6b5638;
+  --neutral-soft: #223b54;
+  --fill: #06bcc1;
+  --fill-ink: #12263a;
+  --fill-hover: #3fd0d4;
+  --toast-bg: #f4edea;
+  --toast-ink: #12263a;
+  --toast-link: #037276;
   --scrim: rgba(0, 0, 0, 0.6);
   --shadow: rgba(0, 0, 0, 0.5);
   color-scheme: dark;
@@ -96,13 +106,18 @@
   box-sizing: border-box;
 }
 
+/* Column layout so the footer sits at the bottom of short pages and follows the content on long ones. */
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
   margin: 0;
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
 }
 
 .page {
+  width: 100%;
   max-width: 960px;
   margin: 0 auto;
   padding: 32px var(--gutter) 64px;
@@ -110,12 +125,40 @@ body {
 
 /* Site footer: the Discogs notice on every page. */
 .site-footer {
+  width: 100%;
   max-width: 960px;
-  margin: 0 auto;
+  margin: auto auto 0;
   padding: 0 var(--gutter) 32px;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.site-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  font-size: 15px;
+}
+
+.site-footer-links .coffee {
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--fill-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-footer-links .coffee:hover {
+  background: var(--fill-hover);
 }
 
 /* Site header: brand, nav, optional log out, one row on desktop. */
@@ -380,13 +423,13 @@ button.secondary {
 }
 
 button[type="submit"] {
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--fill);
+  color: var(--fill-ink);
   border: 0;
 }
 
 button[type="submit"]:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--fill-hover);
 }
 
 button[type="submit"]:disabled {
@@ -828,12 +871,17 @@ button.danger-solid {
   padding: 10px 22px;
   font-weight: 600;
   cursor: pointer;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--fill);
+  color: var(--fill-ink);
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--fill-hover);
 }
 
 button.danger-solid {
   background: var(--danger);
+  color: var(--accent-ink);
 }
 
 button.primary:disabled,
@@ -1823,8 +1871,8 @@ kbd {
 .scanner-toast {
   margin: 0;
   padding: 10px 16px;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--fill);
+  color: var(--fill-ink);
   font-weight: 600;
 }
 
@@ -2232,11 +2280,11 @@ a.action-link:hover {
   :root[data-theme="dark"] {
     --bg: #ffffff;
     --card: #ffffff;
-    --ink: #1d1b18;
-    --muted: #6c675f;
-    --line: #e2ddd3;
+    --ink: #12263a;
+    --muted: #4f5e6d;
+    --line: #c5d8d1;
     --field-bg: #ffffff;
-    --accent: #1f6f5c;
+    --accent: #037276;
     color-scheme: light;
   }
 
@@ -2245,7 +2293,8 @@ a.action-link:hover {
   }
 
   .topbar,
-  .print-controls {
+  .print-controls,
+  .site-footer-links {
     display: none !important;
   }
 

@@ -13,7 +13,7 @@ async function pinnedTheme() {
 export async function generateViewport() {
   const pinned = await pinnedTheme();
   const LIGHT = "#ffffff";
-  const DARK = "#1d1b18";
+  const DARK = "#1a3249";
   return {
     width: "device-width",
     initialScale: 1,
