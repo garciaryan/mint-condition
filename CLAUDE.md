@@ -26,6 +26,10 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   suggestions and stats, so grade changes cost no API call. One in-process lookup worker (`lib/collection/worker.ts`,
   started by `instrumentation.ts`) drains pending items through the shared client in `lib/discogs-client.ts`, so one
   throttle covers lookups and the worker. The worker writes only lookup columns, never grades, year or query.
+- Discogs answers (search, price suggestions, stats) are cached in SQLite (`discogs_cache`, `lib/discogs-cache.ts`)
+  for `discogs.cacheHours` (0 = off). Callers use `getLookupClient()`, which wraps the shared throttled client.
+  Lot Re-price and Retry (`items.refresh`) and the single-record "Refresh prices" bypass it; errors are never
+  cached. Row `priced_at` is when Discogs answered, so cached prices show their real age.
 - `barcode-detector` is the only runtime dependency beyond Next/React; it is lazy-loaded by the camera scanner.
 - Discogs data is asking prices and suggestions, not confirmed sales. The UI should say so.
 
@@ -51,7 +55,8 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - `lib/settings-store.ts` (saved settings over defaults) · `lib/settings-form.ts` (form conversion, client-safe) ·
   `app/settings/` (`SettingsForm`) · `app/api/settings/`
 - `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
-  `lib/discogs-client.ts` shared client · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
+  `lib/discogs-client.ts` shared client + `getLookupClient()` · `lib/discogs-cache.ts` response cache ·
+  `lib/relative-time.ts` · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
 - `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,
   `PickPanel`, `TotalsBar`, `OfferPanel`, `ItemRow`) · `app/api/sessions/` and `app/api/items/` · shared `app/Picker.tsx`,
   `app/GradeSelect.tsx`, `app/SiteHeader.tsx`, `app/NavLinks.tsx`
@@ -79,8 +84,9 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Phase 5 offer calculator (2026-10-04): merged and deployed (migration 2: lot offer inputs, row `pick`); checked on
   prod. Spec: `docs/superpowers/specs/2026-10-04-offer-calculator-design.md`.
 - Phase 6a settings UI (2026-10-04): built on feat/settings-ui; 221 tests passing; migration 3 (`settings` table);
-  checked on staging, merged to main. Spec: `docs/superpowers/specs/2026-10-04-settings-ui-design.md`. Phase 6b (24h Discogs
-  cache, adds `cacheHours` to the page) is next.
+  checked on staging, merged to main. Spec: `docs/superpowers/specs/2026-10-04-settings-ui-design.md`.
+- Phase 6b Discogs cache (2026-10-04): built on feat/discogs-cache; 251 tests passing; migration 4 (`discogs_cache`,
+  `items.refresh`); staging check pending. Spec: `docs/superpowers/specs/2026-10-04-discogs-cache-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns
@@ -101,6 +107,5 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 7. Add tests for any new pure logic; keep `npm test` and `npm run typecheck` green.
 
 ## Later phases (do not start unless asked)
-6b. SQLite cache of Discogs responses (24h, `discogs.cacheHours` on the settings page).
 7. CSV export, printable buy sheet. 8. Track price paid and sold price to learn the user's own offer percentage.
    The user has no offer-percentage rule of thumb; default ladder starts at 40%.

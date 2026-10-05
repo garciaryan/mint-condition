@@ -133,13 +133,19 @@ The pick threshold, bulk price and lot overhead are set per lot. The ladder, mar
   It then takes off your margin and overhead, and adds the bulk at cost. Details are under
   [Offers](#offers).
 
+Discogs answers are reused for up to 24 hours (set on the [Settings](#settings) page), so re-grading a record or
+opening it again is instant. When prices come from that cache the card says how old they are, with **Refresh
+prices** to fetch them fresh; a lot's **Re-price all** and **Retry** always fetch fresh, and a lot shows how old its
+oldest prices are.
+
 Every number above can be changed on the [Settings](#settings) page.
 
 ## Settings
 
 **Settings** in the nav edits the sleeve multipliers, the undercut and minimum sell price, the local price and
 Discogs fee, the default area multiplier, and the offer ladder, opening offer, margin, overhead, pick threshold,
-bulk price and unverified steps. Multipliers are shown as percentages (a VG sleeve keeps 85% of market value).
+bulk price and unverified steps, and how many hours Discogs answers are cached (0 turns the cache off).
+Multipliers are shown as percentages (a VG sleeve keeps 85% of market value).
 
 - A save applies straight away to new lookups and to every lot, including lots you already made offers on.
 - Each changed field shows its default; **Reset to defaults** goes back to [`settings.json`](settings.json).
@@ -191,6 +197,8 @@ lib/
   pricing.ts           pricing logic (pure functions)
   offer.ts             offer ladder, walk-away, cherry-pick vs bulk (pure functions)
   discogs-client.ts    one shared Discogs client per process (one throttle for lookups and the worker)
+  discogs-cache.ts     SQLite cache of Discogs answers in front of that client
+  relative-time.ts     "3 hours ago" formatting
   route-auth.ts        per-route session check
   collection/          lots: types, store (SQLite), parse (paste), view (pure totals/prices), ui, worker
   lookup.ts            request validation, search-or-price flow, error mapping
@@ -210,6 +218,5 @@ Dockerfile, fly.toml   Fly.io deployment
 
 ## Roadmap
 
-- Price cache
 - CSV export and a printable buy sheet
 - Tracking what you paid and sold for, to learn your own offer percentage
