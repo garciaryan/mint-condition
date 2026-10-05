@@ -176,3 +176,53 @@ The database runs in WAL mode, so recent writes may sit in `/data/mint.db-wal`; 
 ## 8. Keep one machine
 
 Do not scale up. Keep exactly one machine (`fly scale count 1` if it ever drifts; check with `fly status`). `fly.toml` stops the machine when idle and starts it on request, so the first request after a while is slow. That is expected.
+
+## 9. Staging
+
+Staging is a second Fly app, `mint-condition-staging`, configured by `fly.staging.toml` (same region, VM size, health check and scale-to-zero as production; its own volume `mint_staging_data`). It has its own secrets and its own empty SQLite database, so it is the place to try DB migrations before they reach production.
+
+### One-time setup
+
+```sh
+fly apps create mint-condition-staging
+fly volumes create mint_staging_data --size 1 --region sjc -a mint-condition-staging
+```
+
+Set the secrets. Use a **new** `SESSION_SECRET` (`openssl rand -base64 32`), distinct from production, so a production cookie never works on staging. The password hash can be the production one or a new one from `npm run hash-password`.
+
+```sh
+fly secrets set -a mint-condition-staging \
+  DISCOGS_TOKEN=your_discogs_token \
+  DISCOGS_USER_AGENT="MintCondition-staging/0.1 (you@example.com)" \
+  APP_PASSWORD_HASH='paste-the-hash-here' \
+  SESSION_SECRET=paste-a-new-openssl-output
+```
+
+First deploy by hand. As in production, `--ha=false` keeps it to one machine:
+
+```sh
+fly deploy -c fly.staging.toml --ha=false
+```
+
+Create a deploy token scoped to the staging app and store it as the `FLY_API_TOKEN_STAGING` repo secret:
+
+```sh
+fly tokens create deploy -a mint-condition-staging --name gha-staging --expiry 8760h | gh secret set FLY_API_TOKEN_STAGING -R garciaryan/mint-condition
+```
+
+The token expires after a year; renew it the same way as the production token (`fly tokens list -a mint-condition-staging`, revoke, create).
+
+### Day to day
+
+Every push to the `staging` branch runs `.github/workflows/fly-deploy-staging.yml`: the same test, typecheck and build checks as production, then `flyctl deploy --remote-only -c fly.staging.toml`. It can also be started by hand from the **Actions** tab (workflow_dispatch). To deploy a feature branch:
+
+```sh
+git push origin feat/x:staging --force
+```
+
+URL: https://mint-condition-staging.fly.dev. The smoke checklist in section 4 works with `<app>` = `mint-condition-staging`. Any `fly` command run against staging needs `-a mint-condition-staging` (or `-c fly.staging.toml`); without it, it targets production.
+
+Notes:
+
+- If staging uses the same Discogs token as production, both apps share one Discogs rate limit. Each app's throttle is in-process only and does not know about the other, so keep staging use light, or give staging a second token.
+- Staging's database starts empty and is separate from production; nothing is copied between them.
