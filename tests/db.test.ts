@@ -59,7 +59,7 @@ test("migration 2 adds offer columns to a version-1 database", () => {
   migrate(db, [migrations[0]]);
   db.exec("insert into sessions (id,name,default_record,default_sleeve,created_at,updated_at) values (1,'L','NM','NM',1,1)");
   db.exec("insert into items (session_id,query,record_grade,sleeve_grade,status,created_at) values (1,'x','NM','NM','pending',1)");
-  assert.equal(migrate(db, migrations), 2);
+  assert.equal(migrate(db, migrations.slice(0, 2)), 2);
   assert.deepEqual({ ...(db.prepare("select unverified, pick_threshold, bulk_each, lot_overhead from sessions").get() as object) },
     { unverified: 0, pick_threshold: null, bulk_each: null, lot_overhead: 0 });
   assert.deepEqual({ ...(db.prepare("select pick from items").get() as object) }, { pick: null });
