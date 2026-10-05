@@ -11,9 +11,8 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   APP_* var set outside production, login is off; only one set = misconfigured (503). Never run more than one machine.
 - Every push to `main` deploys: `.github/workflows/fly-deploy.yml` runs test, typecheck and build, then
   `flyctl deploy --remote-only` (`FLY_API_TOKEN` repo secret, deploy-scoped, expires 2027-10-04). Keep `main` green.
-- Staging is a separate Fly app `mint-condition-staging` (`fly.staging.toml`, own volume `mint_staging_data`, own
-  secrets and DB, one machine). Every push to branch `staging` deploys it via `.github/workflows/fly-deploy-staging.yml`
-  (`FLY_API_TOKEN_STAGING` repo secret). Test migrations there before prod.
+- No staging app (retired 2026-10-05; older status lines below mention it). Test migrations against a local copy of
+  the production database (`DATA_DIR=data/prod-copy npm run dev`, DEPLOY.md §9) before merging to `main`.
 - Never expose `DISCOGS_TOKEN` to the browser. All Discogs calls go through Next route handlers or server actions.
 - Discogs requires a descriptive `User-Agent` (`DISCOGS_USER_AGENT`).
 - Keep `lib/pricing.ts` and `lib/offer.ts` as **pure functions** (no network, no fs, no DB). All tunables come from
@@ -59,7 +58,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - `lib/auth.ts` (session signing, authMode, limiter, health config) · `lib/password.ts` (hashing) · `lib/gate.ts` +
   `middleware.ts` (login gate) · `lib/db.ts` + `lib/migrations.ts` (SQLite, versioned migrations)
 - `app/login/`, `app/api/login|logout|health` · `scripts/hash-password.ts` · `Dockerfile`, `docker-entrypoint.sh`,
-  `fly.toml`, `fly.staging.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`, `fly-deploy-staging.yml`
+  `fly.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`
 
 - `lib/settings-store.ts` (saved settings over defaults) · `lib/settings-form.ts` (form conversion, client-safe) ·
   `app/settings/` (`SettingsForm`) · `app/api/settings/`

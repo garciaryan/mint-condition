@@ -177,52 +177,44 @@ The database runs in WAL mode, so recent writes may sit in `/data/mint.db-wal`; 
 
 Do not scale up. Keep exactly one machine (`fly scale count 1` if it ever drifts; check with `fly status`). `fly.toml` stops the machine when idle and starts it on request, so the first request after a while is slow. That is expected.
 
-## 9. Staging
+## 9. Testing changes before production
 
-Staging is a second Fly app, `mint-condition-staging`, configured by `fly.staging.toml` (same region, VM size, health check and scale-to-zero as production; its own volume `mint_staging_data`). It has its own secrets and its own empty SQLite database, so it is the place to try DB migrations before they reach production.
+There is no staging app (it was retired on 2026-10-05). Every push to `main` deploys production, so check changes
+locally first.
 
-### One-time setup
+### Migrations: run them on a copy of the production database
 
-```sh
-fly apps create mint-condition-staging
-fly volumes create mint_staging_data --size 1 --region sjc -a mint-condition-staging
-```
-
-Set the secrets. Use a **new** `SESSION_SECRET` (`openssl rand -base64 32`), distinct from production, so a production cookie never works on staging. The password hash can be the production one or a new one from `npm run hash-password`.
+Start the machine (request `/api/health`), then copy the database into an ignored folder. Fetch the WAL file too
+if it exists, so recent writes come along:
 
 ```sh
-fly secrets set -a mint-condition-staging \
-  DISCOGS_TOKEN=your_discogs_token \
-  DISCOGS_USER_AGENT="MintCondition-staging/0.1 (you@example.com)" \
-  APP_PASSWORD_HASH='paste-the-hash-here' \
-  SESSION_SECRET=paste-a-new-openssl-output
+mkdir -p data/prod-copy && cd data/prod-copy
+fly ssh sftp get /data/mint.db
+fly ssh sftp get /data/mint.db-wal   # may not exist; that's fine
+cd ../..
+DATA_DIR=data/prod-copy npm run dev
 ```
 
-First deploy by hand. As in production, `--ha=false` keeps it to one machine:
+The app runs pending migrations when it opens the database, so starting it is the migration test. Then use it:
+open a lot, change a grade, open Settings. This uses your real Discogs token from `.env.local`, and opening a lot
+whose prices are more than 6 hours old re-prices that lot. Delete `data/prod-copy` when you're done; it is a copy
+of your real data.
+
+### Phone checks: open your computer's copy over HTTPS
+
+Phone browsers only allow the camera on HTTPS, so `http://192.168.x.x:3000` can't test the scanner. A tunnel gives
+your local copy an HTTPS address. For example, with [Tailscale](https://tailscale.com) on both the computer and the
+phone:
 
 ```sh
-fly deploy -c fly.staging.toml --ha=false
+npm run build && npm start
+tailscale serve 3000        # prints an https://<machine>.<tailnet>.ts.net address
 ```
 
-Create a deploy token scoped to the staging app and store it as the `FLY_API_TOKEN_STAGING` repo secret:
+Set `APP_PASSWORD_HASH` and `SESSION_SECRET` in `.env.local` first if the tunnel can be reached by anyone but you
+(a public tunnel such as `cloudflared` can be). This route is untested: if saving anything fails with
+"Cross-origin request blocked", the tunnel is changing the `Host` header, which the login gate checks against
+`Origin`.
 
-```sh
-fly tokens create deploy -a mint-condition-staging --name gha-staging --expiry 8760h | gh secret set FLY_API_TOKEN_STAGING -R garciaryan/mint-condition
-```
-
-The token expires after a year; renew it the same way as the production token (`fly tokens list -a mint-condition-staging`, revoke, create).
-
-### Day to day
-
-Every push to the `staging` branch runs `.github/workflows/fly-deploy-staging.yml`: the same test, typecheck and build checks as production, then `flyctl deploy --remote-only -c fly.staging.toml`. It can also be started by hand from the **Actions** tab (workflow_dispatch). To deploy a feature branch:
-
-```sh
-git push origin feat/x:staging --force
-```
-
-URL: https://mint-condition-staging.fly.dev. The smoke checklist in section 4 works with `<app>` = `mint-condition-staging`. Any `fly` command run against staging needs `-a mint-condition-staging` (or `-c fly.staging.toml`); without it, it targets production.
-
-Notes:
-
-- If staging uses the same Discogs token as production, both apps share one Discogs rate limit. Each app's throttle is in-process only and does not know about the other, so keep staging use light, or give staging a second token.
-- Staging's database starts empty and is separate from production; nothing is copied between them.
+For small changes it is also reasonable to merge and check on production, since you are its only user and the
+database only changes through migrations.
