@@ -31,10 +31,11 @@ const LABELS: Partial<Record<FieldKey, string>> = {
   "offer.pickThreshold": "Pick threshold ($)",
   "offer.bulkEach": "Bulk price each ($)",
   "offer.unverifiedSteps": "Unverified steps (1–3)",
+  "discogs.cacheHours": "Cache prices for (hours)",
 };
 const label = (k: FieldKey) => LABELS[k] ?? `${k.split(".")[1]} sleeve (%)`;
 
-const SECTIONS: { legend: string; note?: string; grid?: boolean; keys: FieldKey[] }[] = [
+const SECTIONS: { legend: string; note?: string; grid?: boolean; currency?: boolean; keys: FieldKey[] }[] = [
   { legend: "Selling", keys: ["sell.undercutPercent", "sell.floor"] },
   { legend: "Local sale", keys: ["local.localDiscountMultiplier", "local.discogsFeePercent", "local.defaultRegionMultiplier"] },
   {
@@ -49,6 +50,12 @@ const SECTIONS: { legend: string; note?: string; grid?: boolean; keys: FieldKey[
       "offer.ladderPercents", "offer.openingPercent", "offer.marginPercent", "offer.overheadPerRecord",
       "offer.pickThreshold", "offer.bulkEach", "offer.unverifiedSteps",
     ],
+  },
+  {
+    legend: "Discogs",
+    note: "Discogs answers are reused for this long. Re-price and Refresh always fetch fresh. 0 turns the cache off.",
+    currency: true,
+    keys: ["discogs.cacheHours"],
   },
 ];
 
@@ -115,8 +122,23 @@ export default function SettingsForm() {
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    // In-app links navigate client-side, so beforeunload never fires for them; ask here instead.
+    const guard = (e: MouseEvent) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.defaultPrevented) return;
+      const link = (e.target as Element | null)?.closest?.("a");
+      if (!link || link.hasAttribute("target") || !link.href) return;
+      if (new URL(link.href).origin !== location.origin) return;
+      if (!confirm("You have unsaved changes. Leave without saving?")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    document.addEventListener("click", guard, true);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      document.removeEventListener("click", guard, true);
+    };
   }, [dirty]);
 
   useEffect(() => {
@@ -240,7 +262,9 @@ export default function SettingsForm() {
             {...common}
             value={form![k]}
             onChange={(e) => edit(k, e.target.value)}
-            inputMode={k === "offer.ladderPercents" ? "text" : k === "offer.unverifiedSteps" ? "numeric" : "decimal"}
+            inputMode={
+              k === "offer.ladderPercents" ? "text" : k === "offer.unverifiedSteps" || k === "discogs.cacheHours" ? "numeric" : "decimal"
+            }
             autoComplete="off"
           />
         )}
@@ -274,13 +298,13 @@ export default function SettingsForm() {
           <legend>{s.legend}</legend>
           {s.note && <p className="muted small">{s.note}</p>}
           <div className={s.grid ? "settings-grid sleeve" : "settings-grid"}>{s.keys.map(field)}</div>
+          {s.currency && (
+            <p className="settings-currency">
+              <strong>Currency:</strong> {state.settings.discogs.currency} (follows your Discogs seller account)
+            </p>
+          )}
         </fieldset>
       ))}
-      <div className="card settings-section">
-        <p className="settings-currency">
-          <strong>Currency:</strong> {state.settings.discogs.currency} (follows your Discogs seller account)
-        </p>
-      </div>
       <div className="settings-actions">
         <button type="submit" disabled={busy || !(dirty || saveable)}>
           {busy ? "Saving…" : "Save"}

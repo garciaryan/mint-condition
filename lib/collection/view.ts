@@ -74,6 +74,16 @@ export type Totals = {
   stale: number;
 };
 
+/** When the oldest Discogs data still shown in the lot was fetched, or null when there is none. Counts every row
+ * holding suggestions, so a row whose re-price failed (still showing its earlier price) keeps its real age. */
+export function oldestPricedAt(items: ItemRow[]): number | null {
+  let oldest: number | null = null;
+  for (const i of items) {
+    if (i.suggestions && i.pricedAt !== null && (oldest === null || i.pricedAt < oldest)) oldest = i.pricedAt;
+  }
+  return oldest;
+}
+
 export function computeTotals(items: ItemRow[], settings: Settings): Totals {
   const t: Totals = { low: 0, suggested: 0, high: 0, total: items.length, priced: 0, toPick: 0, noPrice: 0, problems: 0, pending: 0, refreshing: 0, stale: 0 };
   for (const item of items) {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { defaultLotName } from "../../lib/collection/ui.ts";
+import { relativeTime } from "../../lib/relative-time.ts";
 import type { Grade } from "../../lib/types.ts";
 import GradeSelect from "../GradeSelect.tsx";
 import { money } from "./[id]/api.ts";
@@ -21,17 +22,6 @@ type LotSummary = {
 
 type ApiError = { status: "error"; kind: string; message: string };
 
-
-/** "just now", "5 minutes ago", "yesterday", or a short date for anything older than a week. */
-function relativeTime(t: number, now = Date.now()): string {
-  const secs = Math.round((now - t) / 1000);
-  if (secs < 60) return "just now";
-  const rtf = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
-  if (secs < 3600) return rtf.format(-Math.floor(secs / 60), "minute");
-  if (secs < 86400) return rtf.format(-Math.floor(secs / 3600), "hour");
-  if (secs < 7 * 86400) return rtf.format(-Math.floor(secs / 86400), "day");
-  return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
 
 async function readError(r: Response): Promise<string> {
   try {

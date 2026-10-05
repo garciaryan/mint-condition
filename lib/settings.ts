@@ -26,6 +26,10 @@ export function parseSettings(raw: unknown): Settings {
   if (!isNum(l.discogsFeePercent) || l.discogsFeePercent < 0 || l.discogsFeePercent >= 100) {
     throw new Error("settings: local.discogsFeePercent must be in [0, 100)");
   }
+  const h = s.discogs?.cacheHours;
+  if (!Number.isInteger(h) || h < 0 || h > 168) {
+    throw new Error("settings: discogs.cacheHours must be an integer from 0 to 168");
+  }
   parseOffer(s.offer);
   return s;
 }

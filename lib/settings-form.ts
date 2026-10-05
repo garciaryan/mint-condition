@@ -9,6 +9,7 @@ export const FIELD_KEYS = [
   "sleeveMultipliers.G+", "sleeveMultipliers.G", "sleeveMultipliers.F", "sleeveMultipliers.P",
   "offer.ladderPercents", "offer.openingPercent", "offer.marginPercent", "offer.overheadPerRecord",
   "offer.pickThreshold", "offer.bulkEach", "offer.unverifiedSteps",
+  "discogs.cacheHours",
 ] as const;
 export type FieldKey = (typeof FIELD_KEYS)[number];
 export type SettingsForm = Record<FieldKey, string>;
@@ -17,6 +18,7 @@ export type EditableSettings = {
   sell: Settings["sell"];
   local: Omit<Settings["local"], "regionMultipliers">;
   offer: Settings["offer"];
+  discogs: { cacheHours: number };
 };
 
 /** Stored as a multiplier (0.8), shown and typed as a percent ("80"). */
@@ -25,7 +27,7 @@ export const PERCENT_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>([
   ...GRADES.map((g) => `sleeveMultipliers.${g}` as FieldKey),
 ]);
 
-type Kind = "mult" | "percent" | "money" | "steps" | "ladder";
+type Kind = "mult" | "percent" | "money" | "steps" | "hours" | "ladder";
 type Rule = { kind: Kind; ok: (n: number) => boolean; message: string };
 
 const BELOW_100: Rule = { kind: "percent", ok: (n) => n >= 0 && n < 100, message: "Use 0 up to (not including) 100." };
@@ -50,6 +52,9 @@ const RULES: Record<FieldKey, Rule> = {
   "offer.bulkEach": MONEY,
   "offer.unverifiedSteps": {
     kind: "steps", ok: (n) => Number.isInteger(n) && n >= 1 && n <= 3, message: "Use a whole number from 1 to 3.",
+  },
+  "discogs.cacheHours": {
+    kind: "hours", ok: (n) => Number.isInteger(n) && n >= 0 && n <= 168, message: "Use a whole number from 0 to 168.",
   },
 };
 
@@ -150,6 +155,7 @@ export function fromForm(
         bulkEach: n["offer.bulkEach"],
         unverifiedSteps: n["offer.unverifiedSteps"],
       },
+      discogs: { cacheHours: n["discogs.cacheHours"] },
     },
   };
 }

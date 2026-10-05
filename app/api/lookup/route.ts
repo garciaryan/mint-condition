@@ -1,5 +1,5 @@
 // POST /api/lookup: search by catalog number, or price a chosen release. Server-side only (holds the token).
-import { getDiscogsClient } from "../../../lib/discogs-client.ts";
+import { getLookupClient } from "../../../lib/discogs-client.ts";
 import { httpStatus, missingEnv, parseLookupRequest, runLookup, toErrorResponse } from "../../../lib/lookup.ts";
 import type { LookupResponse } from "../../../lib/lookup.ts";
 import { requireSession } from "../../../lib/route-auth.ts";
@@ -39,7 +39,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!parsed.ok) return reply({ status: "error", kind: "bad-request", message: parsed.message });
 
   try {
-    return reply(await runLookup(getDiscogsClient(), parsed.value, settings));
+    return reply(await runLookup(getLookupClient(), parsed.value, settings));
   } catch (e) {
     return reply(toErrorResponse(e));
   }

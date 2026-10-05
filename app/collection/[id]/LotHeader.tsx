@@ -3,16 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { SessionRow } from "../../../lib/collection/types.ts";
+import { relativeTime } from "../../../lib/relative-time.ts";
 import { api } from "./api.ts";
 import { useDialog } from "./useDialog.ts";
 
 export default function LotHeader({
   session,
+  oldestPricedAt,
   onChanged,
   onDeleted,
   onError,
 }: {
   session: SessionRow;
+  oldestPricedAt: number | null;
   onChanged: () => void;
   onDeleted: () => void;
   onError: (message: string) => void;
@@ -101,6 +104,9 @@ export default function LotHeader({
         <button type="button" className="secondary quiet" onClick={reprice} disabled={repricing}>
           {repricing ? "Re-pricing…" : "Re-price all"}
         </button>
+        {oldestPricedAt !== null && Date.now() - oldestPricedAt > 3_600_000 && (
+          <span className="meta muted small price-age">Oldest prices: {relativeTime(oldestPricedAt)}</span>
+        )}
         <button type="button" className="secondary danger" ref={deleteTrigger} onClick={() => setConfirming(true)}>
           Delete lot
         </button>

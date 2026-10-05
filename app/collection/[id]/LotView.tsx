@@ -177,7 +177,7 @@ export default function LotView({ id }: { id: number }) {
     );
   }
 
-  const { session, items, totals, offer, queue, currency } = data;
+  const { session, items, totals, offer, queue, currency, oldestPricedAt } = data;
   const isProblem = (i: ItemView) => i.status === "error" || i.status === "no-match";
   const shown = items.filter((i) => (filter === "to-pick" ? i.status === "to-pick" : filter === "problems" ? isProblem(i) : true));
   const tabs: { key: Filter; label: string }[] = [
@@ -188,7 +188,7 @@ export default function LotView({ id }: { id: number }) {
 
   return (
     <>
-      <LotHeader session={session} onChanged={refresh} onDeleted={() => router.push("/collection")} onError={setNotice} />
+      <LotHeader session={session} oldestPricedAt={oldestPricedAt} onChanged={refresh} onDeleted={() => router.push("/collection")} onError={setNotice} />
       <TotalsBar totals={totals} queue={queue} offline={offline} currency={currency} onResume={resume} />
       <OfferPanel offer={offer} session={session} currency={currency} onChanged={refresh} />
       <EntryBar

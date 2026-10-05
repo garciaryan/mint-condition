@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { fieldErrors } from "../lib/form.ts";
+import { relativeTime } from "../lib/relative-time.ts";
 import type { FieldErrors } from "../lib/form.ts";
 import type { LookupResponse } from "../lib/lookup.ts";
 import { GRADE_NAMES } from "../lib/types.ts";
@@ -99,13 +100,13 @@ export default function Lookup() {
   async function price(
     id: number,
     picked: Candidate | null,
-    opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; focus?: boolean } = {},
+    opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; focus?: boolean; fresh?: boolean } = {},
   ) {
     const grades = opts.grades ?? { record, sleeve };
     const area = opts.area ?? (local ? areaCode.trim() : "");
     pending.current = { id, picked };
-    retry.current = () => void price(id, picked, { grades, area, focus: true });
-    const res = await lookup({ releaseId: id, ...grades, areaCode: area }, "price");
+    retry.current = () => void price(id, picked, { grades, area, focus: true, fresh: opts.fresh });
+    const res = await lookup({ releaseId: id, ...grades, areaCode: area, ...(opts.fresh ? { fresh: true } : {}) }, "price");
     if (!res) return;
     pending.current = null;
     setReleaseId(id);
@@ -115,13 +116,13 @@ export default function Lookup() {
     show(res);
   }
 
-  async function search() {
+  async function search(fresh = false) {
     const key = `${catno.trim()}|${year.trim()}`;
     const searchedYear = Number(year) || undefined;
     const area = local ? areaCode.trim() : "";
-    retry.current = () => void search();
+    retry.current = () => void search(fresh);
     pending.current = null;
-    const res = await lookup({ catno, year, record, sleeve, areaCode: area }, "search");
+    const res = await lookup({ catno, year, record, sleeve, areaCode: area, ...(fresh ? { fresh: true } : {}) }, "search");
     if (!res) return;
     setSearchedKey(res.status === "error" ? null : key);
     setCandidates(res.status === "candidates" ? { kind: "candidates", candidates: res.candidates, year: searchedYear } : null);
@@ -149,7 +150,7 @@ export default function Lookup() {
   }
 
   /** Re-prices the shown (or still-loading) pressing in place, e.g. after a grade or area code change. */
-  function reprice(opts: { grades?: { record: Grade; sleeve: Grade }; area?: string }) {
+  function reprice(opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; fresh?: boolean; focus?: boolean }) {
     if (busy === "search") return;
     const target = pending.current ?? (view.kind === "result" && releaseId !== null ? { id: releaseId, picked: release } : null);
     if (target) void price(target.id, target.picked, opts);
@@ -302,6 +303,12 @@ export default function Lookup() {
                   {view.year ? ` within a year of ${view.year}` : ""}. Check the catno against the label or spine (or the
                   barcode digits), or clear the year to widen the search.
                 </p>
+                <p>
+                  Added it to Discogs just now?{" "}
+                  <button type="button" className="link" onClick={() => void search(true)} disabled={busy !== null}>
+                    Search Discogs again
+                  </button>
+                </p>
               </div>
             )}
             {view.kind === "error" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
@@ -315,6 +322,7 @@ export default function Lookup() {
                 showLocal={local}
                 busy={repricing}
                 slow={repricing && slow}
+                onRefresh={() => reprice({ fresh: true, focus: true })}
                 onBack={
                   candidates
                     ? () => {
@@ -365,6 +373,7 @@ function ResultCard({
   showLocal,
   busy,
   slow,
+  onRefresh,
   onBack,
 }: {
   res: Priced;
@@ -372,6 +381,7 @@ function ResultCard({
   showLocal: boolean;
   busy: boolean;
   slow: boolean;
+  onRefresh: () => void;
   onBack?: () => void;
 }) {
   const discogsUrl = `https://www.discogs.com/release/${res.releaseId}`;
@@ -402,6 +412,14 @@ function ResultCard({
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </p>
+          {res.cached && (
+            <p className="muted small price-age">
+              Prices from {relativeTime(res.fetchedAt)} ·{" "}
+              <button type="button" className="link" onClick={onRefresh} disabled={busy}>
+                Refresh prices
+              </button>
+            </p>
+          )}
         </div>
         {busy && (
           <span className="updating muted small">

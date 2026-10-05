@@ -710,6 +710,7 @@ a {
 
 .lot-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -2006,4 +2007,23 @@ kbd {
   .settings-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+.settings-currency {
+  margin: 12px 0 0;
+}
+
+/* Age of cached Discogs prices */
+.price-age {
+  margin: 4px 0 0;
+}
+
+.lot-actions .price-age {
+  align-self: center;
+  margin: 0;
+}
+
+button.link:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }

@@ -39,6 +39,7 @@ const toItem = (r: Row, lite = false): ItemRow => ({
   error: (r.error as string | null) ?? null,
   createdAt: r.created_at as number,
   pick: r.pick == null ? null : r.pick === 1,
+  refresh: r.refresh === 1,
 });
 
 // ---- sessions ----
@@ -178,14 +179,14 @@ export function retryItem(db: DatabaseSync, id: number): ItemRow | "not-found" |
   const cur = getItem(db, id);
   if (!cur) return "not-found";
   if (cur.status !== "error" && cur.status !== "no-match") return "invalid-state";
-  db.prepare("UPDATE items SET status = 'pending', error = NULL WHERE id = ?").run(id);
+  db.prepare("UPDATE items SET status = 'pending', error = NULL, refresh = 1 WHERE id = ?").run(id);
   return getItem(db, id)!;
 }
 
 export function repriceSession(db: DatabaseSync, sessionId: number): number {
   const res = db
     .prepare(
-      "UPDATE items SET status = 'pending' WHERE session_id = ? AND status IN ('priced','no-price') AND release_id IS NOT NULL",
+      "UPDATE items SET status = 'pending', refresh = 1 WHERE session_id = ? AND status IN ('priced','no-price') AND release_id IS NOT NULL",
     )
     .run(sessionId);
   return Number(res.changes);
@@ -221,7 +222,7 @@ const LOOKUP_COLUMNS = [
 ] as const;
 
 export function applyLookup(db: DatabaseSync, id: number, patch: LookupPatch): boolean {
-  const sets = ["status = ?"];
+  const sets = ["status = ?", "refresh = 0"];
   const values: (string | number | null)[] = [patch.status];
   for (const [key, col, enc] of LOOKUP_COLUMNS) {
     if (key in patch) {

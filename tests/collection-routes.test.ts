@@ -403,3 +403,17 @@ test("a saved setting changes lot prices on the next read", async () => {
   const after = await j(await getSession(req("GET"), ctx(String(lot.id))));
   assert.ok(after.totals.suggested < before.totals.suggested, `${after.totals.suggested} < ${before.totals.suggested}`);
 });
+
+test("lot GET includes oldestPricedAt", async () => {
+  const { body: lot } = await newLot();
+  const empty = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  assert.equal(empty.oldestPricedAt, null);
+  await addItems(req("POST", { lines: [{ query: "A" }], record: "VG+", sleeve: "VG" }), ctx(String(lot.id)));
+  const deadline = Date.now() + 2000;
+  let body = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  while (body.totals.priced < 1 && Date.now() < deadline) {
+    await new Promise((res) => setTimeout(res, 10));
+    body = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  }
+  assert.equal(typeof body.oldestPricedAt, "number");
+});

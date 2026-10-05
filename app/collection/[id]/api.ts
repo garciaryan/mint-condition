@@ -9,6 +9,8 @@ export type LotData = {
   totals: Totals;
   offer: OfferView;
   queue: QueueState;
+  /** When the oldest priced row's Discogs data was fetched; null when nothing is priced. */
+  oldestPricedAt: number | null;
   currency: string;
 };
 
