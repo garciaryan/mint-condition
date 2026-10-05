@@ -13,17 +13,17 @@ export function parseSettings(raw: unknown): Settings {
     }
   }
   const u = s.sell?.undercutPercent;
-  if (typeof u !== "number" || u < 0 || u >= 100) {
+  if (!isNum(u) || u < 0 || u >= 100) {
     throw new Error("settings: sell.undercutPercent must be in [0, 100)");
   }
-  if (typeof s.sell?.floor !== "number" || s.sell.floor < 0) {
+  if (!isNum(s.sell?.floor) || s.sell.floor < 0) {
     throw new Error("settings: sell.floor must be >= 0");
   }
   const l = s.local;
-  if (!l || l.localDiscountMultiplier <= 0 || l.defaultRegionMultiplier <= 0) {
-    throw new Error("settings: local multipliers must be > 0");
+  for (const key of ["localDiscountMultiplier", "defaultRegionMultiplier"] as const) {
+    if (!isNum(l?.[key]) || l[key] <= 0) throw new Error(`settings: local.${key} must be > 0`);
   }
-  if (l.discogsFeePercent < 0 || l.discogsFeePercent >= 100) {
+  if (!isNum(l.discogsFeePercent) || l.discogsFeePercent < 0 || l.discogsFeePercent >= 100) {
     throw new Error("settings: local.discogsFeePercent must be in [0, 100)");
   }
   parseOffer(s.offer);
@@ -53,6 +53,27 @@ function parseOffer(o: Settings["offer"] | undefined): void {
   if (!Number.isInteger(o.unverifiedSteps) || o.unverifiedSteps < 1 || o.unverifiedSteps > 3) {
     throw new Error("settings: offer.unverifiedSteps must be an integer from 1 to 3");
   }
+}
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** Saved values over defaults: walks the defaults' keys, recursing into objects; arrays and scalars are replaced
+ * whole and keys only in `saved` are dropped. Unvalidated: pass the result to parseSettings. */
+export function mergeSettings(defaults: Settings, saved: unknown): unknown {
+  const merge = (d: unknown, s: unknown): unknown => {
+    if (!isPlainObject(d)) return s === undefined ? d : s;
+    if (!isPlainObject(s)) return s === undefined ? d : s;
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(d)) out[key] = merge(d[key], s[key]);
+    return out;
+  };
+  return isPlainObject(saved) ? merge(defaults, saved) : defaults;
+}
+
+/** The dotted setting path a parseSettings error names ("settings: offer.marginPercent must ..."), or null. */
+export function settingsErrorPath(message: string): string | null {
+  return /^settings: ([A-Za-z]+(?:\.[A-Za-z+]+)+)(?=\s|$)/.exec(message)?.[1] ?? null;
 }
 
 export function loadSettings(file = path.join(process.cwd(), "settings.json")): Settings {

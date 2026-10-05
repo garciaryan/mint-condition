@@ -1,8 +1,10 @@
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
+import type { DatabaseSync } from "node:sqlite";
 import { signSession } from "../lib/auth.ts";
 import { openDb } from "../lib/db.ts";
 import { __setSettingsPathForTests } from "../lib/collection/http.ts";
+import { saveSettings } from "../lib/settings-store.ts";
 import { __resetWorkerForTests, isQueuePaused, kickWorker } from "../lib/collection/worker.ts";
 import { DiscogsError } from "../lib/discogs.ts";
 import type { LookupClient } from "../lib/lookup.ts";
@@ -385,4 +387,19 @@ test("PATCH item pick", async () => {
   const nz = await patchItem(req("PATCH", { pick: true }), ctx(String(z.id)));
   assert.equal(nz.status, 400);
   assert.equal((await j(nz)).message, "This record has no market value to cherry-pick.");
+});
+
+test("a saved setting changes lot prices on the next read", async () => {
+  const { body: lot } = await newLot();
+  await addItems(req("POST", { lines: [{ query: "A" }], record: "VG+", sleeve: "VG" }), ctx(String(lot.id)));
+  const deadline = Date.now() + 2000;
+  let before = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  while (before.totals.priced < 1 && Date.now() < deadline) {
+    await new Promise((res) => setTimeout(res, 10));
+    before = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  }
+  assert.equal(before.totals.priced, 1);
+  saveSettings(g.__mintDb as DatabaseSync, { sleeveMultipliers: { VG: 0.5 } });
+  const after = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  assert.ok(after.totals.suggested < before.totals.suggested, `${after.totals.suggested} < ${before.totals.suggested}`);
 });

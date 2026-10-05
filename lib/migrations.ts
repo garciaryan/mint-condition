@@ -34,6 +34,11 @@ ALTER TABLE sessions ADD COLUMN pick_threshold REAL;      -- null = settings def
 ALTER TABLE sessions ADD COLUMN bulk_each      REAL;      -- null = settings default
 ALTER TABLE sessions ADD COLUMN lot_overhead   REAL NOT NULL DEFAULT 0;
 ALTER TABLE items    ADD COLUMN pick           INTEGER;   -- null = automatic, 1 = pick, 0 = not a pick`,
+  `CREATE TABLE settings (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),  -- at most one row
+  json       TEXT    NOT NULL,                     -- full Settings object as saved
+  updated_at INTEGER NOT NULL                      -- ms epoch
+);`,
 ];
 
 export function migrate(db: DatabaseSync, steps: string[]): number {
