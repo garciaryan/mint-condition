@@ -150,6 +150,11 @@ oldest prices are.
 
 Every number above can be changed on the [Settings](#settings) page.
 
+## Dark mode
+
+The app follows your device's light or dark setting. The **theme** menu in the header (System / Light / Dark)
+pins one on this browser. Printing always uses the light palette.
+
 ## Settings
 
 **Settings** in the nav edits the sleeve multipliers, the undercut and minimum sell price, the local price and
