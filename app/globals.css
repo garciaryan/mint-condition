@@ -1548,7 +1548,18 @@ kbd {
   .topbar .menu-toggle {
     display: inline-flex;
     align-items: center;
-    min-height: var(--control-h);
+    justify-content: center;
+    width: var(--control-h);
+    height: var(--control-h);
+    margin-right: -10px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--ink);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
   }
 
   .site-menu-panel {

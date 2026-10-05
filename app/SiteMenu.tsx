@@ -19,12 +19,13 @@ export default function SiteMenu({ theme, loggedIn }: { theme: ThemeChoice; logg
       <button
         ref={button}
         type="button"
-        className="secondary menu-toggle"
+        className="menu-toggle"
+        aria-label="Menu"
         aria-expanded={open}
         aria-controls="site-menu-panel"
         onClick={toggle}
       >
-        <span aria-hidden="true">☰ </span>Menu
+        <span aria-hidden="true">☰</span>
       </button>
       <div id="site-menu-panel" className={open ? "site-menu-panel open" : "site-menu-panel"}>
         <NavLinks />

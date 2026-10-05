@@ -16,3 +16,10 @@ test("footer sits at the bottom of short pages", () => {
   assert.match(css, /body \{[^}]*display: flex;[^}]*flex-direction: column;[^}]*min-height: 100dvh;/);
   assert.match(css, /\.site-footer \{[^}]*margin: auto auto 0;/);
 });
+
+test("the phone menu toggle is a bare hamburger icon with an accessible name", () => {
+  const menu = readFileSync("app/SiteMenu.tsx", "utf8");
+  assert.match(menu, /aria-label="Menu"/);
+  assert.match(menu, /className="menu-toggle"/);
+  assert.doesNotMatch(menu, />Menu</);
+});
