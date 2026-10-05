@@ -53,7 +53,7 @@ export default function LotView({ id }: { id: number }) {
       if (res.ok) {
         setData(res.data);
         setOffline(null);
-        schedule(pollDelayMs(res.data.queue.pending));
+        schedule(pollDelayMs(res.data.queue.pending, res.data.queue.paused));
       } else if (res.status === 404) {
         setNotFound(true);
       } else if (res.status !== 401) {
@@ -95,6 +95,12 @@ export default function LotView({ id }: { id: number }) {
     },
     [refresh],
   );
+
+  const resume = useCallback(async () => {
+    const res = await api(`/api/sessions/${id}/resume`, "POST", {});
+    if (!res.ok) setNotice(`Could not retry: ${res.message}`);
+    refresh();
+  }, [id, refresh]);
 
   const retry = useCallback(
     async (itemId: number) => {
@@ -161,7 +167,7 @@ export default function LotView({ id }: { id: number }) {
     );
   }
 
-  const { session, items, totals, queue } = data;
+  const { session, items, totals, queue, currency } = data;
   const isProblem = (i: ItemView) => i.status === "error" || i.status === "no-match";
   const shown = items.filter((i) => (filter === "to-pick" ? i.status === "to-pick" : filter === "problems" ? isProblem(i) : true));
   const tabs: { key: Filter; label: string }[] = [
@@ -173,7 +179,7 @@ export default function LotView({ id }: { id: number }) {
   return (
     <>
       <LotHeader session={session} onChanged={refresh} onDeleted={() => router.push("/collection")} onError={setNotice} />
-      <TotalsBar totals={totals} queue={queue} offline={offline} />
+      <TotalsBar totals={totals} queue={queue} offline={offline} currency={currency} onResume={resume} />
       <EntryBar
         key={session.id}
         sessionId={session.id}
@@ -181,6 +187,7 @@ export default function LotView({ id }: { id: number }) {
         defaultSleeve={session.defaultSleeve}
         queryRef={queryRef}
         items={items}
+        currency={currency}
         onAdded={refresh}
       />
       <p className="small muted caveat">Prices are Discogs asking prices and suggestions, not confirmed sales.</p>
@@ -220,6 +227,7 @@ export default function LotView({ id }: { id: number }) {
             <ItemRow
               key={item.id}
               item={item}
+              currency={currency}
               onGrade={grade}
               onPick={(it, trigger) => setPicking({ item: it, trigger })}
               onRetry={retry}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { coverageText, etaText, pasteSummary } from "../lib/collection/ui.ts";
+import { coverageText, displayStatus, etaText, pasteSummary } from "../lib/collection/ui.ts";
 
 test("coverageText omits zero parts after priced", () => {
   assert.equal(
@@ -9,6 +9,20 @@ test("coverageText omits zero parts after priced", () => {
   );
   assert.equal(coverageText({ priced: 3, total: 3, toPick: 0, noPrice: 0, problems: 0 }), "3 of 3 priced");
   assert.equal(coverageText({ priced: 0, total: 2, toPick: 0, noPrice: 0, problems: 2 }), "0 of 2 priced · 2 error");
+});
+
+test("coverageText appends updating and couldn't refresh", () => {
+  assert.equal(
+    coverageText({ priced: 5, total: 7, toPick: 0, noPrice: 0, problems: 0, refreshing: 2, stale: 1 }),
+    "5 of 7 priced · 2 updating · 1 couldn't refresh",
+  );
+  assert.equal(coverageText({ priced: 1, total: 1, toPick: 0, noPrice: 0, problems: 0, refreshing: 0, stale: 0 }), "1 of 1 priced");
+});
+
+test("displayStatus shows a no-price row with a value as priced", () => {
+  assert.equal(displayStatus({ status: "no-price", market: { suggested: 1 } }), "priced");
+  assert.equal(displayStatus({ status: "no-price", market: null }), "no-price");
+  assert.equal(displayStatus({ status: "error", market: { suggested: 1 } }), "error");
 });
 
 test("etaText formats seconds and minutes", () => {

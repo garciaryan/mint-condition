@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Grade } from "../../../lib/types.ts";
-import { STATUS_INFO, createScanFilter } from "../../../lib/collection/ui.ts";
+import { STATUS_INFO, createScanFilter, displayStatus } from "../../../lib/collection/ui.ts";
 import type { ItemView } from "../../../lib/collection/view.ts";
 import { money } from "./api.ts";
 import { Icon } from "./ItemRow.tsx";
@@ -36,12 +36,14 @@ async function loadDetector(): Promise<Detector> {
 export default function Scanner({
   grades,
   items,
+  currency,
   onCode,
   onClose,
   onUnavailable,
 }: {
   grades: { record: Grade; sleeve: Grade };
   items: ItemView[];
+  currency: string;
   onCode: ScanAdd;
   onClose: () => void;
   onUnavailable: () => void;
@@ -114,7 +116,7 @@ export default function Scanner({
         });
       } catch (e) {
         if (cancelled) return;
-        if (e instanceof DOMException && e.name === "NotAllowedError") setBlocked(true);
+        if ((e as { name?: string } | null)?.name === "NotAllowedError") setBlocked(true);
         else setProblem("Couldn't start the camera. Close this and type the number instead.");
         return;
       }
@@ -200,7 +202,7 @@ export default function Scanner({
           {entries.map((e) => (
             <li key={e.key}>
               <code>{e.code}</code>
-              <EntryStatus entry={e} items={items} />
+              <EntryStatus entry={e} items={items} currency={currency} />
             </li>
           ))}
         </ul>
@@ -209,7 +211,7 @@ export default function Scanner({
   );
 }
 
-function EntryStatus({ entry, items }: { entry: Entry; items: ItemView[] }) {
+function EntryStatus({ entry, items, currency }: { entry: Entry; items: ItemView[]; currency: string }) {
   if (entry.error) {
     return (
       <span>
@@ -220,11 +222,11 @@ function EntryStatus({ entry, items }: { entry: Entry; items: ItemView[] }) {
   if (entry.itemId === undefined) return <span>… Adding…</span>;
   const item = items.find((i) => i.id === entry.itemId);
   // Not in the polled list yet: it was just saved, so it is queued.
-  const st = STATUS_INFO[item?.status ?? "pending"];
+  const st = STATUS_INFO[item ? displayStatus(item) : "pending"];
   return (
     <span>
       {st.icon === "spinner" ? <span aria-hidden="true">… </span> : <Icon name={st.icon} />} {st.text}
-      {item?.market ? ` · ${money(item.market.suggested)}` : ""}
+      {item?.market ? ` · ${money(item.market.suggested, currency)}` : ""}
     </span>
   );
 }

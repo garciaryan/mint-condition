@@ -7,6 +7,7 @@ import type { FormEvent } from "react";
 import { defaultLotName } from "../../lib/collection/ui.ts";
 import type { Grade } from "../../lib/types.ts";
 import GradeSelect from "../GradeSelect.tsx";
+import { money } from "./[id]/api.ts";
 
 type LotSummary = {
   id: number;
@@ -20,7 +21,6 @@ type LotSummary = {
 
 type ApiError = { status: "error"; kind: string; message: string };
 
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 /** "just now", "5 minutes ago", "yesterday", or a short date for anything older than a week. */
 function relativeTime(t: number, now = Date.now()): string {
@@ -45,6 +45,7 @@ async function readError(r: Response): Promise<string> {
 export default function LotsList() {
   const router = useRouter();
   const [lots, setLots] = useState<LotSummary[] | null>(null);
+  const [currency, setCurrency] = useState("USD");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -65,11 +66,12 @@ export default function LotsList() {
         const r = await fetch("/api/sessions", { signal: ctrl.signal });
         if (r.status === 401) return location.assign("/login?next=/collection");
         if (!r.ok) return setLoadError(await readError(r));
-        const body = (await r.json()) as { sessions: LotSummary[] };
+        const body = (await r.json()) as { sessions: LotSummary[]; currency?: string };
         setLots(body.sessions);
+        if (body.currency) setCurrency(body.currency);
       } catch (e) {
         if (ctrl.signal.aborted) return;
-        setLoadError(`Could not reach the local server (${e instanceof Error ? e.message : e}).`);
+        setLoadError("Could not reach the server. Check your connection.");
       }
     })();
     return () => ctrl.abort();
@@ -94,8 +96,9 @@ export default function LotsList() {
       const lot = (await r.json()) as { id: number };
       router.push(`/collection/${lot.id}`);
       // Stay disabled until navigation replaces the page, so a second click cannot create a duplicate.
-    } catch (err) {
-      setCreateError(`Could not reach the local server (${err instanceof Error ? err.message : err}).`);
+      return;
+    } catch {
+      setCreateError("Could not reach the server. Check your connection.");
     }
     setCreating(false);
   }
@@ -171,7 +174,7 @@ export default function LotsList() {
                   </span>
                   <span className="lot-total">
                     <small className="muted">Suggested</small>
-                    {usd.format(lot.suggested)}
+                    {money(lot.suggested, currency)}
                   </span>
                 </Link>
               </li>

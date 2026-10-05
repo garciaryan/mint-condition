@@ -15,12 +15,16 @@ import PasteList from "./PasteList.tsx";
 // Loaded only when Scan is opened, so the camera code and detector stay out of the page bundle.
 const Scanner = dynamic(() => import("./Scanner.tsx"), { ssr: false });
 
+type FailedLine = { key: number; line: NewLine; grades: { record: Grade; sleeve: Grade } };
+let failedKey = 0;
+
 export default function EntryBar({
   sessionId,
   defaultRecord,
   defaultSleeve,
   queryRef,
   items,
+  currency,
   onAdded,
 }: {
   sessionId: number;
@@ -28,6 +32,7 @@ export default function EntryBar({
   defaultSleeve: Grade;
   queryRef: RefObject<HTMLInputElement | null>;
   items: ItemView[];
+  currency: string;
   onAdded: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -37,11 +42,13 @@ export default function EntryBar({
   const [sleeve, setSleeve] = useState<Grade>(defaultSleeve);
   const [saving, setSaving] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // Lines that did not save, kept with the grades they were typed under so Retry sends exactly what was entered.
+  const [failed, setFailed] = useState<FailedLine[]>([]);
+  const [failReason, setFailReason] = useState<string | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const enqueue = useRef(createSerialQueue()).current;
   const [canScan, setCanScan] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const scanButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     setCanScan(typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia);
   }, []);
@@ -80,26 +87,31 @@ export default function EntryBar({
     }
     // Snapshot, clear and refocus at once so the next code can be typed while this one saves.
     const line: NewLine = y ? { query: q, year: Number(y) } : { query: q };
-    const grades = { record, sleeve };
-    const rawQuery = query;
-    const rawYear = year;
     setQuery("");
     setYear("");
     setError(null);
     queryRef.current?.focus();
-    setSaving((n) => n + 1);
-    void enqueue(() => post([line], grades)).then((err) => {
-      setSaving((n) => n - 1);
-      if (!err) return;
-      // Put the text back only if nothing has been typed since; always name the failed code.
-      if (queryRef.current && queryRef.current.value === "") {
-        setQuery(rawQuery);
-        setYear(rawYear);
-        setError(err);
-      } else {
-        setError(`Couldn't add "${q}": ${err}`);
-      }
-    });
+    save([{ key: ++failedKey, line, grades: { record, sleeve } }]);
+  }
+
+  // Each line is posted on its own through the serial queue; a failure keeps the line for Retry, never drops it.
+  function save(lines: FailedLine[]) {
+    for (const f of lines) {
+      setSaving((n) => n + 1);
+      void enqueue(() => post([f.line], f.grades)).then((err) => {
+        setSaving((n) => n - 1);
+        if (!err) return;
+        setFailReason(err);
+        setFailed((list) => [...list, f]);
+      });
+    }
+  }
+
+  function retryFailed() {
+    const lines = failed;
+    setFailed([]);
+    setFailReason(null);
+    save(lines);
   }
 
   return (
@@ -118,7 +130,7 @@ export default function EntryBar({
               autoCapitalize="characters"
               autoFocus
               aria-invalid={error ? true : undefined}
-              aria-describedby={error ? "entry-error" : undefined}
+              aria-describedby={error ? "entry-error" : failed.length > 0 ? "entry-failed" : undefined}
             />
           </div>
           <div className="field">
@@ -143,7 +155,7 @@ export default function EntryBar({
             <GradeSelect id="entry-sleeve" value={sleeve} onChange={setSleeve} />
           </div>
           <div className="entry-buttons">
-            <button type="button" className="secondary" hidden={!canScan} ref={scanButtonRef} onClick={() => setScanning(true)}>
+            <button type="button" className="secondary" hidden={!canScan} onClick={() => setScanning(true)}>
               Scan
             </button>
             <button type="submit">Add</button>
@@ -156,6 +168,26 @@ export default function EntryBar({
           <p className="field-error" id="entry-error" role="alert">
             <span aria-hidden="true">⚠ </span>
             {error}
+          </p>
+        )}
+        {failed.length > 0 && (
+          <p className="field-error" id="entry-failed" role="alert" aria-live="assertive">
+            <span aria-hidden="true">⚠ </span>
+            {failed.length} not saved: {failed.map((f) => f.line.query).join(", ")}
+            {failReason ? ` (${failReason})` : ""}{" "}
+            <button type="button" className="link" onClick={retryFailed}>
+              Retry
+            </button>{" "}
+            <button
+              type="button"
+              className="link"
+              onClick={() => {
+                setFailed([]);
+                setFailReason(null);
+              }}
+            >
+              Dismiss
+            </button>
           </p>
         )}
       </form>
@@ -176,6 +208,7 @@ export default function EntryBar({
         <Scanner
           grades={{ record, sleeve }}
           items={items}
+          currency={currency}
           onCode={addScanned}
           onClose={() => setScanning(false)}
           onUnavailable={() => setCanScan(false)}

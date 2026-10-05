@@ -4,9 +4,9 @@ export function defaultLotName(now: Date): string {
   return `Lot ${now.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
-/** Poll fast while lookups are queued, slowly otherwise. */
-export function pollDelayMs(pending: number): number {
-  return pending > 0 ? 2000 : 15000;
+/** Poll fast while lookups are queued and moving, slowly otherwise (idle or paused). */
+export function pollDelayMs(pending: number, paused = false): number {
+  return pending > 0 && !paused ? 2000 : 15000;
 }
 
 /** Returns false when the same code was accepted within the window (stops double adds). */
@@ -20,12 +20,27 @@ export function createScanFilter(windowMs = 3000): (code: string, now: number) =
   };
 }
 
+/** A no-price row that now has a market value (grade changed) reads as priced. */
+export function displayStatus(item: { status: StatusKey; market: unknown }): StatusKey {
+  return item.status === "no-price" && item.market ? "priced" : item.status;
+}
+
 /** "62 of 70 priced · 4 to pick · 2 no price · 1 error"; zero parts after "priced" are omitted. */
-export function coverageText(t: { priced: number; total: number; toPick: number; noPrice: number; problems: number }): string {
+export function coverageText(t: {
+  priced: number;
+  total: number;
+  toPick: number;
+  noPrice: number;
+  problems: number;
+  refreshing?: number;
+  stale?: number;
+}): string {
   const parts = [`${t.priced} of ${t.total} priced`];
   if (t.toPick > 0) parts.push(`${t.toPick} to pick`);
   if (t.noPrice > 0) parts.push(`${t.noPrice} no price`);
   if (t.problems > 0) parts.push(`${t.problems} error`);
+  if (t.refreshing) parts.push(`${t.refreshing} updating`);
+  if (t.stale) parts.push(`${t.stale} couldn't refresh`);
   return parts.join(" · ");
 }
 

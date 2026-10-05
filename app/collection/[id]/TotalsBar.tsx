@@ -5,7 +5,19 @@ import { coverageText, etaText } from "../../../lib/collection/ui.ts";
 import type { QueueState, Totals } from "../../../lib/collection/view.ts";
 import { money } from "./api.ts";
 
-export default function TotalsBar({ totals, queue, offline }: { totals: Totals; queue: QueueState; offline: string | null }) {
+export default function TotalsBar({
+  totals,
+  queue,
+  offline,
+  currency,
+  onResume,
+}: {
+  totals: Totals;
+  queue: QueueState;
+  offline: string | null;
+  currency: string;
+  onResume: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const working = queue.pending > 0 && !queue.paused;
 
@@ -15,7 +27,7 @@ export default function TotalsBar({ totals, queue, offline }: { totals: Totals; 
       <button type="button" className="totals-toggle" aria-expanded={open} aria-controls="totals-detail" onClick={() => setOpen((o) => !o)}>
         <span className="t big">
           <small>Suggested</small>
-          <span>{money(totals.suggested)}</span>
+          <span>{money(totals.suggested, currency)}</span>
         </span>
         <span className="totals-mini">
           <b>
@@ -33,22 +45,22 @@ export default function TotalsBar({ totals, queue, offline }: { totals: Totals; 
       <div id="totals-detail" className="totals-detail">
         <div className="t">
           <small>Low</small>
-          <span>{money(totals.low)}</span>
+          <span>{money(totals.low, currency)}</span>
         </div>
         <div className="t big">
           <small>Suggested</small>
-          <span>{money(totals.suggested)}</span>
+          <span>{money(totals.suggested, currency)}</span>
         </div>
         <div className="t">
           <small>High</small>
-          <span>{money(totals.high)}</span>
+          <span>{money(totals.high, currency)}</span>
         </div>
         <div className="cov">
           <b>{coverageText(totals)}</b>
           {queue.pending > 0 && (
             <span className="queue-line">
               {working && <span className="spinner" aria-hidden="true" />}
-              Looking up · {queue.pending} left · ~{etaText(queue.etaSeconds)}
+              {queue.paused ? `Paused · ${queue.pending} waiting` : `Looking up · ${queue.pending} left · ~${etaText(queue.etaSeconds)}`}
             </span>
           )}
         </div>
@@ -64,7 +76,11 @@ export default function TotalsBar({ totals, queue, offline }: { totals: Totals; 
       </div>
       {queue.paused && (
         <p className="totals-paused" role="alert">
-          <span aria-hidden="true">⚠ </span>Discogs rejected the token. Fix it, then press Retry on a row.
+          <span aria-hidden="true">⚠ </span>Discogs rejected the token. Fix the token, then press Retry.
+          {" "}
+          <button type="button" className="link" onClick={onResume}>
+            Retry
+          </button>
         </p>
       )}
     </section>

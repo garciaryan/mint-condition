@@ -6,7 +6,7 @@ import type { ItemView } from "../../../lib/collection/view.ts";
 import type { Grade } from "../../../lib/types.ts";
 import GradeSelect from "../../GradeSelect.tsx";
 import { Thumb } from "../../Picker.tsx";
-import { STATUS_INFO } from "../../../lib/collection/ui.ts";
+import { STATUS_INFO, displayStatus } from "../../../lib/collection/ui.ts";
 import { money } from "./api.ts";
 
 export const ICONS = {
@@ -31,7 +31,11 @@ const STATUS = STATUS_INFO;
 function subline(item: ItemView): string {
   if (item.release) {
     const r = item.release;
-    return [r.label, r.catno, r.country, r.year, r.format].filter(Boolean).join(" · ");
+    const base = [r.label, r.catno, r.country, r.year, r.format].filter(Boolean);
+    if (item.status === "error" && item.error) {
+      base.push(item.market ? `Re-price failed: ${item.error} · showing earlier price` : item.error);
+    }
+    return base.join(" · ");
   }
   const bits: string[] = [item.year ? String(item.year) : "No year"];
   if (item.status === "to-pick") bits.push(`${item.candidateCount} pressings match`);
@@ -41,13 +45,13 @@ function subline(item: ItemView): string {
   return bits.join(" · ");
 }
 
-function marketCell(item: ItemView): ReactNode {
+function marketCell(item: ItemView, currency: string): ReactNode {
   if (item.market) {
     return (
       <>
-        <b>{money(item.market.suggested)}</b>
+        <b>{money(item.market.suggested, currency)}</b>
         <span className="sub">
-          {money(item.market.low)} – {money(item.market.high)}
+          {money(item.market.low, currency)} – {money(item.market.high, currency)}
         </span>
       </>
     );
@@ -62,12 +66,14 @@ function marketCell(item: ItemView): ReactNode {
 
 export default function ItemRow({
   item,
+  currency,
   onGrade,
   onPick,
   onRetry,
   onRemove,
 }: {
   item: ItemView;
+  currency: string;
   onGrade: (id: number, patch: { record?: Grade; sleeve?: Grade }) => Promise<boolean>;
   onPick: (item: ItemView, trigger: HTMLButtonElement) => void;
   onRetry: (id: number) => void;
@@ -88,7 +94,7 @@ export default function ItemRow({
     if (!ok) (which === "record" ? setRecord : setSleeve)(item[which]);
   }
 
-  const st = STATUS[item.status];
+  const st = STATUS[displayStatus(item)];
   const busy = item.status === "pending" || item.status === "looking-up";
   const dim = (busy && item.market !== null) || saving;
   const title = item.release?.title ?? item.query;
@@ -112,7 +118,7 @@ export default function ItemRow({
           <GradeSelect id={`slv-${item.id}`} value={sleeve} onChange={(g) => change("sleeve", g)} label={`Sleeve grade for ${title}`} />
         </span>
       </div>
-      <div className={`row-price${dim ? " dim" : ""}`}>{marketCell(item)}</div>
+      <div className={`row-price${dim ? " dim" : ""}`}>{marketCell(item, currency)}</div>
       <div className="row-status">
         <span className={`status ${st.cls}`}>
           {st.icon === "spinner" ? <span className="spinner" aria-hidden="true" /> : <Icon name={st.icon} />}
