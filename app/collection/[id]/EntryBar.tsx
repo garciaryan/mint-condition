@@ -4,10 +4,12 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
 import type { NewLine } from "../../../lib/collection/types.ts";
+import type { ItemView } from "../../../lib/collection/view.ts";
 import type { Grade } from "../../../lib/types.ts";
 import GradeSelect from "../../GradeSelect.tsx";
 import { createSerialQueue } from "../../../lib/collection/ui.ts";
 import { api } from "./api.ts";
+import type { ScanAddResult } from "./Scanner.tsx";
 import PasteList from "./PasteList.tsx";
 
 // Loaded only when Scan is opened, so the camera code and detector stay out of the page bundle.
@@ -18,12 +20,14 @@ export default function EntryBar({
   defaultRecord,
   defaultSleeve,
   queryRef,
+  items,
   onAdded,
 }: {
   sessionId: number;
   defaultRecord: Grade;
   defaultSleeve: Grade;
   queryRef: RefObject<HTMLInputElement | null>;
+  items: ItemView[];
   onAdded: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -43,9 +47,15 @@ export default function EntryBar({
   }, []);
 
   // Scans use the same serial queue as typed adds: one line, no year, the grades at scan time.
-  function addScanned(code: string): Promise<string | null> {
+  function addScanned(code: string): Promise<ScanAddResult> {
     const grades = { record, sleeve };
-    return enqueue(() => post([{ query: code }], grades));
+    return enqueue(async (): Promise<ScanAddResult> => {
+      const res = await api<{ added: ItemView[] }>(`/api/sessions/${sessionId}/items`, "POST", { lines: [{ query: code }], ...grades });
+      if (!res.ok) return { ok: false, message: res.message };
+      onAdded();
+      const id = res.data.added[0]?.id;
+      return id === undefined ? { ok: false, message: "Not saved." } : { ok: true, id };
+    });
   }
 
   async function post(lines: NewLine[], grades = { record, sleeve }): Promise<string | null> {
@@ -165,6 +175,7 @@ export default function EntryBar({
       {scanning && (
         <Scanner
           grades={{ record, sleeve }}
+          items={items}
           onCode={addScanned}
           onClose={() => setScanning(false)}
           onUnavailable={() => setCanScan(false)}

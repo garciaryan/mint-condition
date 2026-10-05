@@ -53,3 +53,17 @@ export function createSerialQueue(): <T>(job: () => Promise<T>) => Promise<T> {
     return run;
   };
 }
+
+export type StatusKey = "pending" | "looking-up" | "to-pick" | "priced" | "no-match" | "no-price" | "error";
+export type StatusIcon = "check" | "list" | "dash" | "warn" | "x" | "clock" | "spinner";
+
+/** Label, CSS class and icon for an item status; shared by the lot rows and the scan list. */
+export const STATUS_INFO: Record<StatusKey, { text: string; cls: string; icon: StatusIcon }> = {
+  pending: { text: "Queued", cls: "s-wait", icon: "clock" },
+  "looking-up": { text: "Looking up", cls: "s-wait", icon: "spinner" },
+  "to-pick": { text: "To pick", cls: "s-pick", icon: "list" },
+  priced: { text: "Priced", cls: "s-ok", icon: "check" },
+  "no-match": { text: "No match", cls: "s-none", icon: "x" },
+  "no-price": { text: "No price data", cls: "s-none", icon: "dash" },
+  error: { text: "Error", cls: "s-err", icon: "warn" },
+};

@@ -6,9 +6,10 @@ import type { ItemView } from "../../../lib/collection/view.ts";
 import type { Grade } from "../../../lib/types.ts";
 import GradeSelect from "../../GradeSelect.tsx";
 import { Thumb } from "../../Picker.tsx";
+import { STATUS_INFO } from "../../../lib/collection/ui.ts";
 import { money } from "./api.ts";
 
-const ICONS = {
+export const ICONS = {
   check: "M20 6 9 17l-5-5",
   list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
   dash: "M5 12h14",
@@ -17,7 +18,7 @@ const ICONS = {
   clock: "M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z",
 } as const;
 
-function Icon({ name }: { name: keyof typeof ICONS }) {
+export function Icon({ name }: { name: keyof typeof ICONS }) {
   return (
     <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d={ICONS[name]} />
@@ -25,15 +26,7 @@ function Icon({ name }: { name: keyof typeof ICONS }) {
   );
 }
 
-const STATUS: Record<ItemView["status"], { text: string; cls: string; icon: keyof typeof ICONS | "spinner" }> = {
-  pending: { text: "Queued", cls: "s-wait", icon: "clock" },
-  "looking-up": { text: "Looking up", cls: "s-wait", icon: "spinner" },
-  "to-pick": { text: "To pick", cls: "s-pick", icon: "list" },
-  priced: { text: "Priced", cls: "s-ok", icon: "check" },
-  "no-match": { text: "No match", cls: "s-none", icon: "x" },
-  "no-price": { text: "No price data", cls: "s-none", icon: "dash" },
-  error: { text: "Error", cls: "s-err", icon: "warn" },
-};
+const STATUS = STATUS_INFO;
 
 function subline(item: ItemView): string {
   if (item.release) {

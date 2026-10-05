@@ -47,3 +47,11 @@ test("createSerialQueue runs jobs one at a time, in order, and survives rejectio
   assert.deepEqual(log, ["start a", "end a", "start b", "end b", "start c", "end c"]);
   assert.deepEqual(results.map((r) => r.status), ["fulfilled", "rejected", "fulfilled"]);
 });
+
+import { STATUS_INFO } from "../lib/collection/ui.ts";
+test("STATUS_INFO covers every item status with text", () => {
+  for (const k of ["pending", "looking-up", "to-pick", "priced", "no-match", "no-price", "error"] as const) {
+    assert.ok(STATUS_INFO[k].text.length > 0);
+  }
+  assert.equal(STATUS_INFO.priced.text, "Priced");
+});

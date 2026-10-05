@@ -180,6 +180,7 @@ export default function LotView({ id }: { id: number }) {
         defaultRecord={session.defaultRecord}
         defaultSleeve={session.defaultSleeve}
         queryRef={queryRef}
+        items={items}
         onAdded={refresh}
       />
       <p className="small muted caveat">Prices are Discogs asking prices and suggestions, not confirmed sales.</p>
