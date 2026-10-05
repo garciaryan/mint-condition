@@ -35,8 +35,20 @@ function defaultKeepAlive(): (() => void) | null {
 }
 
 // Loop and pause flag live on globalThis so dev reloads can't start a second loop.
-const g = globalThis as typeof globalThis & { __mintWorker?: { loop: Promise<void> | null; paused: boolean } };
-const state = () => (g.__mintWorker ??= { loop: null, paused: false });
+type WorkerState = { loop: Promise<void> | null; paused: boolean; recentMs: number[] };
+const g = globalThis as typeof globalThis & { __mintWorker?: WorkerState };
+const fresh = (): WorkerState => ({ loop: null, paused: false, recentMs: [] });
+const state = () => (g.__mintWorker ??= fresh());
+
+// The throttle's pace (one Discogs call per ~1.1 s, ~3 per record) until real lookups have been timed.
+const DEFAULT_MS_PER_ITEM = 3300;
+const RECENT = 10;
+
+/** Average time per lookup over the last few, so cache hits shorten the queue estimate. */
+export function msPerItem(): number {
+  const recent = state().recentMs;
+  return recent.length === 0 ? DEFAULT_MS_PER_ITEM : recent.reduce((a, b) => a + b, 0) / recent.length;
+}
 
 // pricedAt is when Discogs answered (the older of the two), so prices served from the cache show their real age.
 async function priceRelease(client: CachedLookupClient, item: ItemRow, id: number, extra: Partial<LookupPatch>): Promise<LookupPatch> {
@@ -73,7 +85,11 @@ async function runLoop(db: DatabaseSync, client: CachedLookupClient, nowFn: () =
       const item = claimNextPending(db);
       if (!item) return false;
       claimed = item.id;
-      const patch = await processItem(client, item, nowFn());
+      const started = nowFn();
+      const patch = await processItem(client, item, started);
+      const recent = state().recentMs;
+      recent.push(Math.max(0, nowFn() - started));
+      if (recent.length > RECENT) recent.shift();
       const { pauseQueue, ...write } = patch;
       applyLookup(db, item.id, write);
       claimed = null;
@@ -129,5 +145,5 @@ export function startWorkerOnBoot(): void {
 }
 
 export function __resetWorkerForTests(): void {
-  g.__mintWorker = { loop: null, paused: false };
+  g.__mintWorker = fresh();
 }

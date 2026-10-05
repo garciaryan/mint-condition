@@ -92,6 +92,8 @@ test("list rows carry candidateCount without the candidate array", () => {
 
 test("queueState eta", () => {
   assert.deepEqual(queueState(10, false), { pending: 10, paused: false, etaSeconds: 33 });
+  assert.equal(queueState(10, false, 200).etaSeconds, 2);
+  assert.equal(queueState(10, false, 0).etaSeconds, 0);
   assert.equal(pollDelayMs(5, true), 15000);
 });
 
