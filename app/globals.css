@@ -1068,7 +1068,57 @@ textarea:focus-visible {
 
 .entry-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+/* Scan: a pressable barcode icon. The wrapper doesn't box anything, so the reason note wraps onto its own line. */
+.scan-control {
+  display: contents;
+}
+
+.scan-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 1px solid var(--field-line);
+  border-radius: 6px;
+  background: var(--field-bg);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.scan-button:hover:not([aria-disabled="true"]) {
+  background: var(--neutral-soft);
+}
+
+.scan-button[aria-disabled="true"] {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* Last in visual order, so it opens under the whole row and never splits the scan icon from Add. */
+.scan-reason {
+  order: 1;
+  flex-basis: 100%;
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* A text field with a button beside it (catalog number + scan). */
+.input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.input-row input {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .entry .field-error {
@@ -1843,11 +1893,15 @@ kbd {
   .entry-buttons {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto 1fr;
   }
 
   .entry-buttons button {
     width: 100%;
+  }
+
+  .entry-buttons .scan-button {
+    width: var(--control-h);
   }
 
   .entry-buttons button[hidden] {
