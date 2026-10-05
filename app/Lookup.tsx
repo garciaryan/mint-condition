@@ -155,8 +155,8 @@ export default function Lookup() {
     if (clearsInputs(res.status)) clearInputs();
   }
 
+  // The scanner fades out by itself and then calls onClose.
   function onScanned(code: string) {
-    setScanning(false);
     setCatno(code);
     setErrors({});
     void search(false, { catno: code, year });

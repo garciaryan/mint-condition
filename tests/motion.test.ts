@@ -38,3 +38,13 @@ test("a successful scan pulses the viewfinder frame (and reduced motion stops al
   assert.match(css, /\.scanner-frame\.hit \{[^}]*border-color: var\(--fill\);[^}]*animation: scan-pulse /);
   assert.match(css, /@keyframes scan-pulse/);
 });
+
+test("the scanner fades in, and fades out over --dur-exit before it goes away (instant with reduced motion)", async () => {
+  const { exitMs, SCANNER_EXIT_MS } = await import("../lib/motion.ts");
+  assert.match(css, new RegExp(`--dur-exit: ${SCANNER_EXIT_MS}ms;`), "CSS token and JS delay agree");
+  assert.match(css, /\.scanner \{[^}]*animation: fade-in var\(--dur\) var\(--ease\);/);
+  assert.match(css, /\.scanner\.closing \{[^}]*animation: fade-out var\(--dur-exit\) var\(--ease\) forwards;/);
+  assert.match(css, /@keyframes fade-out/);
+  assert.equal(exitMs(false), SCANNER_EXIT_MS);
+  assert.equal(exitMs(true), 0);
+});

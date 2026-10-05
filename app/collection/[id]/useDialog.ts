@@ -2,12 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
+import { shouldRestoreFocus } from "../../../lib/disclosure.ts";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Modal behaviour: focus moves in on mount, Tab stays inside, Escape closes, and focus returns to
- * `returnTo` (or whatever was focused before) on unmount unless `restoreFocus` is false.
+ * `returnTo` (or whatever was focused before) on unmount, unless something outside the dialog took focus meanwhile.
  */
 export function useDialog(
   ref: RefObject<HTMLElement | null>,
@@ -54,7 +55,9 @@ export function useDialog(
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
-      if (previous?.isConnected) previous.focus();
+      const active = document.activeElement;
+      const free = shouldRestoreFocus({ onBody: !active || active === document.body, insideDialog: !!root?.contains(active) });
+      if (free && previous?.isConnected) previous.focus();
     };
     // Mount-only on purpose; onClose is read through closeRef.
     // eslint-disable-next-line react-hooks/exhaustive-deps

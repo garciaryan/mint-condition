@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LOOKUP_HOLD_MS } from "../lib/camera.ts";
 import ScanFrame from "./ScanFrame.tsx";
+import { useFadeOut } from "./useFadeOut.ts";
 import { useDialog } from "./collection/[id]/useDialog.ts";
 import { useBarcodeCamera } from "./useBarcodeCamera.ts";
 
@@ -22,6 +23,7 @@ export default function LookupScanner({
   const [scanned, setScanned] = useState<string | null>(null);
   const onCodeRef = useRef(onCode);
   onCodeRef.current = onCode;
+  const fade = useFadeOut(onClose);
   const camera = useBarcodeCamera(
     videoRef,
     (code) => {
@@ -40,7 +42,8 @@ export default function LookupScanner({
     if (!scanned) return;
     const t = setTimeout(() => {
       camera.stop();
-      onCodeRef.current(scanned);
+      onCodeRef.current(scanned); // the search starts now, under the fading scanner
+      fade.start();
     }, LOOKUP_HOLD_MS);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,13 +51,20 @@ export default function LookupScanner({
 
   function close() {
     camera.stop();
-    onClose();
+    fade.start();
   }
   useDialog(rootRef, close, { initialFocus: () => rootRef.current?.querySelector<HTMLElement>("button") });
 
   const s = camera.state;
   return (
-    <div className="scanner" role="dialog" aria-modal="true" aria-label="Scan a barcode" ref={rootRef} tabIndex={-1}>
+    <div
+      className={fade.closing ? "scanner closing" : "scanner"}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Scan a barcode"
+      ref={rootRef}
+      tabIndex={-1}
+    >
       <header className="scanner-head">
         <strong>Scan a barcode</strong>
         <button type="button" onClick={close}>

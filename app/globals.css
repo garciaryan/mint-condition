@@ -35,6 +35,7 @@
   /* Motion: quick start, soft settle. Reduced-motion users get none of it (see the block near .spinner). */
   --dur-fast: 120ms;
   --dur: 180ms;
+  --dur-exit: 220ms; /* = SCANNER_EXIT_MS in lib/motion.ts */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --t-interactive: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
     border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
@@ -390,6 +391,12 @@ button:active:not(:disabled),
 
 @keyframes fade-in {
   from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
     opacity: 0;
   }
 }
@@ -2062,6 +2069,13 @@ kbd {
   background: #111;
   color: #fff;
   overflow: hidden;
+  animation: fade-in var(--dur) var(--ease);
+}
+
+/* Fades back to the page instead of cutting from the dark camera view (useFadeOut removes it afterwards). */
+.scanner.closing {
+  pointer-events: none;
+  animation: fade-out var(--dur-exit) var(--ease) forwards;
 }
 
 .scanner:focus {
