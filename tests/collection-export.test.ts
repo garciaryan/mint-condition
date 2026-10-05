@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { buySheetRows, csvFilename, DISCOGS_GRADE, exportCounts, toDiscogsCsv } from "../lib/collection/export.ts";
+import { buySheetRows, csvFilename, DISCOGS_GRADE, exportCounts, exportHint, toDiscogsCsv } from "../lib/collection/export.ts";
 import { marketFor } from "../lib/collection/view.ts";
 import { offerInputs } from "../lib/offer.ts";
 import type { ItemRow } from "../lib/collection/types.ts";
@@ -119,4 +119,11 @@ test("buy sheet row fields", () => {
   const row = buySheetRows([item({ status: "no-price", releaseId: 5 })], settings, INPUTS)[0];
   assert.equal(row.suggested, null);
   assert.equal(row.sell, null);
+});
+
+test("exportHint", () => {
+  assert.equal(exportHint({ exportable: 2, lookingUp: 1, skipped: 3 }), "2 to export · 1 still looking up · 3 without a price");
+  assert.equal(exportHint({ exportable: 5, lookingUp: 0, skipped: 0 }), "5 to export");
+  assert.equal(exportHint({ exportable: 0, lookingUp: 2, skipped: 0 }), "Nothing to export yet · 2 still looking up");
+  assert.equal(exportHint({ exportable: 0, lookingUp: 0, skipped: 0 }), "Nothing to export yet");
 });

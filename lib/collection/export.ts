@@ -135,3 +135,14 @@ export function buySheetRows(items: ItemRow[], settings: Settings, inputs: Offer
   valued.sort((a, b) => Number(b.isPick) - Number(a.isPick) || (b.suggested ?? 0) - (a.suggested ?? 0));
   return [...valued, ...rest];
 }
+
+/** The line under the export link, e.g. "18 to export · 2 still looking up · 3 without a price". */
+export function exportHint(c: { exportable: number; lookingUp: number; skipped: number }): string {
+  return [
+    c.exportable > 0 ? `${c.exportable} to export` : "Nothing to export yet",
+    c.lookingUp > 0 ? `${c.lookingUp} still looking up` : null,
+    c.skipped > 0 && c.exportable > 0 ? `${c.skipped} without a price` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
