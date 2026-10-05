@@ -2341,8 +2341,9 @@ kbd {
   }
 }
 
-.settings-currency {
-  margin: 12px 0 0;
+/* Same gap as between fields; specific enough to beat `.settings-section > p`, which would zero the top. */
+.settings-section > p.settings-currency {
+  margin: 16px 0 0;
 }
 
 /* Age of cached Discogs prices */
