@@ -3,7 +3,7 @@ import { getLookupClient } from "../../../lib/discogs-client.ts";
 import { httpStatus, missingEnv, parseLookupRequest, runLookup, toErrorResponse } from "../../../lib/lookup.ts";
 import type { LookupResponse } from "../../../lib/lookup.ts";
 import { requireSession } from "../../../lib/route-auth.ts";
-import { getDb } from "../../../lib/db.ts";
+import { dbUnavailable, getDb } from "../../../lib/db.ts";
 import { getSettings } from "../../../lib/settings-store.ts";
 
 export const dynamic = "force-dynamic";
@@ -28,9 +28,15 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
+  let db;
+  try {
+    db = getDb();
+  } catch (e) {
+    return reply({ status: "error", kind: "database", message: dbUnavailable(e) });
+  }
   let settings;
   try {
-    settings = getSettings(getDb()).settings;
+    settings = getSettings(db).settings;
   } catch (e) {
     return reply({ status: "error", kind: "settings", message: `settings.json is invalid: ${e instanceof Error ? e.message : e}` });
   }

@@ -20,3 +20,8 @@ export function getDb(): DatabaseSync {
   g.__mintDb ??= openDb(path.join(process.env.DATA_DIR ?? "./data", "mint.db"));
   return g.__mintDb;
 }
+
+/** User-facing message when the database can't be opened (e.g. the Fly volume isn't mounted). */
+export function dbUnavailable(e: unknown): string {
+  return `The database is unavailable: ${e instanceof Error ? e.message : String(e)}`;
+}

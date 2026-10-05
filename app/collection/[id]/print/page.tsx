@@ -6,7 +6,7 @@ import { parseId } from "../../../../lib/collection/http.ts";
 import { getSession, listItems } from "../../../../lib/collection/store.ts";
 import { cash, offerNotes } from "../../../../lib/collection/ui.ts";
 import { oldestPricedAt } from "../../../../lib/collection/view.ts";
-import { getDb } from "../../../../lib/db.ts";
+import { dbUnavailable, getDb } from "../../../../lib/db.ts";
 import { computeOffer, offerInputs } from "../../../../lib/offer.ts";
 import type { OfferSide } from "../../../../lib/offer.ts";
 import { relativeTime } from "../../../../lib/relative-time.ts";
@@ -24,8 +24,22 @@ function lotFor(raw: string) {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const lot = lotFor((await params).id);
+  let lot = null;
+  try {
+    lot = lotFor((await params).id);
+  } catch {}
   return { title: lot ? `Buy sheet - ${lot.name} - Mint Condition` : "Buy sheet - Mint Condition" };
+}
+
+function Problem({ message }: { message: string }) {
+  return (
+    <>
+      <SiteHeader />
+      <main className="page sheet">
+        <p role="alert">{message}</p>
+      </main>
+    </>
+  );
 }
 
 const records = (n: number) => `${n} ${n === 1 ? "record" : "records"}`;
@@ -35,6 +49,13 @@ function Ladder({ caption, side, opening, currency }: { caption: string; side: O
     <div className="sheet-offer">
       <table className="sheet-ladder">
         <caption>{caption}</caption>
+        <thead className="sr-only">
+          <tr>
+            <th scope="col">Percent</th>
+            <th scope="col">Offer</th>
+            <th scope="col">Note</th>
+          </tr>
+        </thead>
         <tbody>
           {side.rungs.map((r) => (
             <tr key={r.percent}>
@@ -55,18 +76,20 @@ function Ladder({ caption, side, opening, currency }: { caption: string; side: O
 }
 
 export default async function BuySheetPage({ params }: Props) {
-  const lot = lotFor((await params).id);
+  const raw = (await params).id;
+  let lot;
+  try {
+    lot = lotFor(raw);
+  } catch (e) {
+    return <Problem message={dbUnavailable(e)} />;
+  }
   if (!lot) notFound();
 
   let settings;
   try {
     settings = getSettings(getDb()).settings;
   } catch (e) {
-    return (
-      <main className="page sheet">
-        <p role="alert">settings.json is invalid: {e instanceof Error ? e.message : String(e)}</p>
-      </main>
-    );
+    return <Problem message={`settings.json is invalid: ${e instanceof Error ? e.message : String(e)}`} />;
   }
 
   const items = listItems(getDb(), lot.id);
@@ -113,7 +136,8 @@ export default async function BuySheetPage({ params }: Props) {
         </section>
         <p className="sheet-counts">
           {offer.picks} picks · {offer.bulkCount} bulk · {offer.unpricedCount} unpriced
-          {offerNotes(offer, currency).map((n) => (
+          {/* The header already says the condition is unverified; leave that note out here. */}
+          {offerNotes({ ...offer, inputs: { ...offer.inputs, unverified: false } }, currency).map((n) => (
             <span key={n}> · {n}</span>
           ))}
         </p>
@@ -142,8 +166,8 @@ export default async function BuySheetPage({ params }: Props) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td className="box" aria-hidden="true">
-                  ☐
+                <td className="box">
+                  <span aria-hidden="true">☐</span>
                 </td>
                 <td>{r.query}</td>
                 <td>
@@ -166,7 +190,14 @@ export default async function BuySheetPage({ params }: Props) {
                     <td className="num">{money(r.sell)}</td>
                   </>
                 )}
-                <td>{r.isPick ? "★" : ""}</td>
+                <td>
+                  {r.isPick && (
+                    <>
+                      <span aria-hidden="true">★</span>
+                      <span className="sr-only">Pick</span>
+                    </>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -174,6 +205,7 @@ export default async function BuySheetPage({ params }: Props) {
 
         <footer className="sheet-foot muted small">
           <p>Discogs asking prices and suggestions, not confirmed sales.</p>
+          {lot.unverified && <p>★ uses the lowered offer grades, so a record can show more than the pick threshold without a star.</p>}
           {oldest !== null && Date.now() - oldest > 3_600_000 && <p>Oldest prices: {relativeTime(oldest)}</p>}
         </footer>
       </main>

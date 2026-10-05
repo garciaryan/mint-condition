@@ -77,3 +77,16 @@ test("cache hours are saved while currency still follows the file", () => {
   assert.equal(s.discogs.cacheHours, 6);
   assert.equal(s.discogs.currency, defaults.discogs.currency);
 });
+
+test("a saved row that is not an object is reported invalid", () => {
+  for (const json of ["null", "[]", "5", '"x"']) {
+    db.prepare("insert or replace into settings (id, json, updated_at) values (1, ?, 5)").run(json);
+    const s = getSettings(db);
+    assert.deepEqual(s.settings, defaults, json);
+    assert.match(s.invalid ?? "", /not an object/, json);
+  }
+});
+
+test("saving discogs: null is rejected with a settings message", () => {
+  assert.throws(() => saveSettings(db, { discogs: null }), /^Error: settings: discogs\.cacheHours/);
+});

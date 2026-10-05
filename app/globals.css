@@ -1427,8 +1427,10 @@ kbd {
     flex-basis: 100%;
   }
 
-  .lot-actions button {
+  .lot-actions button,
+  .lot-actions .action-link {
     flex: 1;
+    justify-content: center;
   }
 
   .totals {

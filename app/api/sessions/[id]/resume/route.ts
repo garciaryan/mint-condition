@@ -2,7 +2,7 @@
 import { errorJson, parseId } from "../../../../../lib/collection/http.ts";
 import { countPending, getSession } from "../../../../../lib/collection/store.ts";
 import { queueState } from "../../../../../lib/collection/view.ts";
-import { kickWorker, resumeQueue } from "../../../../../lib/collection/worker.ts";
+import { kickWorker, msPerItem, resumeQueue } from "../../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../../lib/db.ts";
 import { requireSession } from "../../../../../lib/route-auth.ts";
 
@@ -17,5 +17,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!getSession(db, id)) return errorJson("not-found", 404, "Lot not found.");
   resumeQueue();
   void kickWorker();
-  return Response.json({ queue: queueState(countPending(db), false) });
+  return Response.json({ queue: queueState(countPending(db), false, msPerItem()) });
 }

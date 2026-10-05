@@ -345,13 +345,14 @@ function ErrorCard({ res, onRetry }: { res: LookupError; onRetry: () => void }) 
     "bad-request": "Check the form",
     "missing-env": "Setup needed",
     settings: "Settings problem",
+    database: "Database unavailable",
     "bad-token": "Discogs rejected the token",
     "rate-limited": "Rate-limited by Discogs",
     upstream: "Lookup failed",
     auth: "Signed out",
     forbidden: "Request blocked",
   };
-  const retryable = res.kind === "rate-limited" || res.kind === "upstream";
+  const retryable = res.kind === "rate-limited" || res.kind === "upstream" || res.kind === "database";
   return (
     <div className="card error" role="alert">
       <h2 tabIndex={-1} data-focus>
@@ -414,7 +415,7 @@ function ResultCard({
           </p>
           {res.cached && (
             <p className="muted small price-age">
-              Prices from {relativeTime(res.fetchedAt)} ·{" "}
+              {res.status === "priced" ? "Prices from" : "Checked"} {relativeTime(res.fetchedAt)} ·{" "}
               <button type="button" className="link" onClick={onRefresh} disabled={busy}>
                 Refresh prices
               </button>

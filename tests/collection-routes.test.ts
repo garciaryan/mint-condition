@@ -456,3 +456,20 @@ test("lot GET includes exportCounts", async () => {
   const { body } = await namedPricedLot("L");
   assert.deepEqual(body.exportCounts, { exportable: 1, lookingUp: 0, skipped: 0 });
 });
+
+test("a database that won't open is reported as a database error, not a settings error", async () => {
+  const savedDir = process.env.DATA_DIR;
+  delete g.__mintDb;
+  process.env.DATA_DIR = "/dev/null/nope";
+  try {
+    const r = await listSessions(req("GET"));
+    assert.equal(r.status, 500);
+    const b = await j(r);
+    assert.equal(b.kind, "database");
+    assert.match(b.message, /^The database is unavailable/);
+  } finally {
+    if (savedDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = savedDir;
+    delete g.__mintDb;
+  }
+});

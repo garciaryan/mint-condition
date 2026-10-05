@@ -22,7 +22,7 @@ export type LookupRequest = {
 /** When the prices came from Discogs (the older of suggestions and stats), and whether that was before this lookup. */
 type Age = { fetchedAt: number; cached: boolean };
 
-export type LookupErrorKind = "bad-request" | "missing-env" | "settings" | "bad-token" | "rate-limited" | "upstream" | "auth" | "forbidden";
+export type LookupErrorKind = "bad-request" | "missing-env" | "settings" | "database" | "bad-token" | "rate-limited" | "upstream" | "auth" | "forbidden";
 
 export type LookupResponse =
   | { status: "candidates"; candidates: Candidate[] }
@@ -101,7 +101,7 @@ export function toErrorResponse(e: unknown): Extract<LookupResponse, { status: "
 /** HTTP status for a response; data outcomes are 200, errors map to the closest code. */
 export function httpStatus(res: LookupResponse): number {
   if (res.status !== "error") return 200;
-  return { "bad-request": 400, "missing-env": 500, settings: 500, "bad-token": 502, "rate-limited": 429, upstream: 502, auth: 401, forbidden: 403 }[res.kind];
+  return { "bad-request": 400, "missing-env": 500, settings: 500, database: 500, "bad-token": 502, "rate-limited": 429, upstream: 502, auth: 401, forbidden: 403 }[res.kind];
 }
 
 /**

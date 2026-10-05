@@ -65,7 +65,8 @@ const split = (key: FieldKey) => key.split(".") as [string, string];
 function formatValue(key: FieldKey, v: unknown): string | null {
   if (RULES[key].kind === "ladder") return Array.isArray(v) && v.every(isNum) ? v.join(", ") : null;
   if (!isNum(v)) return null;
-  return RULES[key].kind === "mult" ? String(Math.round(v * 10000) / 100) : String(v);
+  // Up to 4 decimals of percent (6 of the multiplier), without float noise: 0.95 → "95", 0.12345 → "12.345".
+  return RULES[key].kind === "mult" ? String(Math.round(v * 1_000_000) / 10_000) : String(v);
 }
 
 function valueAt(source: unknown, key: FieldKey): unknown {
@@ -98,7 +99,7 @@ export function formView(s: { settings: Settings; defaults: Settings; invalid: s
 
 export function parseLadder(text: string): { ok: true; value: number[] } | { ok: false; error: string } {
   const parts = text.split(/[\s,]+/).filter((p) => p !== "");
-  const nums = parts.map(Number);
+  const nums = parts.map((p) => (PLAIN_NUMBER.test(p) ? Number(p) : Number.NaN));
   if (parts.length < 1 || parts.length > 8 || !nums.every((n) => Number.isFinite(n) && n > 0 && n <= 100)) {
     return { ok: false, error: "List 1 to 8 numbers, each above 0 and at most 100." };
   }
@@ -108,11 +109,12 @@ export function parseLadder(text: string): { ok: true; value: number[] } | { ok:
   return { ok: true, value: nums };
 }
 
+/** Plain decimals only ("30", "-1", "30.5", ".5"); Number() would also take "1e2", "0x10" and "Infinity". */
+const PLAIN_NUMBER = /^-?(\d+(\.\d+)?|\.\d+)$/;
+
 function parseNumber(text: string): number | null {
   const t = text.trim();
-  if (t === "") return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : null;
+  return PLAIN_NUMBER.test(t) ? Number(t) : null;
 }
 
 export function fromForm(
@@ -126,7 +128,7 @@ export function fromForm(
     const n = parseNumber(f[key]);
     if (n === null) errors[key] = "Enter a number.";
     else if (!rule.ok(n)) errors[key] = rule.message;
-    else nums[key] = rule.kind === "mult" ? Math.round(n * 100) / 10000 : n;
+    else nums[key] = rule.kind === "mult" ? Math.round(n * 10_000) / 1_000_000 : n;
   }
   const ladder = parseLadder(f["offer.ladderPercents"]);
   if (!ladder.ok) errors["offer.ladderPercents"] = ladder.error;

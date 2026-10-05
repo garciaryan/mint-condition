@@ -111,3 +111,29 @@ test("cache hours field round-trips and is limited to 0–168 whole hours", () =
   assert.equal(r.value.discogs.cacheHours, 0);
   for (const bad of ["-1", "169", "2.5", ""]) assert.equal(fromForm({ ...f, "discogs.cacheHours": bad }).ok, false, bad);
 });
+
+test("only plain decimals count as numbers", () => {
+  const f = toForm(defaults);
+  for (const bad of ["1e2", "0x10", "Infinity", "1,5", "+5", "5.", "--1"]) {
+    const r = fromForm({ ...f, "offer.marginPercent": bad });
+    assert.equal(!r.ok && r.errors["offer.marginPercent"], "Enter a number.", bad);
+  }
+  for (const ok of ["30", " 30 ", "30.5", ".5", "0"]) {
+    assert.equal(fromForm({ ...f, "offer.marginPercent": ok }).ok, true, ok);
+  }
+  assert.equal(fromForm({ ...f, "sell.floor": "-1" }).ok, false);
+  assert.equal(parseLadder("30 1e1").ok, false);
+});
+
+test("multipliers keep up to four decimals of percent", () => {
+  const precise = { ...defaults, local: { ...defaults.local, localDiscountMultiplier: 0.12345 } };
+  const f = toForm(precise);
+  assert.equal(f["local.localDiscountMultiplier"], "12.345");
+  const r = fromForm(f);
+  assert.ok(r.ok);
+  assert.equal(r.value.local.localDiscountMultiplier, 0.12345);
+  assert.equal(toForm(defaults)["sleeveMultipliers.VG+"], "95");
+  const r2 = fromForm({ ...f, "sleeveMultipliers.VG+": "95.12345" });
+  assert.ok(r2.ok);
+  assert.equal(r2.value.sleeveMultipliers["VG+"], 0.951235);
+});

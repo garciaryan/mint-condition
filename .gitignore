@@ -10,3 +10,4 @@ data/
 .claude/settings.local.json
 .DS_Store
 .superpowers/
+.claude/worktrees/

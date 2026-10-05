@@ -116,6 +116,6 @@ export function computeTotals(items: ItemRow[], settings: Settings): Totals {
 
 export type QueueState = { pending: number; paused: boolean; etaSeconds: number };
 
-export function queueState(pending: number, paused: boolean): QueueState {
-  return { pending, paused, etaSeconds: Math.round(pending * 3 * 1.1) };
+export function queueState(pending: number, paused: boolean, msPerItem = 3300): QueueState {
+  return { pending, paused, etaSeconds: Math.round((pending * msPerItem) / 1000) };
 }

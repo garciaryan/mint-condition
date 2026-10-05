@@ -3,7 +3,7 @@ import { errorJson, isObject, MAX_BODY, parseAmount, parseId, parseName, readJso
 import { exportCounts } from "../../../../lib/collection/export.ts";
 import { deleteSession, getSession, listItems, updateSession } from "../../../../lib/collection/store.ts";
 import { computeTotals, oldestPricedAt, queueState, toItemView } from "../../../../lib/collection/view.ts";
-import { isQueuePaused } from "../../../../lib/collection/worker.ts";
+import { isQueuePaused, msPerItem } from "../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../lib/db.ts";
 import { computeOffer, offerInputs } from "../../../../lib/offer.ts";
 import { requireSession } from "../../../../lib/route-auth.ts";
@@ -33,7 +33,7 @@ export async function GET(request: Request, { params }: Ctx): Promise<Response> 
       items: items.map((i) => toItemView(i, settings, inputs)),
       totals,
       offer: computeOffer(items, inputs, settings),
-      queue: queueState(totals.pending, isQueuePaused()),
+      queue: queueState(totals.pending, isQueuePaused(), msPerItem()),
       oldestPricedAt: oldestPricedAt(items),
       exportCounts: exportCounts(items, settings),
       currency: settings.discogs.currency,

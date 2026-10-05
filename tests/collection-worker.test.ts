@@ -2,7 +2,7 @@ import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { openDb } from "../lib/db.ts";
 import { addItems, createSession, deleteItem, getItem, resetWorking, updateItemFields } from "../lib/collection/store.ts";
-import { __resetWorkerForTests, isQueuePaused, kickWorker, processItem, resumeQueue } from "../lib/collection/worker.ts";
+import { __resetWorkerForTests, isQueuePaused, kickWorker, msPerItem, processItem, resumeQueue } from "../lib/collection/worker.ts";
 import { DiscogsError } from "../lib/discogs.ts";
 import type { LookupClient } from "../lib/lookup.ts";
 import { live } from "./helpers/live-client.ts";
@@ -264,4 +264,13 @@ test("retrying a no-match searches fresh; a normal row uses the cache", async ()
   const seen2 = { fresh: [] as (boolean | undefined)[] };
   await processItem(fake({}, 0, seen2).client, items[0], 1);
   assert.deepEqual(seen2.fresh, [false, false, false]);
+});
+
+test("msPerItem starts at the throttle estimate and then follows real lookups", async () => {
+  assert.equal(msPerItem(), 3300);
+  const { db } = setup(["A", "B", "C"]);
+  let t = 0;
+  await kickWorker({ db, client: fake({}, 0).client, now: () => (t += 100) });
+  const avg = msPerItem();
+  assert.ok(avg > 0 && avg < 3300, String(avg));
 });

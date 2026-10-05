@@ -1,5 +1,5 @@
 // Shared helpers for the collection route handlers. Server-side only.
-import { getDb } from "../db.ts";
+import { dbUnavailable, getDb } from "../db.ts";
 import { getSettings } from "../settings-store.ts";
 import type { Settings } from "../types.ts";
 
@@ -35,9 +35,15 @@ export function parseId(raw: string): number | null {
 export { __setSettingsPathForTests } from "../settings-store.ts";
 
 export function withSettings<T>(fn: (s: Settings) => T): T | Response {
+  let db;
+  try {
+    db = getDb();
+  } catch (e) {
+    return errorJson("database", 500, dbUnavailable(e));
+  }
   let settings: Settings;
   try {
-    settings = getSettings(getDb()).settings;
+    settings = getSettings(db).settings;
   } catch (e) {
     return errorJson("settings", 500, `settings.json is invalid: ${e instanceof Error ? e.message : e}`);
   }
