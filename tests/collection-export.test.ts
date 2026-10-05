@@ -59,7 +59,7 @@ test("only priced rows with a release and a positive price are exported", () => 
 test("lot names are quoted and formula-safe", () => {
   const row = (name: string) => toDiscogsCsv(name, [priced({ id: 1 })], settings).split("\r\n")[1];
   assert.match(row('Smith, "Jazz"'), /,"Smith, ""Jazz"""$/);
-  assert.match(row("two\nlines"), /,"two\nlines"$/);
+  assert.match(row("two\r\nlines\nhere"), /,mc-1,two lines here$/);
   assert.match(row("=SUM(A1)"), /,mc-1, =SUM\(A1\)$/);
   assert.match(row("@home"), /,mc-1, @home$/);
 });
@@ -122,8 +122,9 @@ test("buy sheet row fields", () => {
 });
 
 test("exportHint", () => {
-  assert.equal(exportHint({ exportable: 2, lookingUp: 1, skipped: 3 }), "2 to export · 1 still looking up · 3 without a price");
+  assert.equal(exportHint({ exportable: 2, lookingUp: 1, skipped: 3 }), "2 to export · 1 still looking up · 3 can't be listed");
   assert.equal(exportHint({ exportable: 5, lookingUp: 0, skipped: 0 }), "5 to export");
-  assert.equal(exportHint({ exportable: 0, lookingUp: 2, skipped: 0 }), "Nothing to export yet · 2 still looking up");
-  assert.equal(exportHint({ exportable: 0, lookingUp: 0, skipped: 0 }), "Nothing to export yet");
+  assert.equal(exportHint({ exportable: 0, lookingUp: 2, skipped: 1 }), "Nothing to export yet · 2 still looking up · 1 can't be listed");
+  assert.equal(exportHint({ exportable: 0, lookingUp: 0, skipped: 4 }), "Nothing to export · 4 can't be listed");
+  assert.equal(exportHint({ exportable: 0, lookingUp: 0, skipped: 0 }), "Nothing to export");
 });

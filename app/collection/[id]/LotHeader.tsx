@@ -111,7 +111,7 @@ export default function LotHeader({
           <span className="meta muted small price-age">Oldest prices: {relativeTime(oldestPricedAt)}</span>
         )}
         {exportCounts.exportable > 0 ? (
-          <a className="action-link" href={`/api/sessions/${session.id}/discogs.csv`} download aria-describedby="lot-export-hint">
+          <a className="action-link" href={`/api/sessions/${session.id}/discogs.csv`} aria-describedby="lot-export-hint">
             Export for Discogs
           </a>
         ) : (

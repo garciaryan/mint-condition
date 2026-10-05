@@ -2170,3 +2170,8 @@ a.action-link:hover {
     break-inside: avoid;
   }
 }
+
+.sheet-flag {
+  display: block;
+  white-space: normal;
+}

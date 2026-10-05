@@ -42,6 +42,8 @@ function field(value: string): string {
 
 export function toDiscogsCsv(lotName: string, items: ItemRow[], settings: Settings): string {
   const lines = [COLUMNS.join(",")];
+  // Discogs' uploader may not accept line breaks inside a field; a lot name never needs one.
+  const notes = lotName.replace(/[\r\n]+/g, " ");
   for (const item of items) {
     const listing = exportable(item, settings);
     if (!listing) continue;
@@ -53,7 +55,7 @@ export function toDiscogsCsv(lotName: string, items: ItemRow[], settings: Settin
         DISCOGS_GRADE[item.sleeve],
         LISTING_STATUS,
         `mc-${item.id}`,
-        lotName,
+        notes,
       ]
         .map(field)
         .join(","),
@@ -136,12 +138,12 @@ export function buySheetRows(items: ItemRow[], settings: Settings, inputs: Offer
   return [...valued, ...rest];
 }
 
-/** The line under the export link, e.g. "18 to export · 2 still looking up · 3 without a price". */
+/** The line under the export link, e.g. "18 to export · 2 still looking up · 3 can't be listed". */
 export function exportHint(c: { exportable: number; lookingUp: number; skipped: number }): string {
   return [
-    c.exportable > 0 ? `${c.exportable} to export` : "Nothing to export yet",
+    c.exportable > 0 ? `${c.exportable} to export` : c.lookingUp > 0 ? "Nothing to export yet" : "Nothing to export",
     c.lookingUp > 0 ? `${c.lookingUp} still looking up` : null,
-    c.skipped > 0 && c.exportable > 0 ? `${c.skipped} without a price` : null,
+    c.skipped > 0 ? `${c.skipped} can't be listed` : null,
   ]
     .filter(Boolean)
     .join(" · ");

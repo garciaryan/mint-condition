@@ -125,7 +125,7 @@ The pick threshold, bulk price and lot overhead are set per lot. The ladder, mar
 - **Export for Discogs** downloads the lot as a Discogs inventory-upload CSV. Upload it on Discogs (Sell Music →
   Inventory Upload). Each priced record becomes a **draft** listing at the app's sell price with its record and
   sleeve grades, so nothing goes live until you review it there. Records with no pressing or no price are left out;
-  the line under the link says how many will export.
+  the line under the link says how many will export and how many can't be listed.
 - **Print buy sheet** opens a printer-friendly page for you (not the seller): both offer ladders with the walk-away,
   then every record with a box to tick, its grades, suggested and sell value, and a ★ for picks. Picks and the
   most valuable records come first.

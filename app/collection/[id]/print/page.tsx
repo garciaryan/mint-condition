@@ -159,7 +159,10 @@ export default async function BuySheetPage({ params }: Props) {
                   </td>
                 ) : (
                   <>
-                    <td className="num">{money(r.suggested)}</td>
+                    <td className="num">
+                      {money(r.suggested)}
+                      {r.statusLabel && <span className="muted small sheet-flag"> {r.statusLabel}: earlier price</span>}
+                    </td>
                     <td className="num">{money(r.sell)}</td>
                   </>
                 )}
