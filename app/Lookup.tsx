@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { DATA_CREDIT, releaseUrl } from "../lib/discogs-terms.ts";
-import { clearsInputs, fieldErrors } from "../lib/form.ts";
+import { clearsInputs, fieldErrors, movesToResult } from "../lib/form.ts";
 import { relativeTime } from "../lib/relative-time.ts";
 import type { FieldErrors } from "../lib/form.ts";
 import type { LookupResponse } from "../lib/lookup.ts";
@@ -62,12 +62,17 @@ export default function Lookup() {
   const catnoRef = useRef<HTMLInputElement>(null);
   const yearRef = useRef<HTMLInputElement>(null);
 
-  // Move focus to the new heading after navigation-like changes (search, pick, back); not on in-place re-prices.
+  // Take the user to the new heading after navigation-like changes (search, pick, back); not on in-place re-prices.
+  // Scrolls explicitly (focus alone doesn't reliably scroll on mobile Safari) and waits for the scanner to close.
   useEffect(() => {
-    if (!focusNext.current) return;
+    if (!movesToResult({ pending: focusNext.current, scannerOpen: scanning })) return;
     focusNext.current = false;
-    outputRef.current?.querySelector<HTMLElement>("[data-focus]")?.focus();
-  }, [view]);
+    const heading = outputRef.current?.querySelector<HTMLElement>("[data-focus]");
+    if (!heading) return;
+    heading.focus({ preventScroll: true });
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    heading.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
+  }, [view, scanning]);
 
   async function lookup(body: Record<string, unknown>, what: "search" | "price"): Promise<LookupResponse | null> {
     inflight.current?.abort();

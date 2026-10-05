@@ -40,3 +40,9 @@ export function groupCandidates(candidates: Candidate[], filter: string, year?: 
 export function clearsInputs(status: "priced" | "no-price" | "candidates" | "no-match" | "error"): boolean {
   return status === "priced" || status === "no-price";
 }
+
+/** Whether to take the user to newly shown results now. Waits while the scanner is open: it locks page scrolling,
+ * so scrolling then would do nothing. */
+export function movesToResult(s: { pending: boolean; scannerOpen: boolean }): boolean {
+  return s.pending && !s.scannerOpen;
+}
