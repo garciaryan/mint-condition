@@ -106,7 +106,9 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   `tests/theme-contrast.test.ts` checks contrast in both themes. Never hard-code a colour outside the token blocks. Palette (2026-10-05): parchment/deep-space blue
   pages, deep-space-blue/parchment text, strong cyan `--fill` buttons with deep-space-blue labels in both themes,
   darker cyan `--accent` for links in light (cyan fails 4.5:1 on parchment). Footer has GitHub and Buy Me a Coffee
-  as plain links (no BMC widget script); `body` is a flex column so the footer sits at the bottom. Spec: `docs/superpowers/specs/2026-10-04-export-print-design.md`.
+  as plain links (no BMC widget script); `body` is a flex column so the footer sits at the bottom. Motion uses the
+  `--dur-fast`/`--dur`/`--ease` tokens (`--t-interactive` for hover/focus); menus, dialogs and the pick drawer
+  animate in only, and `prefers-reduced-motion` turns all of it off (`tests/motion.test.ts`). Spec: `docs/superpowers/specs/2026-10-04-export-print-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns

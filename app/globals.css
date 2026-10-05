@@ -32,6 +32,13 @@
   --radius: 10px;
   --control-h: 44px;
   --gutter: 24px;
+  /* Motion: quick start, soft settle. Reduced-motion users get none of it (see the block near .spinner). */
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-interactive: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--ink);
 }
@@ -363,6 +370,48 @@ button {
   touch-action: manipulation;
 }
 
+/* Hover and focus changes ease in on everything you can press or type into. */
+button,
+a,
+input,
+select,
+textarea {
+  transition: var(--t-interactive);
+}
+
+/* A slight press-in on tap or click. */
+button:active:not(:disabled),
+.site-footer-links .coffee:active {
+  transform: scale(0.98);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
 input,
 select {
   min-height: var(--control-h);
@@ -429,7 +478,7 @@ button.secondary {
   padding: 10px 22px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition: var(--t-interactive);
 }
 
 button[type="submit"] {
@@ -526,8 +575,15 @@ a {
     border-color: var(--accent);
     opacity: 0.6;
   }
-  * {
+  *,
+  *::before,
+  *::after {
     transition: none !important;
+    animation: none !important;
+  }
+  button:active:not(:disabled),
+  .site-footer-links .coffee:active {
+    transform: none !important;
   }
 }
 
@@ -576,7 +632,7 @@ a {
   text-align: left;
   cursor: pointer;
   color: inherit;
-  transition: background-color 150ms ease;
+  transition: var(--t-interactive);
 }
 
 .candidate:active {
@@ -630,7 +686,7 @@ a {
 
 /* Result */
 .result {
-  transition: opacity 150ms ease;
+  transition: opacity var(--dur-fast) var(--ease);
 }
 
 .result.stale .prices,
@@ -678,7 +734,7 @@ a {
   grid-template-columns: 2fr 1fr;
   gap: 16px;
   margin: 20px 0;
-  transition: opacity 150ms ease;
+  transition: opacity var(--dur-fast) var(--ease);
 }
 
 .prices.with-local {
@@ -776,7 +832,7 @@ a {
   border-radius: var(--radius);
   color: inherit;
   text-decoration: none;
-  transition: background-color 150ms ease;
+  transition: var(--t-interactive);
 }
 
 @media (hover: hover) {
@@ -1294,6 +1350,7 @@ kbd {
   background: var(--scrim);
   display: flex;
   justify-content: flex-end;
+  animation: fade-in var(--dur) var(--ease);
 }
 
 .scrim.center {
@@ -1309,6 +1366,7 @@ kbd {
   display: flex;
   flex-direction: column;
   box-shadow: -4px 0 20px var(--shadow);
+  animation: drawer-in var(--dur) var(--ease);
 }
 
 .panel:focus,
@@ -1374,6 +1432,7 @@ kbd {
   background: var(--card);
   border-radius: var(--radius);
   padding: 20px;
+  animation: dialog-in var(--dur) var(--ease);
 }
 
 .dialog-actions {
@@ -1402,6 +1461,7 @@ kbd {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: 0 8px 24px var(--shadow);
+  animation: drop-in var(--dur) var(--ease);
 }
 
 .dropdown-panel .dropdown-item {
@@ -1418,6 +1478,7 @@ kbd {
   text-align: left;
   text-decoration: none;
   cursor: pointer;
+  transition: var(--t-interactive);
 }
 
 .dropdown-panel .dropdown-item:hover:not(:disabled):not([aria-disabled="true"]) {
@@ -1562,6 +1623,11 @@ kbd {
     cursor: pointer;
   }
 
+  .topbar .menu-toggle:hover,
+  .topbar .menu-toggle[aria-expanded="true"] {
+    background: var(--neutral-soft);
+  }
+
   .site-menu-panel {
     display: none;
   }
@@ -1580,6 +1646,7 @@ kbd {
     background: var(--card);
     border-bottom: 1px solid var(--line);
     box-shadow: 0 8px 24px var(--shadow);
+    animation: drop-in var(--dur) var(--ease);
   }
 
   .site-menu-panel .nav {
