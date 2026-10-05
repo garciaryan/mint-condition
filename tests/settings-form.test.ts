@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { loadSettings, mergeSettings, parseSettings } from "../lib/settings.ts";
-import { FIELD_KEYS, formatDefault, fromForm, parseLadder, toForm, toFormLoose } from "../lib/settings-form.ts";
+import { FIELD_KEYS, formatDefault, formView, fromForm, parseLadder, toForm, toFormLoose } from "../lib/settings-form.ts";
 import type { FieldKey } from "../lib/settings-form.ts";
 
 const defaults = loadSettings();
@@ -90,4 +90,14 @@ test("every fromForm result passes parseSettings once merged over defaults", () 
   const r = fromForm(toForm(defaults));
   assert.ok(r.ok);
   assert.doesNotThrow(() => parseSettings(mergeSettings(defaults, r.value)));
+});
+
+test("formView: a valid state loads clean; an invalid saved row is saveable with errors shown", () => {
+  const ok = formView({ settings: defaults, defaults, invalid: null, savedRaw: null });
+  assert.deepEqual(ok, { form: toForm(defaults), saveable: false, showErrors: false });
+  const raw = { sleeveMultipliers: { VG: 2 } };
+  const bad = formView({ settings: defaults, defaults, invalid: "settings: sleeveMultipliers.VG must be ...", savedRaw: raw });
+  assert.equal(bad.form["sleeveMultipliers.VG"], "200");
+  assert.equal(bad.saveable, true);
+  assert.equal(bad.showErrors, true);
 });

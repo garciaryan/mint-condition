@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { FIELD_KEYS, formatDefault, fromForm, parseLadder, toForm, toFormLoose } from "../../lib/settings-form.ts";
+import { FIELD_KEYS, formatDefault, formView, fromForm, parseLadder, toForm } from "../../lib/settings-form.ts";
 import type { FieldKey, SettingsForm as Form } from "../../lib/settings-form.ts";
 import { GRADES } from "../../lib/types.ts";
 import type { Settings } from "../../lib/types.ts";
@@ -72,6 +72,7 @@ export default function SettingsForm() {
   const [attempt, setAttempt] = useState(0);
   const [form, setForm] = useState<Form | null>(null);
   const [loaded, setLoaded] = useState<Form | null>(null);
+  const [saveable, setSaveable] = useState(false);
   const [touched, setTouched] = useState<Set<FieldKey>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const [serverErrors, setServerErrors] = useState<Errors>({});
@@ -82,12 +83,13 @@ export default function SettingsForm() {
   const focusAfter = useRef<FieldKey | null>(null);
 
   function apply(s: State) {
-    const f = s.invalid ? toFormLoose(s.savedRaw, s.defaults) : toForm(s.settings);
+    const view = formView(s);
     setState(s);
-    setForm(f);
-    setLoaded(f);
+    setForm(view.form);
+    setLoaded(view.form);
+    setSaveable(view.saveable);
     setTouched(new Set());
-    setSubmitted(false);
+    setSubmitted(view.showErrors);
     setServerErrors({});
     setFormError(null);
   }
@@ -190,7 +192,7 @@ export default function SettingsForm() {
 
   function save(e: FormEvent) {
     e.preventDefault();
-    if (busy || !dirty) return;
+    if (busy || !(dirty || saveable)) return;
     setSubmitted(true);
     if (!checked.ok) {
       focusAfter.current = FIELD_KEYS.find((k) => checked.errors[k]) ?? null;
@@ -268,7 +270,7 @@ export default function SettingsForm() {
         </div>
       )}
       {SECTIONS.map((s) => (
-        <fieldset className="card settings-section" key={s.legend}>
+        <fieldset className="card settings-section" key={s.legend} disabled={busy}>
           <legend>{s.legend}</legend>
           {s.note && <p className="muted small">{s.note}</p>}
           <div className={s.grid ? "settings-grid sleeve" : "settings-grid"}>{s.keys.map(field)}</div>
@@ -280,7 +282,7 @@ export default function SettingsForm() {
         </p>
       </div>
       <div className="settings-actions">
-        <button type="submit" disabled={busy || !dirty}>
+        <button type="submit" disabled={busy || !(dirty || saveable)}>
           {busy ? "Saving…" : "Save"}
         </button>
         <button type="button" className="secondary" onClick={reset} disabled={busy || (!state.saved && !dirty)}>

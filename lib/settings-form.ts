@@ -80,6 +80,17 @@ export function toFormLoose(raw: unknown, defaults: Settings): SettingsForm {
   return Object.fromEntries(FIELD_KEYS.map((k) => [k, formatValue(k, valueAt(source, k)) ?? fallback[k]])) as SettingsForm;
 }
 
+/** What the page shows after a load or save. A saved row that no longer validates fills the form from the saved values
+ * and can be saved as-is (so it can be fixed), with field errors shown straight away. */
+export function formView(s: { settings: Settings; defaults: Settings; invalid: string | null; savedRaw: unknown }): {
+  form: SettingsForm;
+  saveable: boolean;
+  showErrors: boolean;
+} {
+  if (s.invalid) return { form: toFormLoose(s.savedRaw, s.defaults), saveable: true, showErrors: true };
+  return { form: toForm(s.settings), saveable: false, showErrors: false };
+}
+
 export function parseLadder(text: string): { ok: true; value: number[] } | { ok: false; error: string } {
   const parts = text.split(/[\s,]+/).filter((p) => p !== "");
   const nums = parts.map(Number);

@@ -78,7 +78,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   Spec: `docs/superpowers/specs/2026-10-04-collection-mode-design.md`.
 - Phase 5 offer calculator (2026-10-04): merged and deployed (migration 2: lot offer inputs, row `pick`); checked on
   prod. Spec: `docs/superpowers/specs/2026-10-04-offer-calculator-design.md`.
-- Phase 6a settings UI (2026-10-04): built on feat/settings-ui; 220 tests passing; migration 3 (`settings` table);
+- Phase 6a settings UI (2026-10-04): built on feat/settings-ui; 221 tests passing; migration 3 (`settings` table);
   staging check pending. Spec: `docs/superpowers/specs/2026-10-04-settings-ui-design.md`. Phase 6b (24h Discogs
   cache, adds `cacheHours` to the page) is next.
 
