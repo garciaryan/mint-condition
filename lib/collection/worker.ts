@@ -7,7 +7,7 @@ import { getDiscogsClient } from "../discogs-client.ts";
 import { missingEnv } from "../lookup.ts";
 import type { LookupClient } from "../lookup.ts";
 import type { Candidate } from "../types.ts";
-import { applyLookup, claimNextPending, countPending, releaseClaim, resetWorking, touchSession } from "./store.ts";
+import { applyLookup, claimNextPending, countClaimable, releaseClaim, resetWorking, touchSession } from "./store.ts";
 import type { ItemRow, LookupPatch } from "./types.ts";
 
 export type WorkerDeps = {
@@ -106,7 +106,7 @@ export function kickWorker(deps: WorkerDeps = {}): Promise<void> {
       if (timer) clearInterval(timer);
       if (s.loop === loop) s.loop = null;
       // Rows added just as the loop finished would otherwise wait for the next kick.
-      if (!failed && !s.paused && countPending(db) > 0) void kickWorker(deps);
+      if (!failed && !s.paused && countClaimable(db) > 0) void kickWorker(deps);
     });
   s.loop = loop;
   return loop;

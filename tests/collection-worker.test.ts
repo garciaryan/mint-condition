@@ -192,6 +192,29 @@ test("resetWorking plus a kick processes a stranded working row", async () => {
   assert.equal(getItem(db, items[0].id)!.status, "priced");
 });
 
+test("an unowned working row does not make the worker re-kick forever", async () => {
+  const { db, items } = setup(["A"]);
+  db.prepare("UPDATE items SET status = 'working' WHERE id = ?").run(items[0].id);
+  const f = fake();
+  const first = kickWorker({ db, client: f.client });
+  const TIMEOUT = Symbol("timeout");
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const winner = await Promise.race([
+    first.then(() => "settled"),
+    new Promise<symbol>((r) => { timer = setTimeout(() => r(TIMEOUT), 500); }),
+  ]);
+  clearTimeout(timer);
+  assert.equal(winner, "settled");
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(f.calls.length, 0);
+  assert.equal(getItem(db, items[0].id)!.status, "working");
+  // Idle: a new kick starts a fresh loop rather than returning the finished one.
+  const second = kickWorker({ db, client: f.client });
+  assert.notEqual(second, first);
+  await second;
+  assert.equal(f.calls.length, 0);
+});
+
 test("kickWorker without an injected client is a no-op when Discogs env is missing", async () => {
   const saved = { t: process.env.DISCOGS_TOKEN, u: process.env.DISCOGS_USER_AGENT };
   delete process.env.DISCOGS_TOKEN;

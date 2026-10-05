@@ -231,3 +231,9 @@ export function countPending(db: DatabaseSync): number {
   const r = db.prepare("SELECT count(*) AS n FROM items WHERE status IN ('pending','working')").get() as { n: number };
   return r.n;
 }
+
+/** Rows a worker loop can actually claim (pending only; `working` rows belong to a loop). */
+export function countClaimable(db: DatabaseSync): number {
+  const r = db.prepare("SELECT count(*) AS n FROM items WHERE status = 'pending'").get() as { n: number };
+  return r.n;
+}

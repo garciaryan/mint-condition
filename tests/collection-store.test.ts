@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { openDb } from "../lib/db.ts";
 import {
-  addItems, applyLookup, claimNextPending, countPending, createSession, deleteItem, deleteSession, getItem,
+  addItems, applyLookup, claimNextPending, countClaimable, countPending, createSession, deleteItem, deleteSession, getItem,
   getSession, listItems, listSessions, pickRelease, releaseClaim, repriceSession, resetWorking, retryItem, touchSession,
   updateItemFields, updateSession,
 } from "../lib/collection/store.ts";
@@ -185,6 +185,21 @@ test("resetWorking and countPending", () => {
   assert.equal(resetWorking(db), 1);
   assert.equal(countPending(db), 2);
   assert.equal(listItems(db, s.id).filter((r) => r.status === "working").length, 0);
+});
+
+test("countClaimable counts only pending rows", () => {
+  const { db, s } = setup();
+  addItems(db, s.id, [{ query: "A" }, { query: "B" }, { query: "C" }], G, 1);
+  assert.equal(countClaimable(db), 3);
+  claimNextPending(db);
+  assert.equal(countClaimable(db), 2);
+  assert.equal(countPending(db), 3);
+  const w = claimNextPending(db)!;
+  applyLookup(db, w.id, { status: "no-match" });
+  assert.equal(countClaimable(db), 1);
+  claimNextPending(db);
+  assert.equal(countClaimable(db), 0);
+  assert.equal(countPending(db), 2);
 });
 
 test("deleteSession cascades to items", () => {
