@@ -86,7 +86,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Phase 6a settings UI (2026-10-04): built on feat/settings-ui; 221 tests passing; migration 3 (`settings` table);
   checked on staging, merged to main. Spec: `docs/superpowers/specs/2026-10-04-settings-ui-design.md`.
 - Phase 6b Discogs cache (2026-10-04): built on feat/discogs-cache; 253 tests passing; migration 4 (`discogs_cache`,
-  `items.refresh`); staging check pending. Spec: `docs/superpowers/specs/2026-10-04-discogs-cache-design.md`.
+  `items.refresh`); checked on staging, merged to main. Spec: `docs/superpowers/specs/2026-10-04-discogs-cache-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns
