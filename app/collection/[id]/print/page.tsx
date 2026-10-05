@@ -49,6 +49,13 @@ function Ladder({ caption, side, opening, currency }: { caption: string; side: O
     <div className="sheet-offer">
       <table className="sheet-ladder">
         <caption>{caption}</caption>
+        <thead className="sr-only">
+          <tr>
+            <th scope="col">Percent</th>
+            <th scope="col">Offer</th>
+            <th scope="col">Note</th>
+          </tr>
+        </thead>
         <tbody>
           {side.rungs.map((r) => (
             <tr key={r.percent}>
@@ -129,7 +136,8 @@ export default async function BuySheetPage({ params }: Props) {
         </section>
         <p className="sheet-counts">
           {offer.picks} picks · {offer.bulkCount} bulk · {offer.unpricedCount} unpriced
-          {offerNotes(offer, currency).map((n) => (
+          {/* The header already says the condition is unverified; leave that note out here. */}
+          {offerNotes({ ...offer, inputs: { ...offer.inputs, unverified: false } }, currency).map((n) => (
             <span key={n}> · {n}</span>
           ))}
         </p>
@@ -158,8 +166,8 @@ export default async function BuySheetPage({ params }: Props) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td className="box" aria-hidden="true">
-                  ☐
+                <td className="box">
+                  <span aria-hidden="true">☐</span>
                 </td>
                 <td>{r.query}</td>
                 <td>
@@ -182,7 +190,14 @@ export default async function BuySheetPage({ params }: Props) {
                     <td className="num">{money(r.sell)}</td>
                   </>
                 )}
-                <td>{r.isPick ? "★" : ""}</td>
+                <td>
+                  {r.isPick && (
+                    <>
+                      <span aria-hidden="true">★</span>
+                      <span className="sr-only">Pick</span>
+                    </>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -190,6 +205,7 @@ export default async function BuySheetPage({ params }: Props) {
 
         <footer className="sheet-foot muted small">
           <p>Discogs asking prices and suggestions, not confirmed sales.</p>
+          {lot.unverified && <p>★ uses the lowered offer grades, so a record can show more than the pick threshold without a star.</p>}
           {oldest !== null && Date.now() - oldest > 3_600_000 && <p>Oldest prices: {relativeTime(oldest)}</p>}
         </footer>
       </main>

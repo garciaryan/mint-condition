@@ -415,7 +415,7 @@ function ResultCard({
           </p>
           {res.cached && (
             <p className="muted small price-age">
-              Prices from {relativeTime(res.fetchedAt)} ·{" "}
+              {res.status === "priced" ? "Prices from" : "Checked"} {relativeTime(res.fetchedAt)} ·{" "}
               <button type="button" className="link" onClick={onRefresh} disabled={busy}>
                 Refresh prices
               </button>

@@ -115,7 +115,7 @@ export default function LotHeader({
             Export for Discogs
           </a>
         ) : (
-          <span className="action-link" aria-disabled="true" aria-describedby="lot-export-hint">
+          <span className="action-link" role="link" aria-disabled="true" tabIndex={0} aria-describedby="lot-export-hint">
             Export for Discogs
           </span>
         )}
