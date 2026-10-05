@@ -1,9 +1,10 @@
 // PATCH/DELETE /api/items/:id
 import { errorJson, isObject, MAX_BODY, parseId, parseYear, readJson, withSettings } from "../../../../lib/collection/http.ts";
-import { deleteItem, getItem, pickRelease, updateItemFields } from "../../../../lib/collection/store.ts";
+import { deleteItem, getItem, getSession, pickRelease, setItemPick, updateItemFields } from "../../../../lib/collection/store.ts";
 import { toItemView } from "../../../../lib/collection/view.ts";
 import { kickWorker } from "../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../lib/db.ts";
+import { offerInputs, offerMarket } from "../../../../lib/offer.ts";
 import { requireSession } from "../../../../lib/route-auth.ts";
 import { isGrade } from "../../../../lib/types.ts";
 import type { Grade } from "../../../../lib/types.ts";
@@ -45,6 +46,11 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
     releaseId = b.releaseId;
   }
 
+  if (b.pick !== undefined && typeof b.pick !== "boolean") {
+    return errorJson("bad-request", 400, "Cherry-pick must be true or false.");
+  }
+  const pick = b.pick as boolean | undefined;
+
   return withSettings((settings) => {
     const db = getDb();
     const cur = getItem(db, id);
@@ -57,10 +63,19 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
       kick = true;
     }
     if (fields.year !== undefined && fields.year !== cur.year) kick = true;
-    const updated = updateItemFields(db, id, fields);
+    let updated = updateItemFields(db, id, fields);
     if (!updated) return notFound();
     if (kick) void kickWorker();
-    return Response.json(toItemView(updated, settings));
+    const inputs = offerInputs(getSession(db, updated.sessionId)!, settings);
+    if (pick !== undefined) {
+      // Checked after grade changes so a combined request is judged at the new grades.
+      if (!offerMarket(updated, inputs, settings)) {
+        return errorJson("bad-request", 400, "This record has no market value to cherry-pick.");
+      }
+      updated = setItemPick(db, id, pick);
+      if (!updated) return notFound();
+    }
+    return Response.json(toItemView(updated, settings, inputs));
   });
 }
 

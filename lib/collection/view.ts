@@ -1,4 +1,6 @@
 // Server-side view logic: prices are calculated when read, never stored.
+import { isPickRow } from "../offer.ts";
+import type { OfferInputs } from "../offer.ts";
 import { priceRecord, roundCents } from "../pricing.ts";
 import type { Candidate, Grade, MarketplaceStats, Settings } from "../types.ts";
 import type { ItemRow, ItemStatus } from "./types.ts";
@@ -28,12 +30,14 @@ export type ItemView = {
   release: Candidate | null;
   candidateCount: number;
   market: Market | null;
+  /** Counted as a cherry-pick in the lot offer (threshold or pin, at the offer grades). */
+  isPick: boolean;
   stats: MarketplaceStats | null;
   pricedAt: number | null;
   error: string | null;
 };
 
-export function toItemView(item: ItemRow, settings: Settings): ItemView {
+export function toItemView(item: ItemRow, settings: Settings, inputs: OfferInputs): ItemView {
   return {
     id: item.id,
     query: item.query,
@@ -44,6 +48,7 @@ export function toItemView(item: ItemRow, settings: Settings): ItemView {
     release: item.release,
     candidateCount: item.candidateCount ?? item.candidates?.length ?? 0,
     market: marketFor(item, settings),
+    isPick: isPickRow(item, inputs, settings),
     stats: item.stats,
     pricedAt: item.pricedAt,
     error: item.error,

@@ -4,11 +4,13 @@ import { readFileSync } from "node:fs";
 import { computeTotals, marketFor, queueState, toItemView } from "../lib/collection/view.ts";
 import { createScanFilter, defaultLotName, pollDelayMs } from "../lib/collection/ui.ts";
 import { priceRecord } from "../lib/pricing.ts";
+import { offerInputs } from "../lib/offer.ts";
 import { parseSettings } from "../lib/settings.ts";
 import type { ItemRow } from "../lib/collection/types.ts";
 import type { Candidate } from "../lib/types.ts";
 
 const settings = parseSettings(JSON.parse(readFileSync("settings.json", "utf8")));
+const INPUTS = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);
 const cand = (id: number): Candidate => ({
   id, title: `R${id}`, year: 1971, country: "US", label: "L", catno: "C", format: "LP", thumb: null,
 });
@@ -33,10 +35,10 @@ test("marketFor null without suggestions or grade", () => {
 });
 
 test("toItemView maps working and counts candidates", () => {
-  const v = toItemView(item({ status: "working", candidates: [cand(1), cand(2)] }), settings);
+  const v = toItemView(item({ status: "working", candidates: [cand(1), cand(2)] }), settings, INPUTS);
   assert.equal(v.status, "looking-up");
   assert.equal(v.candidateCount, 2);
-  assert.equal(toItemView(item({ status: "error", error: "x" }), settings).candidateCount, 0);
+  assert.equal(toItemView(item({ status: "error", error: "x" }), settings, INPUTS).candidateCount, 0);
 });
 
 test("computeTotals over a mix", () => {
@@ -84,7 +86,7 @@ test("a row with a value lands only in priced, whatever its status", () => {
 });
 
 test("list rows carry candidateCount without the candidate array", () => {
-  const v = toItemView(item({ status: "to-pick", candidates: null, candidateCount: 7 }), settings);
+  const v = toItemView(item({ status: "to-pick", candidates: null, candidateCount: 7 }), settings, INPUTS);
   assert.equal(v.candidateCount, 7);
 });
 

@@ -56,6 +56,11 @@ export function parseYear(v: unknown): { ok: true; value: number | null } | { ok
   return { ok: false };
 }
 
+/** A finite amount in [0, max], or null when invalid. */
+export function parseAmount(v: unknown, max: number): number | null {
+  return typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= max ? v : null;
+}
+
 export function parseQuery(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const q = v.trim();

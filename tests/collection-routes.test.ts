@@ -321,3 +321,68 @@ test("session responses include the settings currency", async () => {
   assert.equal(typeof (await j(await listSessions(req("GET")))).currency, "string");
   assert.equal(typeof (await j(await getSession(req("GET"), ctx(String(lot.id))))).currency, "string");
 });
+
+async function pricedLot() {
+  searchFn = (q) => (q === "Z" ? [] : [cand(1)]);
+  const { body } = await newLot();
+  const id = String(body.id);
+  await addItems(req("POST", { lines: [{ query: "A" }, { query: "Z" }], record: "NM", sleeve: "NM" }), ctx(id));
+  await kickWorker();
+  const got = await j(await getSession(req("GET"), ctx(id)));
+  // biome-ignore lint: test helper
+  const byQuery = (q: string) => got.items.find((i: any) => i.query === q);
+  return { id, got, a: byQuery("A"), z: byQuery("Z") };
+}
+
+test("GET returns offer and isPick", async () => {
+  const { got, a, z } = await pricedLot();
+  assert.equal(got.offer.picks, 1);
+  assert.equal(got.offer.bulkCount, 1);
+  assert.equal(a.isPick, true);
+  assert.equal(z.isPick, false);
+  assert.equal(got.offer.pickOnly.rungs.length, 4);
+});
+
+test("PATCH session offer inputs", async () => {
+  const { id } = await pricedLot();
+  const r = await patchSession(req("PATCH", { unverified: true, pickThreshold: 25, bulkEach: 1, lotOverhead: 10 }), ctx(id));
+  assert.equal(r.status, 200);
+  const s = await j(r);
+  assert.deepEqual([s.unverified, s.pickThreshold, s.bulkEach, s.lotOverhead], [true, 25, 1, 10]);
+  assert.equal((await j(await getSession(req("GET"), ctx(id)))).offer.inputs.pickThreshold, 25);
+  await patchSession(req("PATCH", { pickThreshold: null }), ctx(id));
+  assert.equal((await j(await getSession(req("GET"), ctx(id)))).offer.inputs.pickThreshold, 15);
+});
+
+test("PATCH session rejects bad offer inputs", async () => {
+  const { id } = await pricedLot();
+  const bad: [unknown, RegExp][] = [
+    [{ pickThreshold: "abc" }, /Pick threshold/],
+    [{ pickThreshold: -1 }, /Pick threshold/],
+    [{ pickThreshold: 100001 }, /Pick threshold/],
+    [{ bulkEach: 1001 }, /Bulk per record/],
+    [{ bulkEach: "1" }, /Bulk per record/],
+    [{ lotOverhead: null }, /Lot overhead/],
+    ['{"lotOverhead": 1e999}', /Lot overhead/],
+    [{ unverified: "yes" }, /Condition unverified/],
+  ];
+  for (const [body, msg] of bad) {
+    const r = await patchSession(req("PATCH", body), ctx(id));
+    assert.equal(r.status, 400, JSON.stringify(body));
+    assert.match((await j(r)).message, msg);
+  }
+  const inputs = (await j(await getSession(req("GET"), ctx(id)))).offer.inputs;
+  assert.deepEqual([inputs.unverified, inputs.pickThreshold, inputs.bulkEach, inputs.lotOverhead], [false, 15, 0.5, 0]);
+});
+
+test("PATCH item pick", async () => {
+  const { id, a, z } = await pricedLot();
+  const r = await patchItem(req("PATCH", { pick: false }), ctx(String(a.id)));
+  assert.equal(r.status, 200);
+  assert.equal((await j(r)).isPick, false);
+  assert.equal((await j(await getSession(req("GET"), ctx(id)))).offer.picks, 0);
+  assert.equal((await patchItem(req("PATCH", { pick: "no" }), ctx(String(a.id)))).status, 400);
+  const nz = await patchItem(req("PATCH", { pick: true }), ctx(String(z.id)));
+  assert.equal(nz.status, 400);
+  assert.equal((await j(nz)).message, "This record has no market value to cherry-pick.");
+});

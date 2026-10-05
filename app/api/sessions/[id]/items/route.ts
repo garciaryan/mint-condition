@@ -4,6 +4,7 @@ import { addItems, getSession } from "../../../../../lib/collection/store.ts";
 import { toItemView } from "../../../../../lib/collection/view.ts";
 import { kickWorker } from "../../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../../lib/db.ts";
+import { offerInputs } from "../../../../../lib/offer.ts";
 import { requireSession } from "../../../../../lib/route-auth.ts";
 import { isGrade } from "../../../../../lib/types.ts";
 import type { NewLine } from "../../../../../lib/collection/types.ts";
@@ -41,9 +42,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   return withSettings((settings) => {
     const db = getDb();
-    if (!getSession(db, id)) return errorJson("not-found", 404, "Lot not found.");
+    const session = getSession(db, id);
+    if (!session) return errorJson("not-found", 404, "Lot not found.");
+    const inputs = offerInputs(session, settings);
     const added = addItems(db, id, lines, { record, sleeve }, Date.now());
     void kickWorker();
-    return Response.json({ added: added.map((i) => toItemView(i, settings)) }, { status: 201 });
+    return Response.json({ added: added.map((i) => toItemView(i, settings, inputs)) }, { status: 201 });
   });
 }
