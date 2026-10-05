@@ -120,6 +120,16 @@ and sleeve) for the offer only.
 The pick threshold, bulk price and lot overhead are set per lot. The ladder, margin (30%), overhead per record
 ($1.50) and unverified steps are on the [Settings](#settings) page.
 
+### Export and print
+
+- **Export for Discogs** downloads the lot as a Discogs inventory-upload CSV. Upload it on Discogs (Sell Music →
+  Inventory Upload). Each priced record becomes a **draft** listing at the app's sell price with its record and
+  sleeve grades, so nothing goes live until you review it there. Records with no pressing or no price are left out;
+  the line under the link says how many will export.
+- **Print buy sheet** opens a printer-friendly page for you (not the seller): both offer ladders with the walk-away,
+  then every record with a box to tick, its grades, suggested and sell value, and a ★ for picks. Picks and the
+  most valuable records come first.
+
 ## How prices are worked out
 
 - **Market value**: the Discogs price suggestion for your record grade, multiplied by a sleeve-condition
@@ -198,6 +208,7 @@ lib/
   offer.ts             offer ladder, walk-away, cherry-pick vs bulk (pure functions)
   discogs-client.ts    one shared Discogs client per process (one throttle for lookups and the worker)
   discogs-cache.ts     SQLite cache of Discogs answers in front of that client
+  collection/export.ts Discogs inventory CSV and buy sheet rows (pure functions)
   relative-time.ts     "3 hours ago" formatting
   route-auth.ts        per-route session check
   collection/          lots: types, store (SQLite), parse (paste), view (pure totals/prices), ui, worker
@@ -218,5 +229,4 @@ Dockerfile, fly.toml   Fly.io deployment
 
 ## Roadmap
 
-- CSV export and a printable buy sheet
 - Tracking what you paid and sold for, to learn your own offer percentage
