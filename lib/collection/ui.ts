@@ -1,4 +1,5 @@
 // Small helpers for the browser components. Client-safe: no Node or server imports.
+import type { OfferView } from "../offer.ts";
 
 export function defaultLotName(now: Date): string {
   return `Lot ${now.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
@@ -82,3 +83,34 @@ export const STATUS_INFO: Record<StatusKey, { text: string; cls: string; icon: S
   "no-price": { text: "No price data", cls: "s-none", icon: "dash" },
   error: { text: "Error", cls: "s-err", icon: "warn" },
 };
+
+/** Currency amount; whole dollars unless the amount has cents (or `cents` forces them). */
+export function cash(n: number, currency: string, cents = !Number.isInteger(n)): string {
+  const opts = { style: "currency", currency, minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 } as const;
+  try {
+    return new Intl.NumberFormat("en-US", opts).format(n);
+  } catch {
+    return new Intl.NumberFormat("en-US", { ...opts, currency: "USD" }).format(n);
+  }
+}
+
+/** "Offer · open $13 · max $18": the whole-lot opening rung and walk-away. */
+export function offerSummary(offer: OfferView, currency: string): string {
+  const open = offer.wholeLot.rungs.find((r) => r.percent === offer.openingPercent)!;
+  return `Offer · open ${cash(open.amount, currency)} · max ${cash(offer.wholeLot.walkAway, currency)}`;
+}
+
+/** Caveats under the offer tables, in display order; only the ones that apply. */
+export function offerNotes(offer: OfferView, currency: string): string[] {
+  const notes: string[] = [];
+  const n = offer.unpricedCount;
+  if (n > 0) {
+    notes.push(`${n} ${n === 1 ? "record" : "records"} unpriced, counted as bulk at ${cash(offer.inputs.bulkEach, currency, true)} each`);
+  }
+  if (offer.inputs.unverified) {
+    const s = offer.inputs.unverifiedSteps;
+    notes.push(`Grades lowered ${s} ${s === 1 ? "step" : "steps"} for this offer (condition unverified)`);
+  }
+  if (offer.picks === 0) notes.push(`Picks: none at or above ${cash(offer.inputs.pickThreshold, currency)}`);
+  return notes;
+}

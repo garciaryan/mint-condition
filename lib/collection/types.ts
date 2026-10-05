@@ -9,6 +9,21 @@ export type SessionRow = {
   defaultSleeve: Grade;
   createdAt: number;
   updatedAt: number;
+  /** Offer inputs. Null threshold/bulk = use the settings default. */
+  unverified: boolean;
+  pickThreshold: number | null;
+  bulkEach: number | null;
+  lotOverhead: number;
+};
+
+export type SessionPatch = {
+  name?: string;
+  defaultRecord?: Grade;
+  defaultSleeve?: Grade;
+  unverified?: boolean;
+  pickThreshold?: number | null;
+  bulkEach?: number | null;
+  lotOverhead?: number;
 };
 
 export type ItemRow = {
@@ -29,6 +44,8 @@ export type ItemRow = {
   pricedAt: number | null;
   error: string | null;
   createdAt: number;
+  /** Cherry-pick pin: null = automatic (threshold), true/false = set by the owner. */
+  pick: boolean | null;
 };
 
 export type LookupPatch = {

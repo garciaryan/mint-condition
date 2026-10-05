@@ -29,6 +29,11 @@ CREATE TABLE items (
 );
 CREATE INDEX items_session ON items(session_id, created_at);
 CREATE INDEX items_status  ON items(status, created_at);`,
+  `ALTER TABLE sessions ADD COLUMN unverified     INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE sessions ADD COLUMN pick_threshold REAL;      -- null = settings default
+ALTER TABLE sessions ADD COLUMN bulk_each      REAL;      -- null = settings default
+ALTER TABLE sessions ADD COLUMN lot_overhead   REAL NOT NULL DEFAULT 0;
+ALTER TABLE items    ADD COLUMN pick           INTEGER;   -- null = automatic, 1 = pick, 0 = not a pick`,
 ];
 
 export function migrate(db: DatabaseSync, steps: string[]): number {

@@ -11,6 +11,7 @@ import type { LotData } from "./api.ts";
 import EntryBar from "./EntryBar.tsx";
 import ItemRow from "./ItemRow.tsx";
 import LotHeader from "./LotHeader.tsx";
+import OfferPanel from "./OfferPanel.tsx";
 import PickPanel from "./PickPanel.tsx";
 import TotalsBar from "./TotalsBar.tsx";
 
@@ -96,6 +97,15 @@ export default function LotView({ id }: { id: number }) {
     [refresh],
   );
 
+  const star = useCallback(
+    async (itemId: number, pick: boolean) => {
+      const res = await api(`/api/items/${itemId}`, "PATCH", { pick });
+      if (!res.ok) setNotice(`Could not change the cherry-pick: ${res.message}`);
+      refresh();
+    },
+    [refresh],
+  );
+
   const resume = useCallback(async () => {
     const res = await api(`/api/sessions/${id}/resume`, "POST", {});
     if (!res.ok) setNotice(`Could not retry: ${res.message}`);
@@ -167,7 +177,7 @@ export default function LotView({ id }: { id: number }) {
     );
   }
 
-  const { session, items, totals, queue, currency } = data;
+  const { session, items, totals, offer, queue, currency } = data;
   const isProblem = (i: ItemView) => i.status === "error" || i.status === "no-match";
   const shown = items.filter((i) => (filter === "to-pick" ? i.status === "to-pick" : filter === "problems" ? isProblem(i) : true));
   const tabs: { key: Filter; label: string }[] = [
@@ -180,6 +190,7 @@ export default function LotView({ id }: { id: number }) {
     <>
       <LotHeader session={session} onChanged={refresh} onDeleted={() => router.push("/collection")} onError={setNotice} />
       <TotalsBar totals={totals} queue={queue} offline={offline} currency={currency} onResume={resume} />
+      <OfferPanel offer={offer} session={session} currency={currency} onChanged={refresh} />
       <EntryBar
         key={session.id}
         sessionId={session.id}
@@ -229,6 +240,7 @@ export default function LotView({ id }: { id: number }) {
               item={item}
               currency={currency}
               onGrade={grade}
+              onStar={star}
               onPick={(it, trigger) => setPicking({ item: it, trigger })}
               onRetry={retry}
               onRemove={remove}

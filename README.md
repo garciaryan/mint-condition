@@ -9,6 +9,9 @@ pressing on Discogs and gives you three numbers:
 - **Sell price**: what to list it for on Discogs to undercut comparable copies.
 - **Local price**: what to ask in person, next to what you'd actually net on Discogs after fees.
 
+For buying collections, **collection mode** prices a whole lot of records at once and works out what to offer the
+seller: an opening offer, a ladder to negotiate up, and the most you can pay and still make your margin.
+
 > Discogs figures are asking prices and price suggestions, not confirmed sales. Treat them as a guide.
 
 ## Hosted version
@@ -86,9 +89,36 @@ a phone and finish it on a laptop.
    "62 of 70 priced · 4 to pick …", so you can see how much of the total is still missing.
 6. **Grades and re-pricing.** Changing a record's grades re-prices it instantly from the stored Discogs
    suggestions, with no new request. **Re-price all** fetches fresh figures from Discogs for the whole lot.
+7. **Make an offer.** Open **Offer** to see what to pay for the cherry-picks or the whole lot (see below).
 
 Totals use the same market value as the single lookup. Like everything here they are asking prices and
 suggestions, not sales.
+
+### Offers
+
+Open **Offer** on a lot to see what to offer the seller. It shows two deals side by side:
+
+- **Cherry-picks**: only the valuable records. A record is a pick when its suggested value is at or above the lot's
+  **pick threshold** (default $15). Tap the star on a row to add or remove it by hand.
+- **Whole lot**: the picks plus everything else at a flat **bulk** price per record (default $0.50). Records that
+  aren't priced yet (to pick, no match, no price) count as bulk, and the panel says how many.
+
+Each deal has a **ladder** (30 / 40 / 50 / 60% of the picks' suggested value, opening at 40%) and a **walk-away**:
+the most you can pay and still keep your margin:
+
+- **Cherry-picks walk-away** = what the picks would net on Discogs after the fee × (1 − margin) − overhead per pick
+  − the lot's overhead (gas, travel), never below $0.
+- **Whole-lot walk-away** = the same amount plus the bulk at cost, never below $0. If the lot's overhead is more
+  than the picks cover, the whole-lot walk-away comes down by the difference.
+
+"You keep" on each rung is how far that offer is below the walk-away, so it's room to negotiate on top of your
+margin, not your profit. Rungs above the walk-away are marked "over max". Offers are whole dollars, rounded down.
+
+For a remote buy from photos, switch on **Condition unverified**: every record is priced one grade lower (record
+and sleeve) for the offer only.
+
+The pick threshold, bulk price and lot overhead are set per lot. The ladder, margin (30%), overhead per record
+($1.50) and unverified steps are in the `offer` block of `settings.json`.
 
 ## How prices are worked out
 
@@ -98,9 +128,14 @@ suggestions, not sales.
   above the cheapest current listing, since that copy may be in worse shape.
 - **Local price**: market value × a local discount × the area-code multiplier. Shown next to what selling on
   Discogs would net after the seller fee.
+- **Offers** (lots only): the ladder is a percentage of the cherry-picks' suggested value, plus the flat bulk price
+  for everything else. The walk-away starts from what the picks would net at the sell price after the Discogs fee.
+  It then takes off your margin and overhead, and adds the bulk at cost. Details are under
+  [Offers](#offers).
 
 Every number above comes from [`settings.json`](settings.json). Edit it to change the sleeve multipliers, the
-undercut and floor, the Discogs fee, the local discount, regional multipliers by area code, and the currency.
+undercut and floor, the Discogs fee, the local discount, regional multipliers by area code, the currency, and the
+offer ladder, margin and defaults.
 
 ## Command-line lookup
 
@@ -129,7 +164,7 @@ app/                   Next.js App Router UI
   Picker.tsx, GradeSelect.tsx  shared by the lookup page and lots
   SiteHeader.tsx, NavLinks.tsx header and nav
   collection/          /collection lots list; [id]/ is one lot (entry bar, camera scanner, paste, to-pick
-                       panel, totals, rows)
+                       panel, totals, offer panel, rows)
   login/               login page
   api/lookup/route.ts  POST /api/lookup: Discogs lookups for the single-record page (lots use the worker)
   api/sessions/        lots: list/create, one lot, add items (bulk), re-price all
@@ -141,6 +176,7 @@ instrumentation.ts     starts the lookup worker when the server boots
 lib/
   discogs.ts           Discogs client: throttled, retries on 429, catno variants, barcode detection
   pricing.ts           pricing logic (pure functions)
+  offer.ts             offer ladder, walk-away, cherry-pick vs bulk (pure functions)
   discogs-client.ts    one shared Discogs client per process (one throttle for lookups and the worker)
   route-auth.ts        per-route session check
   collection/          lots: types, store (SQLite), parse (paste), view (pure totals/prices), ui, worker
@@ -159,7 +195,6 @@ Dockerfile, fly.toml   Fly.io deployment
 
 ## Roadmap
 
-- Offer calculator for buying collections
 - Price cache and a settings page
 - CSV export and a printable buy sheet
 - Tracking what you paid and sold for, to learn your own offer percentage

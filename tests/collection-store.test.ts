@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { openDb } from "../lib/db.ts";
 import {
   addItems, applyLookup, claimNextPending, countClaimable, countPending, createSession, deleteItem, deleteSession, getItem,
-  getSession, listItems, listSessions, pickRelease, releaseClaim, repriceSession, resetWorking, retryItem, touchSession,
-  updateItemFields, updateSession,
+  getSession, listItems, listSessions, pickRelease, releaseClaim, repriceSession, resetWorking, retryItem, setItemPick,
+  touchSession, updateItemFields, updateSession,
 } from "../lib/collection/store.ts";
 import type { Candidate } from "../lib/types.ts";
 
@@ -18,7 +18,10 @@ const setup = () => {
 
 test("sessions: create, get, update, list ordered by updatedAt", () => {
   const { db, s } = setup();
-  assert.deepEqual(s, { id: s.id, name: "A", defaultRecord: "NM", defaultSleeve: "NM", createdAt: 100, updatedAt: 100 });
+  assert.deepEqual(s, {
+    id: s.id, name: "A", defaultRecord: "NM", defaultSleeve: "NM", createdAt: 100, updatedAt: 100,
+    unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0,
+  });
   const b = createSession(db, { name: "B", defaultRecord: "VG", defaultSleeve: "VG" }, 200);
   assert.deepEqual(listSessions(db).map((x) => x.name), ["B", "A"]);
   const u = updateSession(db, s.id, { name: "A2", defaultRecord: "M" }, 300)!;
@@ -254,4 +257,29 @@ test("listItems reports candidate_count without parsing candidates; releaseClaim
   assert.equal(getItem(db, b.id)!.status, "pending");
   releaseClaim(db, a.id);
   assert.equal(getItem(db, a.id)!.status, "to-pick");
+});
+
+test("updateSession saves offer inputs and keeps others", () => {
+  const { db, s } = setup();
+  updateSession(db, s.id, { unverified: true, pickThreshold: 20, bulkEach: 1, lotOverhead: 25 }, 200);
+  const u = updateSession(db, s.id, { name: "X" }, 300)!;
+  assert.deepEqual([u.name, u.unverified, u.pickThreshold, u.bulkEach, u.lotOverhead], ["X", true, 20, 1, 25]);
+  const r = updateSession(db, s.id, { pickThreshold: null }, 400)!;
+  assert.deepEqual([r.unverified, r.pickThreshold, r.bulkEach, r.lotOverhead], [true, null, 1, 25]);
+});
+
+test("setItemPick pins and survives re-price and lookup", () => {
+  const { db, s } = setup();
+  const [it] = addItems(db, s.id, [{ query: "A" }], G, 1);
+  assert.equal(it.pick, null);
+  assert.equal(setItemPick(db, it.id, true)!.pick, true);
+  claimNextPending(db);
+  applyLookup(db, it.id, { status: "priced", releaseId: 5, release: cand(5), suggestions: { "VG+": 20 }, stats: null, pricedAt: 1 });
+  assert.equal(repriceSession(db, s.id), 1);
+  claimNextPending(db);
+  applyLookup(db, it.id, { status: "priced", suggestions: { "VG+": 21 }, pricedAt: 2 });
+  assert.equal(getItem(db, it.id)!.pick, true);
+  assert.equal(listItems(db, s.id)[0].pick, true);
+  assert.equal(setItemPick(db, it.id, false)!.pick, false);
+  assert.equal(setItemPick(db, 9999, true), null);
 });

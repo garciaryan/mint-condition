@@ -1,8 +1,16 @@
 // Browser-side fetch helper for the lot page. Client-safe: types only from server modules.
 import type { SessionRow } from "../../../lib/collection/types.ts";
 import type { ItemView, QueueState, Totals } from "../../../lib/collection/view.ts";
+import type { OfferView } from "../../../lib/offer.ts";
 
-export type LotData = { session: SessionRow; items: ItemView[]; totals: Totals; queue: QueueState; currency: string };
+export type LotData = {
+  session: SessionRow;
+  items: ItemView[];
+  totals: Totals;
+  offer: OfferView;
+  queue: QueueState;
+  currency: string;
+};
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; message: string };
 

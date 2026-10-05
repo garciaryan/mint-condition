@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { coverageText, displayStatus, etaText, pasteSummary } from "../lib/collection/ui.ts";
+import { readFileSync } from "node:fs";
+import { coverageText, displayStatus, etaText, offerNotes, offerSummary, pasteSummary } from "../lib/collection/ui.ts";
+import { computeOffer, offerInputs } from "../lib/offer.ts";
+import { parseSettings } from "../lib/settings.ts";
+import type { ItemRow } from "../lib/collection/types.ts";
 
 test("coverageText omits zero parts after priced", () => {
   assert.equal(
@@ -68,4 +72,32 @@ test("STATUS_INFO covers every item status with text", () => {
     assert.ok(STATUS_INFO[k].text.length > 0);
   }
   assert.equal(STATUS_INFO.priced.text, "Priced");
+});
+
+const settings = parseSettings(JSON.parse(readFileSync("settings.json", "utf8")));
+const row = (o: Partial<ItemRow>): ItemRow => ({
+  id: 1, sessionId: 1, query: "Q", year: null, record: "VG+", sleeve: "NM", status: "pending", releaseId: null,
+  release: null, candidates: null, suggestions: null, stats: null, pricedAt: null, error: null, createdAt: 0,
+  pick: null, ...o,
+});
+const stats = { lowestPrice: 12, currency: "USD", numForSale: 3 };
+const lot = [
+  row({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 }, stats }),
+  row({ status: "priced", suggestions: { NM: 12, "VG+": 10, VG: 6 }, stats }),
+  row({}),
+];
+const inputs = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);
+
+test("offerSummary shows the whole-lot opening rung and walk-away", () => {
+  assert.equal(offerSummary(computeOffer(lot, inputs, settings), "USD"), "Offer · open $13 · max $18");
+});
+
+test("offerNotes lists only the notes that apply", () => {
+  assert.deepEqual(offerNotes(computeOffer(lot, inputs, settings), "USD"), ["1 record unpriced, counted as bulk at $0.50 each"]);
+  const o = computeOffer([row({}), row({})], { ...inputs, unverified: true }, settings);
+  assert.deepEqual(offerNotes(o, "USD"), [
+    "2 records unpriced, counted as bulk at $0.50 each",
+    "Grades lowered 1 step for this offer (condition unverified)",
+    "Picks: none at or above $15",
+  ]);
 });
