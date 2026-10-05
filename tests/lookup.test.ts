@@ -45,18 +45,18 @@ function fakeClient(
 const req: LookupRequest = { catno: "SD 7208", year: 1971, record: "VG+", sleeve: "VG" };
 
 test("parseLookupRequest accepts a full form and trims fields", () => {
-  const r = parseLookupRequest({ catno: " SD 7208 ", year: "1971", record: "VG+", sleeve: "VG", areaCode: " 212 " });
+  const r = parseLookupRequest({ catno: " SD 7208 ", year: "1971", record: "VG+", sleeve: "VG" });
   assert.deepEqual(r, {
     ok: true,
-    value: { catno: "SD 7208", year: 1971, record: "VG+", sleeve: "VG", areaCode: "212", releaseId: undefined },
+    value: { catno: "SD 7208", year: 1971, record: "VG+", sleeve: "VG", releaseId: undefined },
   });
 });
 
-test("parseLookupRequest treats blank year and area code as absent", () => {
-  const r = parseLookupRequest({ catno: "X1", year: "", record: "NM", sleeve: "NM", areaCode: "  " });
+test("parseLookupRequest treats a blank year as absent and ignores an old client's area code", () => {
+  const r = parseLookupRequest({ catno: "X1", year: "", record: "NM", sleeve: "NM", areaCode: "212" });
   assert.ok(r.ok);
   assert.equal(r.value.year, undefined);
-  assert.equal(r.value.areaCode, undefined);
+  assert.equal("areaCode" in r.value, false);
 });
 
 test("parseLookupRequest rejects bad input with a readable message", () => {

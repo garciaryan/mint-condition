@@ -23,9 +23,7 @@ type Errors = Partial<Record<FieldKey, string>>;
 const LABELS: Partial<Record<FieldKey, string>> = {
   "sell.undercutPercent": "Undercut (%)",
   "sell.floor": "Minimum sell price ($)",
-  "local.localDiscountMultiplier": "Local price (% of market)",
-  "local.discogsFeePercent": "Discogs fee (%)",
-  "local.defaultRegionMultiplier": "Default area multiplier (%)",
+  "sell.discogsFeePercent": "Discogs fee (%)",
   "offer.ladderPercents": "Offer ladder (% of suggested)",
   "offer.openingPercent": "Opening offer (%)",
   "offer.marginPercent": "Margin (%)",
@@ -38,8 +36,7 @@ const LABELS: Partial<Record<FieldKey, string>> = {
 const label = (k: FieldKey) => LABELS[k] ?? `${k.split(".")[1]} sleeve (%)`;
 
 const SECTIONS: { legend: string; note?: string; grid?: boolean; currency?: boolean; keys: FieldKey[] }[] = [
-  { legend: "Selling", keys: ["sell.undercutPercent", "sell.floor"] },
-  { legend: "Local sale", keys: ["local.localDiscountMultiplier", "local.discogsFeePercent", "local.defaultRegionMultiplier"] },
+  { legend: "Selling", keys: ["sell.undercutPercent", "sell.floor", "sell.discogsFeePercent"] },
   {
     legend: "Sleeve condition",
     note: "Share of market value kept for each sleeve grade.",

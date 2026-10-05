@@ -21,13 +21,7 @@ export type PriceSuggestions = Partial<Record<Grade, number>>;
 
 export type Settings = {
   sleeveMultipliers: Record<Grade, number>;
-  sell: { undercutPercent: number; floor: number };
-  local: {
-    discogsFeePercent: number;
-    localDiscountMultiplier: number;
-    defaultRegionMultiplier: number;
-    regionMultipliers: Record<string, number>;
-  };
+  sell: { undercutPercent: number; floor: number; discogsFeePercent: number };
   discogs: { currency: string; cacheHours: number };
   offer: {
     ladderPercents: number[];

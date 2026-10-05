@@ -1,16 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { searchUrl } from "../lib/discogs-terms.ts";
 import { groupCandidates } from "../lib/form.ts";
 import type { Candidate } from "../lib/types.ts";
+import DiscogsCredit from "./DiscogsCredit.tsx";
 
 export default function Picker({
   candidates,
+  query,
   year,
   onPick,
   autoFocusFilter = false,
 }: {
   candidates: Candidate[];
+  /** The catalog number or barcode searched, for the credit's link to the same Discogs search. */
+  query: string;
   year?: number;
   onPick: (c: Candidate) => void;
   autoFocusFilter?: boolean;
@@ -34,6 +39,7 @@ export default function Picker({
         />
       </div>
       <p className="muted">Pick the one that matches your copy (check the label, country and matrix if you can).</p>
+      <DiscogsCredit href={searchUrl(query)} />
       {groups.length === 0 && <p className="muted">Nothing matches that filter.</p>}
       {groups.map((g) => (
         <div key={g.title}>

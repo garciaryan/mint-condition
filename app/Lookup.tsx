@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { DATA_CREDIT, releaseUrl } from "../lib/discogs-terms.ts";
+import { DATA_CREDIT, dataExpired, MAX_CACHE_HOURS, releaseUrl } from "../lib/discogs-terms.ts";
 import { clearsInputs, fieldErrors, movesToResult } from "../lib/form.ts";
 import { relativeTime } from "../lib/relative-time.ts";
 import type { FieldErrors } from "../lib/form.ts";
@@ -35,8 +35,6 @@ export default function Lookup() {
   const [year, setYear] = useState("");
   const [record, setRecord] = useState<Grade>("VG+");
   const [sleeve, setSleeve] = useState<Grade>("VG+");
-  const [local, setLocal] = useState(false);
-  const [areaCode, setAreaCode] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [scanning, setScanning] = useState(false);
   const [scanUnavailable, setScanUnavailable] = useState<string | null>(null);
@@ -50,8 +48,6 @@ export default function Lookup() {
   const [candidates, setCandidates] = useState<Extract<View, { kind: "candidates" }> | null>(null);
   // catno|year of the last search, so re-submitting an unchanged search re-prices instead of searching again.
   const [searchedKey, setSearchedKey] = useState<string | null>(null);
-  // Area code the shown prices were computed with, so editing it re-prices.
-  const [pricedArea, setPricedArea] = useState("");
 
   const inflight = useRef<AbortController | null>(null);
   // A pick that hasn't come back yet; grade changes re-price it rather than the older result.
@@ -113,24 +109,22 @@ export default function Lookup() {
   async function price(
     id: number,
     picked: Candidate | null,
-    opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; focus?: boolean; fresh?: boolean; clear?: boolean } = {},
+    opts: { grades?: { record: Grade; sleeve: Grade }; focus?: boolean; fresh?: boolean; clear?: boolean } = {},
   ) {
     const grades = opts.grades ?? { record, sleeve };
-    const area = opts.area ?? (local ? areaCode.trim() : "");
     pending.current = { id, picked };
-    retry.current = () => void price(id, picked, { grades, area, focus: true, fresh: opts.fresh });
-    const res = await lookup({ releaseId: id, ...grades, areaCode: area, ...(opts.fresh ? { fresh: true } : {}) }, "price");
+    retry.current = () => void price(id, picked, { grades, focus: true, fresh: opts.fresh });
+    const res = await lookup({ releaseId: id, ...grades, ...(opts.fresh ? { fresh: true } : {}) }, "price");
     if (!res) return;
     pending.current = null;
     setReleaseId(id);
     setRelease(picked);
-    setPricedArea(area);
     if (opts.focus) focusNext.current = true;
     show(res);
     if (opts.clear && clearsInputs(res.status)) clearInputs();
   }
 
-  // Ready for the next record; grades, local sale and the shown result stay.
+  // Ready for the next record; grades and the shown result stay.
   function clearInputs() {
     setCatno("");
     setYear("");
@@ -140,17 +134,15 @@ export default function Lookup() {
   async function search(fresh = false, q: { catno: string; year: string } = { catno, year }) {
     const key = `${q.catno.trim()}|${q.year.trim()}`;
     const searchedYear = Number(q.year) || undefined;
-    const area = local ? areaCode.trim() : "";
     retry.current = () => void search(fresh, q);
     pending.current = null;
-    const res = await lookup({ catno: q.catno, year: q.year, record, sleeve, areaCode: area, ...(fresh ? { fresh: true } : {}) }, "search");
+    const res = await lookup({ catno: q.catno, year: q.year, record, sleeve, ...(fresh ? { fresh: true } : {}) }, "search");
     if (!res) return;
     setSearchedKey(res.status === "error" ? null : key);
     setCandidates(res.status === "candidates" ? { kind: "candidates", candidates: res.candidates, year: searchedYear } : null);
     if (res.status === "priced" || res.status === "no-price") {
       setReleaseId(res.releaseId);
       setRelease(res.release);
-      setPricedArea(area);
     } else {
       setReleaseId(null);
       setRelease(null);
@@ -178,8 +170,8 @@ export default function Lookup() {
     else void search();
   }
 
-  /** Re-prices the shown (or still-loading) pressing in place, e.g. after a grade or area code change. */
-  function reprice(opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; fresh?: boolean; focus?: boolean }) {
+  /** Re-prices the shown (or still-loading) pressing in place, e.g. after a grade change. */
+  function reprice(opts: { grades?: { record: Grade; sleeve: Grade }; fresh?: boolean; focus?: boolean }) {
     if (busy === "search") return;
     const target = pending.current ?? (view.kind === "result" && releaseId !== null ? { id: releaseId, picked: release } : null);
     if (target) void price(target.id, target.picked, opts);
@@ -190,11 +182,6 @@ export default function Lookup() {
     if (which === "record") setRecord(g);
     else setSleeve(g);
     reprice({ grades });
-  }
-
-  function changeArea() {
-    const area = areaCode.trim();
-    if (area !== pricedArea) reprice({ area });
   }
 
   function validateField(which: keyof FieldErrors) {
@@ -278,31 +265,6 @@ export default function Lookup() {
           <GradeSelect id="sleeve" value={sleeve} onChange={(g) => changeGrade("sleeve", g)} />
         </div>
         <div className="form-row">
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={local}
-              onChange={(e) => {
-                setLocal(e.target.checked);
-                if (e.target.checked && areaCode.trim()) changeArea();
-              }}
-            />
-            <span>Local sale</span>
-          </label>
-          {local && (
-            <div className="field inline">
-              <label htmlFor="area">Area code</label>
-              <input
-                id="area"
-                value={areaCode}
-                onChange={(e) => setAreaCode(e.target.value)}
-                onBlur={changeArea}
-                placeholder="optional"
-                inputMode="numeric"
-                size={6}
-              />
-            </div>
-          )}
           <button type="submit" disabled={busy !== null}>
             {busy !== null ? "Looking up…" : "Price it"}
           </button>
@@ -352,13 +314,12 @@ export default function Lookup() {
             )}
             {view.kind === "error" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
             {view.kind === "candidates" && (
-              <Picker candidates={view.candidates} year={view.year} onPick={(c) => void price(c.id, c, { focus: true, clear: true })} />
+              <Picker candidates={view.candidates} query={searchedKey?.split("|")[0] ?? catno} year={view.year} onPick={(c) => void price(c.id, c, { focus: true, clear: true })} />
             )}
             {view.kind === "result" && (
               <ResultCard
                 res={view.res}
                 release={view.res.release ?? release}
-                showLocal={local}
                 busy={repricing}
                 slow={repricing && slow}
                 onRefresh={() => reprice({ fresh: true, focus: true })}
@@ -410,7 +371,6 @@ function ErrorCard({ res, onRetry }: { res: LookupError; onRetry: () => void }) 
 function ResultCard({
   res,
   release,
-  showLocal,
   busy,
   slow,
   onRefresh,
@@ -418,7 +378,6 @@ function ResultCard({
 }: {
   res: Priced;
   release: Candidate | null;
-  showLocal: boolean;
   busy: boolean;
   slow: boolean;
   onRefresh: () => void;
@@ -426,6 +385,17 @@ function ResultCard({
 }) {
   const cur = res.status === "priced" ? res.currency : (res.stats.currency ?? "USD");
   const money = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
+
+  // Discogs terms: nothing shown more than 6 hours behind discogs.com. A card left open that long hides its figures.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    setNow(Date.now());
+    const wait = res.fetchedAt + MAX_CACHE_HOURS * 3_600_000 - Date.now() + 1000;
+    if (wait <= 0) return;
+    const t = setTimeout(() => setNow(Date.now()), wait);
+    return () => clearTimeout(t);
+  }, [res.fetchedAt]);
+  const expired = dataExpired(res.fetchedAt, now);
 
   return (
     <div className={busy ? "card result stale" : "card result"} aria-busy={busy}>
@@ -451,7 +421,7 @@ function ResultCard({
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </p>
-          {res.cached && (
+          {res.cached && !expired && (
             <p className="muted small price-age">
               {res.status === "priced" ? "Prices from" : "Checked"} {relativeTime(res.fetchedAt)} ·{" "}
               <button type="button" className="link" onClick={onRefresh} disabled={busy}>
@@ -468,7 +438,17 @@ function ResultCard({
         )}
       </div>
 
-      {res.status === "no-price" ? (
+      {expired ? (
+        <div className="notice">
+          <p>
+            These figures are more than {MAX_CACHE_HOURS} hours old, so they’re hidden (Discogs only allows showing current
+            data).{" "}
+            <button type="button" className="link" onClick={onRefresh} disabled={busy}>
+              Refresh prices
+            </button>
+          </p>
+        </div>
+      ) : res.status === "no-price" ? (
         <div className="notice">
           {res.reason === "no-suggestions" ? (
             <p>
@@ -480,7 +460,7 @@ function ResultCard({
           )}
         </div>
       ) : (
-        <div className={showLocal ? "prices with-local" : "prices"}>
+        <div className="prices">
           <div className="price-block market">
             <h3>Market value</h3>
             <div className="range">
@@ -505,35 +485,28 @@ function ResultCard({
           <div className="price-block">
             <h3>Sell price</h3>
             <div className="big">{money(res.result.sell.price)}</div>
+            <p className="muted small">You'd net {money(res.result.sell.net)} on Discogs after the seller fee.</p>
             {res.result.sell.aboveLowestListing && (
               <p className="warn small">
                 Above the cheapest current listing ({money(res.stats.lowestPrice!)}), which may be a worse copy.
               </p>
             )}
           </div>
-          {showLocal && (
-            <div className="price-block">
-              <h3>Local sale</h3>
-              <div className="big">{money(res.result.local.price)}</div>
-              <p className="muted small">
-                Region ×{res.result.local.regionMultiplier}. Selling on Discogs instead nets{" "}
-                {money(res.result.local.discogsNet)} after fees.
-              </p>
-            </div>
-          )}
         </div>
       )}
 
-      <dl className="stats">
-        <div>
-          <dt>Copies for sale</dt>
-          <dd>{res.stats.numForSale}</dd>
-        </div>
-        <div>
-          <dt>Lowest listing</dt>
-          <dd>{res.stats.lowestPrice === null ? "none" : money(res.stats.lowestPrice)}</dd>
-        </div>
-      </dl>
+      {!expired && (
+        <dl className="stats">
+          <div>
+            <dt>Copies for sale</dt>
+            <dd>{res.stats.numForSale}</dd>
+          </div>
+          <div>
+            <dt>Lowest listing</dt>
+            <dd>{res.stats.lowestPrice === null ? "none" : money(res.stats.lowestPrice)}</dd>
+          </div>
+        </dl>
+      )}
       <p className="muted small">
         Discogs figures are asking prices and suggestions, not confirmed sales. Treat them as a guide.
       </p>

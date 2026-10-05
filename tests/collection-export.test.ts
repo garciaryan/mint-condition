@@ -19,7 +19,7 @@ const item = (o: Partial<ItemRow>): ItemRow => ({
 const HEADER = "release_id,price,media_condition,sleeve_condition,status,external_id,private_notes";
 const sugg = { NM: 40, "VG+": 30, VG: 20, "G+": 10 };
 const priced = (o: Partial<ItemRow> = {}) => item({ status: "priced", releaseId: 101, suggestions: sugg, stats: null, ...o });
-const withSell = (sell: Settings["sell"]): Settings => ({ ...settings, sell });
+const withSell = (sell: Partial<Settings["sell"]>): Settings => ({ ...settings, sell: { ...settings.sell, ...sell } });
 
 test("header and one row in Discogs wording at the sell price", () => {
   const it = priced({ id: 7, record: "VG+", sleeve: "VG" });
@@ -106,7 +106,7 @@ test("buy sheet row fields", () => {
   const [r] = buySheetRows([it], settings, INPUTS);
   const p = priceRecord({ suggestions: sugg, lowestListing: null, record: "VG+", sleeve: "VG", settings })!;
   assert.deepEqual(r, {
-    id: 1, query: "SD 1", title: "Blue", detail: "Atlantic · 1971", record: "VG+", sleeve: "VG",
+    id: 1, releaseId: 101, query: "SD 1", title: "Blue", detail: "Atlantic · 1971", record: "VG+", sleeve: "VG",
     suggested: marketFor(it, settings)!.suggested, sell: p.sell.price, isPick: true, statusLabel: null,
   });
   assert.equal(buySheetRows([priced({ release: rel({ label: "", year: null }) })], settings, INPUTS)[0].detail, "");

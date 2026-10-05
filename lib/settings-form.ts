@@ -4,8 +4,7 @@ import { GRADES } from "./types.ts";
 import type { Grade, Settings } from "./types.ts";
 
 export const FIELD_KEYS = [
-  "sell.undercutPercent", "sell.floor",
-  "local.localDiscountMultiplier", "local.discogsFeePercent", "local.defaultRegionMultiplier",
+  "sell.undercutPercent", "sell.floor", "sell.discogsFeePercent",
   "sleeveMultipliers.M", "sleeveMultipliers.NM", "sleeveMultipliers.VG+", "sleeveMultipliers.VG",
   "sleeveMultipliers.G+", "sleeveMultipliers.G", "sleeveMultipliers.F", "sleeveMultipliers.P",
   "offer.ladderPercents", "offer.openingPercent", "offer.marginPercent", "offer.overheadPerRecord",
@@ -17,31 +16,26 @@ export type SettingsForm = Record<FieldKey, string>;
 export type EditableSettings = {
   sleeveMultipliers: Record<Grade, number>;
   sell: Settings["sell"];
-  local: Omit<Settings["local"], "regionMultipliers">;
   offer: Settings["offer"];
   discogs: { cacheHours: number };
 };
 
 /** Stored as a multiplier (0.8), shown and typed as a percent ("80"). */
-export const PERCENT_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>([
-  "local.localDiscountMultiplier", "local.defaultRegionMultiplier",
-  ...GRADES.map((g) => `sleeveMultipliers.${g}` as FieldKey),
-]);
+export const PERCENT_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>(
+  GRADES.map((g) => `sleeveMultipliers.${g}` as FieldKey),
+);
 
 type Kind = "mult" | "percent" | "money" | "steps" | "hours" | "ladder";
 type Rule = { kind: Kind; ok: (n: number) => boolean; message: string };
 
 const BELOW_100: Rule = { kind: "percent", ok: (n) => n >= 0 && n < 100, message: "Use 0 up to (not including) 100." };
 const MONEY: Rule = { kind: "money", ok: (n) => n >= 0, message: "Use 0 or more." };
-const POSITIVE_MULT: Rule = { kind: "mult", ok: (n) => n > 0, message: "Use more than 0." };
 const SLEEVE: Rule = { kind: "mult", ok: (n) => n >= 1 && n <= 150, message: "Use 1 to 150." };
 
 const RULES: Record<FieldKey, Rule> = {
   "sell.undercutPercent": BELOW_100,
   "sell.floor": MONEY,
-  "local.localDiscountMultiplier": POSITIVE_MULT,
-  "local.discogsFeePercent": BELOW_100,
-  "local.defaultRegionMultiplier": POSITIVE_MULT,
+  "sell.discogsFeePercent": BELOW_100,
   "sleeveMultipliers.M": SLEEVE, "sleeveMultipliers.NM": SLEEVE, "sleeveMultipliers.VG+": SLEEVE,
   "sleeveMultipliers.VG": SLEEVE, "sleeveMultipliers.G+": SLEEVE, "sleeveMultipliers.G": SLEEVE,
   "sleeveMultipliers.F": SLEEVE, "sleeveMultipliers.P": SLEEVE,
@@ -144,12 +138,7 @@ export function fromForm(
     ok: true,
     value: {
       sleeveMultipliers: Object.fromEntries(GRADES.map((g) => [g, n[`sleeveMultipliers.${g}`]])) as Record<Grade, number>,
-      sell: { undercutPercent: n["sell.undercutPercent"], floor: n["sell.floor"] },
-      local: {
-        discogsFeePercent: n["local.discogsFeePercent"],
-        localDiscountMultiplier: n["local.localDiscountMultiplier"],
-        defaultRegionMultiplier: n["local.defaultRegionMultiplier"],
-      },
+      sell: { undercutPercent: n["sell.undercutPercent"], floor: n["sell.floor"], discogsFeePercent: n["sell.discogsFeePercent"] },
       offer: {
         ladderPercents: ladder.value,
         openingPercent: n["offer.openingPercent"],

@@ -1,8 +1,8 @@
 # Mint Condition
 
 Single-user web app (Next.js App Router + TypeScript), hosted on Fly.io, that prices vinyl records using the Discogs API.
-Input: catalog number, pressing year, record grade, sleeve grade (optionally an area code). Output: fair market
-value range, sell price, and local-sale price. Later phases add collection (bulk buying) tools.
+Input: catalog number (or barcode), pressing year, record grade, sleeve grade. Output: fair market value range and
+sell price (with the net after the Discogs fee). Collection (bulk buying) tools build on it.
 
 ## Decisions already made
 - Hosted on Fly.io (one machine, SQLite on a volume at `/data`), single-password login (`APP_PASSWORD_HASH` +
@@ -17,10 +17,12 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Discogs requires a descriptive `User-Agent` (`DISCOGS_USER_AGENT`).
 - Keep `lib/pricing.ts` and `lib/offer.ts` as **pure functions** (no network, no fs, no DB). All tunables come from
   `settings.json`, overridden by the saved row edited on `/settings` (`lib/settings-store.ts`); routes read settings
-  through `getSettings(getDb())`. Currency and region multipliers come only from the file.
+  through `getSettings(getDb())`. Currency comes only from the file.
 - Price meanings: *market value* = Discogs suggestion for the record grade x sleeve multiplier (range = next grade
-  down to next grade up). *Sell price* = market x (1 - undercut), floored. *Local price* = market x local discount x
-  area-code multiplier, shown next to what the user would net on Discogs after fees.
+  down to next grade up). *Sell price* = market x (1 - undercut), floored, with *net* = sell x (1 - Discogs fee).
+  Local-sale pricing was removed (2026-10-05): pricing records for sale off Discogs with Discogs data is close to the
+  terms' "circumvent Our marketplace" example. Don't bring it back. The fee is `sell.discogsFeePercent`; rows saved
+  with the old `local.discogsFeePercent` are read through `moveLegacyFee` in `lib/settings-store.ts`.
 - Collection mode: lot prices are computed at read time (`lib/collection/view.ts`) from stored per-grade Discogs
   suggestions and stats, so grade changes cost no API call. One in-process lookup worker (`lib/collection/worker.ts`,
   started by `instrumentation.ts`) drains pending items through the shared client in `lib/discogs-client.ts`, so one
@@ -39,8 +41,11 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Discogs data is asking prices and suggestions, not confirmed sales. The UI should say so.
 - Discogs API terms (`lib/discogs-terms.ts`): no Discogs data shown more than 6 hours old (`MAX_CACHE_HOURS`; lot
   rows past it are hidden by `hideExpired` and re-queued by `requeueExpired` when the lot or buy sheet opens);
-  "Data provided by Discogs" linked to the release next to the data (no `nofollow`); the not-affiliated notice in
-  `app/SiteFooter.tsx` on every page. Price data is Restricted Data: no commercial use, no transfer to third parties.
+  "Data provided by Discogs" linked next to the data (no `nofollow`): the release on the result card and lot rows,
+  `app/DiscogsCredit.tsx` (Discogs search for pick lists, marketplace for totals, offers, the lots list and scanner);
+  `discogs.com/release/<id>` per buy-sheet row; the result card hides its figures past 6 hours (`dataExpired`);
+  the not-affiliated notice in `app/SiteFooter.tsx` on every page. Anything new that shows Discogs data needs a credit
+  (`tests/discogs-terms.test.ts`). Price data is Restricted Data: no commercial use, no transfer to third parties.
 
 - Released as self-hosted, MIT-licensed (`LICENSE`): each person runs their own copy (locally or their own Fly app)
   with their own Discogs token and IP rate limit; there is no shared public instance. The workflow runs the checks on PRs
@@ -53,7 +58,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - `npm install`
 - `npm test` (Node's built-in test runner, no extra deps; Node 22.13+)
 - `npm run typecheck`
-- `npm run lookup -- "<catno|barcode>" <year> <recordGrade> <sleeveGrade> [areaCode] [--id <releaseId>]` (CLI check)
+- `npm run lookup -- "<catno|barcode>" <year> <recordGrade> <sleeveGrade> [--id <releaseId>]` (CLI check)
 - `npm run dev` -> http://localhost:3000
 - `npm run hash-password` (interactive; prints `APP_PASSWORD_HASH`) · deploy and ops: see `DEPLOY.md`
 

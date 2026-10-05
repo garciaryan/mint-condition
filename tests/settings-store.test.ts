@@ -39,15 +39,26 @@ test("an invalid save throws and leaves the stored row unchanged", () => {
   assert.equal(getSettings(db).settings.offer.marginPercent, 35);
 });
 
-test("currency and region multipliers are never stored", () => {
-  saveSettings(db, { discogs: { currency: "EUR" }, local: { regionMultipliers: { "415": 2 } } });
+test("currency is never stored", () => {
+  saveSettings(db, { discogs: { currency: "EUR" } });
   // biome-ignore lint: test helper
   const raw = getSavedRaw(db) as Record<string, any>;
   assert.equal(raw.discogs?.currency, undefined);
-  assert.equal(raw.local?.regionMultipliers, undefined);
-  const s = getSettings(db).settings;
-  assert.equal(s.discogs.currency, defaults.discogs.currency);
-  assert.deepEqual(s.local.regionMultipliers, defaults.local.regionMultipliers);
+  assert.equal(getSettings(db).settings.discogs.currency, defaults.discogs.currency);
+});
+
+test("a row saved before local sale was dropped keeps its Discogs fee (moved to sell) and loses the rest", () => {
+  const old = {
+    ...defaults,
+    sell: { undercutPercent: 5, floor: 2 },
+    local: { discogsFeePercent: 12, localDiscountMultiplier: 0.7, defaultRegionMultiplier: 1.1 },
+  };
+  db.prepare("insert into settings (id, json, updated_at) values (1, ?, 5)").run(JSON.stringify(old));
+  const s = getSettings(db);
+  assert.equal(s.invalid, null);
+  assert.equal(s.settings.sell.discogsFeePercent, 12);
+  assert.equal(s.settings.sell.undercutPercent, 5);
+  assert.equal("local" in s.settings, false);
 });
 
 test("a stored row that no longer validates falls back to defaults with a reason", () => {

@@ -10,8 +10,7 @@ test("multipliers show as percents without float noise and round-trip", () => {
   const f = toForm(defaults);
   assert.equal(f["sleeveMultipliers.VG+"], "95");
   assert.equal(f["sleeveMultipliers.VG"], "85");
-  assert.equal(f["local.localDiscountMultiplier"], "80");
-  assert.equal(f["local.defaultRegionMultiplier"], "100");
+  assert.equal(f["sell.discogsFeePercent"], "9");
   assert.equal(f["offer.ladderPercents"], "30, 40, 50, 60");
   assert.equal(f["sell.floor"], "1");
   const r = fromForm({ ...f, "sleeveMultipliers.VG+": "95.5" });
@@ -21,7 +20,7 @@ test("multipliers show as percents without float noise and round-trip", () => {
   assert.ok(back.ok);
   assert.deepEqual(back.value.sleeveMultipliers, defaults.sleeveMultipliers);
   assert.deepEqual(back.value.offer, defaults.offer);
-  assert.equal(back.value.local.localDiscountMultiplier, 0.8);
+  assert.equal(back.value.sell.discogsFeePercent, 9);
 });
 
 test("toForm covers every field key", () => {
@@ -59,9 +58,8 @@ test("field limits mirror parseSettings", () => {
   assert.ok(!bad("sleeveMultipliers.NM", "150"));
   assert.ok(bad("sell.undercutPercent", "100"));
   assert.ok(bad("sell.floor", "-1"));
-  assert.ok(bad("local.discogsFeePercent", "-1"));
-  assert.ok(bad("local.localDiscountMultiplier", "0"));
-  assert.ok(bad("local.defaultRegionMultiplier", "0"));
+  assert.ok(bad("sell.discogsFeePercent", "-1"));
+  assert.ok(bad("sell.discogsFeePercent", "100"));
   assert.ok(bad("offer.marginPercent", "100"));
   assert.ok(bad("offer.unverifiedSteps", "1.5"));
   assert.ok(bad("offer.unverifiedSteps", "4"));
@@ -126,12 +124,12 @@ test("only plain decimals count as numbers", () => {
 });
 
 test("multipliers keep up to four decimals of percent", () => {
-  const precise = { ...defaults, local: { ...defaults.local, localDiscountMultiplier: 0.12345 } };
+  const precise = { ...defaults, sleeveMultipliers: { ...defaults.sleeveMultipliers, G: 0.12345 } };
   const f = toForm(precise);
-  assert.equal(f["local.localDiscountMultiplier"], "12.345");
+  assert.equal(f["sleeveMultipliers.G"], "12.345");
   const r = fromForm(f);
   assert.ok(r.ok);
-  assert.equal(r.value.local.localDiscountMultiplier, 0.12345);
+  assert.equal(r.value.sleeveMultipliers.G, 0.12345);
   assert.equal(toForm(defaults)["sleeveMultipliers.VG+"], "95");
   const r2 = fromForm({ ...f, "sleeveMultipliers.VG+": "95.12345" });
   assert.ok(r2.ok);

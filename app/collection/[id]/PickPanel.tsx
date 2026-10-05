@@ -83,7 +83,7 @@ export default function PickPanel({
               <span>Loading pressings…</span>
             </div>
           ) : (
-            <Picker candidates={candidates} year={item.year ?? undefined} onPick={pick} />
+            <Picker candidates={candidates} query={item.query} year={item.year ?? undefined} onPick={pick} />
           )}
         </div>
       </div>

@@ -139,6 +139,22 @@ body {
   scroll-margin-top: 16px;
 }
 
+/* "Data provided by Discogs" next to Discogs data and totals worked out from it. */
+.discogs-credit {
+  margin: 6px 0 0;
+}
+
+/* On the scanner's dark background, follow its light text rather than the page link colour. */
+.scanner .discogs-credit,
+.scanner .discogs-credit a {
+  color: inherit;
+}
+
+/* Buy sheet: the release each row was priced from (paper can't carry a link). */
+.sheet-ref {
+  display: block;
+}
+
 /* Site footer: the Discogs notice on every page. */
 .site-footer {
   width: 100%;
@@ -467,23 +483,8 @@ a:focus-visible {
   gap: 12px 20px;
 }
 
-.form-row .field.inline input {
-  width: 9ch;
-  min-width: 90px;
-}
-
 .form-row button[type="submit"] {
   margin-left: auto;
-}
-
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: var(--control-h);
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
 }
 
 button[type="submit"],
@@ -755,10 +756,6 @@ a {
   gap: 16px;
   margin: 20px 0;
   transition: opacity var(--dur-fast) var(--ease);
-}
-
-.prices.with-local {
-  grid-template-columns: 2fr 1fr 1fr;
 }
 
 .price-block {
@@ -1649,9 +1646,6 @@ kbd {
   }
 
   .prices,
-  .prices.with-local {
-    grid-template-columns: 1fr 1fr;
-  }
 
   .price-block.market {
     grid-column: 1 / -1;
@@ -1799,9 +1793,6 @@ kbd {
   }
 
   .prices,
-  .prices.with-local {
-    grid-template-columns: 1fr;
-  }
 
   .big {
     font-size: 24px;

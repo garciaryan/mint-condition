@@ -33,12 +33,21 @@ export function getSettings(db: DatabaseSync, defaultsPath?: string): SettingsSt
     if (typeof saved !== "object" || saved === null || Array.isArray(saved)) {
       throw new Error("settings: the saved settings are not an object");
     }
-    const settings = parseSettings(capCacheHours(mergeSettings(defaults, saved)));
+    const settings = parseSettings(capCacheHours(mergeSettings(defaults, moveLegacyFee(saved))));
     return { settings, defaults, saved: true, updatedAt: row.updated_at, invalid: null };
   } catch (e) {
     const invalid = e instanceof Error ? e.message : String(e);
     return { settings: defaults, defaults, saved: true, updatedAt: row.updated_at, invalid };
   }
+}
+
+// Rows saved while local sale existed kept the Discogs fee under `local`; it now lives under `sell`. The other local
+// values are dropped by the merge (the defaults no longer have them).
+function moveLegacyFee(saved: object): object {
+  const fee = (saved as { local?: { discogsFeePercent?: unknown } }).local?.discogsFeePercent;
+  const sell = (saved as { sell?: Record<string, unknown> }).sell;
+  if (fee === undefined || sell?.discogsFeePercent !== undefined) return saved;
+  return { ...saved, sell: { ...sell, discogsFeePercent: fee } };
 }
 
 // Rows saved before the 6-hour cap may hold more; read them as the cap rather than dropping the whole row.
@@ -59,14 +68,13 @@ export function getSavedRaw(db: DatabaseSync): unknown | null {
   }
 }
 
-/** Validates `input` over the defaults and stores it. Currency and region multipliers are not editable here, so they
- * are left out of the row and always follow settings.json. Throws (row unchanged) when invalid. */
+/** Validates `input` over the defaults and stores it. Currency is not editable here, so it is left out of the row and
+ * always follows settings.json. Throws (row unchanged) when invalid. */
 export function saveSettings(db: DatabaseSync, input: unknown, defaultsPath?: string, now = Date.now()): Settings {
   const defaults = loadSettings(defaultsPath ?? settingsPath());
   const settings = parseSettings(mergeSettings(defaults, input));
   const { currency: _currency, ...discogs } = settings.discogs;
-  const { regionMultipliers: _regions, ...local } = settings.local;
-  const stored = { ...settings, discogs, local };
+  const stored = { ...settings, discogs };
   db.prepare(
     `INSERT INTO settings (id, json, updated_at) VALUES (1, ?, ?)
      ON CONFLICT(id) DO UPDATE SET json = excluded.json, updated_at = excluded.updated_at`,

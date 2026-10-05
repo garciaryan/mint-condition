@@ -11,13 +11,8 @@
   },
   "sell": {
     "undercutPercent": 3,
-    "floor": 1
-  },
-  "local": {
-    "discogsFeePercent": 9,
-    "localDiscountMultiplier": 0.8,
-    "defaultRegionMultiplier": 1.0,
-    "regionMultipliers": {}
+    "floor": 1,
+    "discogsFeePercent": 9
   },
   "discogs": {
     "currency": "USD",

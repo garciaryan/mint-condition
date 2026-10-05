@@ -11,3 +11,14 @@ export const NOT_AFFILIATED =
 export const DATA_CREDIT = "Data provided by Discogs";
 
 export const releaseUrl = (id: number): string => `https://www.discogs.com/release/${id}`;
+
+/** The Discogs search page for a catalog number: where the pressings in a pick list come from. */
+export const searchUrl = (catno: string): string => `https://www.discogs.com/search/?q=${encodeURIComponent(catno)}&type=release`;
+
+/** The marketplace, credited next to totals worked out from many releases' prices. */
+export const MARKETPLACE_URL = "https://www.discogs.com/sell/list";
+
+/** True once Discogs data fetched at `fetchedAt` is past the 6-hour display limit. */
+export function dataExpired(fetchedAt: number, now: number): boolean {
+  return now - fetchedAt > MAX_CACHE_HOURS * 3_600_000;
+}

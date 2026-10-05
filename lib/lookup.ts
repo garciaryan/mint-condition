@@ -12,7 +12,6 @@ export type LookupRequest = {
   year?: number;
   record: Grade;
   sleeve: Grade;
-  areaCode?: string;
   /** Set once the user has picked a pressing (or to re-price one); skips the search. */
   releaseId?: number;
   /** Skip the cache: re-search (without releaseId) and re-fetch suggestions and stats from Discogs. */
@@ -75,8 +74,7 @@ export function parseLookupRequest(body: unknown): Parsed {
 
   if (b.fresh !== undefined && typeof b.fresh !== "boolean") return { ok: false, message: "fresh must be true or false." };
 
-  const areaCode = typeof b.areaCode === "string" && b.areaCode.trim() ? b.areaCode.trim() : undefined;
-  return { ok: true, value: { catno, year, record, sleeve, areaCode, releaseId, ...(b.fresh === true ? { fresh: true } : {}) } };
+  return { ok: true, value: { catno, year, record, sleeve, releaseId, ...(b.fresh === true ? { fresh: true } : {}) } };
 }
 
 /** Names of required env vars that are unset. Never returns their values. */
@@ -139,7 +137,6 @@ export async function runLookup(
     lowestListing: stats.lowestPrice,
     record: req.record,
     sleeve: req.sleeve,
-    areaCode: req.areaCode,
     settings,
   });
   if (!result) return { status: "no-price", reason: "grade-missing", releaseId, release, stats, ...age };
