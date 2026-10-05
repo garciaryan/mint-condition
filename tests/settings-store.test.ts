@@ -59,6 +59,15 @@ test("a stored row that no longer validates falls back to defaults with a reason
   assert.match(s.invalid ?? "", /openingPercent/);
 });
 
+test("a row saved with cache hours above the 6-hour cap reads as 6 and keeps its other values", () => {
+  const row = { ...defaults, discogs: { cacheHours: 24 }, offer: { ...defaults.offer, marginPercent: 35 } };
+  db.prepare("insert into settings (id, json, updated_at) values (1, ?, 5)").run(JSON.stringify(row));
+  const s = getSettings(db);
+  assert.equal(s.invalid, null);
+  assert.equal(s.settings.discogs.cacheHours, 6);
+  assert.equal(s.settings.offer.marginPercent, 35);
+});
+
 test("corrupt JSON in the row falls back to defaults with a reason", () => {
   db.prepare("insert into settings (id, json, updated_at) values (1, '{not json', 5)").run();
   const s = getSettings(db);

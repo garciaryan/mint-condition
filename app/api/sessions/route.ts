@@ -1,7 +1,7 @@
 // GET /api/sessions (list lots), POST /api/sessions (create a lot).
 import { defaultLotName, errorJson, isObject, MAX_BODY, parseName, readJson, withSettings } from "../../../lib/collection/http.ts";
 import { createSession, listItems, listSessions } from "../../../lib/collection/store.ts";
-import { computeTotals } from "../../../lib/collection/view.ts";
+import { computeTotals, hideExpired } from "../../../lib/collection/view.ts";
 import { getDb } from "../../../lib/db.ts";
 import { requireSession } from "../../../lib/route-auth.ts";
 import { isGrade } from "../../../lib/types.ts";
@@ -13,8 +13,9 @@ export async function GET(request: Request): Promise<Response> {
   if (denied) return denied;
   return withSettings((settings) => {
     const db = getDb();
+    const now = Date.now();
     const sessions = listSessions(db).map((s) => {
-      const items = listItems(db, s.id);
+      const items = hideExpired(listItems(db, s.id), now);
       return {
         id: s.id,
         name: s.name,

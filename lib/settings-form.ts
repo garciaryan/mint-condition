@@ -1,4 +1,5 @@
 // Settings page form: Settings <-> string fields, and per-field checks. Pure and client-safe.
+import { MAX_CACHE_HOURS } from "./discogs-terms.ts";
 import { GRADES } from "./types.ts";
 import type { Grade, Settings } from "./types.ts";
 
@@ -54,7 +55,8 @@ const RULES: Record<FieldKey, Rule> = {
     kind: "steps", ok: (n) => Number.isInteger(n) && n >= 1 && n <= 3, message: "Use a whole number from 1 to 3.",
   },
   "discogs.cacheHours": {
-    kind: "hours", ok: (n) => Number.isInteger(n) && n >= 0 && n <= 168, message: "Use a whole number from 0 to 168.",
+    kind: "hours", ok: (n) => Number.isInteger(n) && n >= 0 && n <= MAX_CACHE_HOURS,
+    message: `Use a whole number from 0 to ${MAX_CACHE_HOURS}.`,
   },
 };
 

@@ -108,6 +108,16 @@ body {
   padding: 32px var(--gutter) 64px;
 }
 
+/* Site footer: the Discogs notice on every page. */
+.site-footer {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 var(--gutter) 32px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* Site header: brand, nav, optional log out, one row on desktop. */
 .topbar {
   display: flex;

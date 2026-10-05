@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { DATA_CREDIT, releaseUrl } from "../lib/discogs-terms.ts";
 import { fieldErrors } from "../lib/form.ts";
 import { relativeTime } from "../lib/relative-time.ts";
 import type { FieldErrors } from "../lib/form.ts";
@@ -385,7 +386,6 @@ function ResultCard({
   onRefresh: () => void;
   onBack?: () => void;
 }) {
-  const discogsUrl = `https://www.discogs.com/release/${res.releaseId}`;
   const cur = res.status === "priced" ? res.currency : (res.stats.currency ?? "USD");
   const money = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
 
@@ -408,8 +408,8 @@ function ResultCard({
             </p>
           )}
           <p>
-            <a href={discogsUrl} target="_blank" rel="noreferrer">
-              View on Discogs<span aria-hidden="true"> ↗</span>
+            <a href={releaseUrl(res.releaseId)} target="_blank" rel="noreferrer">
+              {DATA_CREDIT}<span aria-hidden="true"> ↗</span>
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </p>

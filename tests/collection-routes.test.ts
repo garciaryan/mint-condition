@@ -431,6 +431,33 @@ async function namedPricedLot(name: string) {
   return { lot, body };
 }
 
+test("prices older than 6 hours are hidden everywhere; opening the lot re-prices them", async () => {
+  const { lot } = await namedPricedLot("Old");
+  const db = g.__mintDb as DatabaseSync;
+  const old = Date.now() - 7 * 3_600_000;
+  db.prepare("UPDATE items SET priced_at = ? WHERE session_id = ?").run(old, lot.id);
+
+  const list = await j(await listSessions(req("GET")));
+  assert.equal(list.sessions.find((s: { id: number }) => s.id === lot.id).suggested, 0);
+  const csv = await (await exportCsv(req("GET"), ctx(String(lot.id)))).text();
+  assert.equal(csv.trim().split("\n").length, 1, "only the header row");
+
+  const opened = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  assert.equal(opened.items[0].market, null);
+  assert.equal(opened.totals.suggested, 0);
+  assert.equal(opened.oldestPricedAt, null);
+  assert.notEqual(opened.items[0].status, "priced");
+
+  const deadline = Date.now() + 2000;
+  let body = opened;
+  while (body.totals.priced < 1 && Date.now() < deadline) {
+    await new Promise((res) => setTimeout(res, 10));
+    body = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  }
+  assert.ok(body.items[0].market, "re-priced");
+  assert.ok(body.oldestPricedAt > old);
+});
+
 test("CSV export: auth, bad id, unknown lot", async () => {
   assert.equal((await exportCsv(req("GET", undefined, false), ctx("1"))).status, 401);
   assert.equal((await exportCsv(req("GET"), ctx("abc"))).status, 400);

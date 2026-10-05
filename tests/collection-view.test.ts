@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { computeTotals, marketFor, oldestPricedAt, queueState, toItemView } from "../lib/collection/view.ts";
+import {
+  computeTotals, hideExpired, marketFor, oldestPricedAt, PRICE_MAX_AGE_MS, queueState, toItemView,
+} from "../lib/collection/view.ts";
 import { createScanFilter, defaultLotName, pollDelayMs } from "../lib/collection/ui.ts";
 import { priceRecord } from "../lib/pricing.ts";
 import { offerInputs } from "../lib/offer.ts";
@@ -147,4 +149,22 @@ test("oldestPricedAt counts rows still showing an earlier price after a failed r
     item({ status: "pending", pricedAt: 50, suggestions: sugg }),
   ];
   assert.equal(oldestPricedAt(rows), 50);
+});
+
+test("hideExpired drops Discogs data older than 6 hours and keeps the rest", () => {
+  const now = 10 * PRICE_MAX_AGE_MS;
+  const old = item({ status: "priced", pricedAt: now - PRICE_MAX_AGE_MS - 1, suggestions: sugg, stats });
+  const edge = item({ status: "priced", pricedAt: now - PRICE_MAX_AGE_MS, suggestions: sugg, stats });
+  const failed = item({ status: "error", pricedAt: 0, suggestions: sugg, stats, error: "429" });
+  const unpriced = item({ status: "to-pick" });
+  const [a, b, c, d] = hideExpired([old, edge, failed, unpriced], now);
+  assert.equal(a.suggestions, null);
+  assert.equal(a.stats, null);
+  assert.equal(marketFor(a, settings), null);
+  assert.deepEqual(b, edge);
+  assert.equal(c.suggestions, null);
+  assert.equal(c.error, "429");
+  assert.deepEqual(d, unpriced);
+  assert.equal(oldestPricedAt([a, b, c, d]), edge.pricedAt);
+  assert.equal(old.suggestions, sugg, "input rows are not changed");
 });

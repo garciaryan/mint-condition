@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { MAX_CACHE_HOURS } from "./discogs-terms.ts";
 import { GRADES } from "./types.ts";
 import type { Settings } from "./types.ts";
 
@@ -27,8 +28,8 @@ export function parseSettings(raw: unknown): Settings {
     throw new Error("settings: local.discogsFeePercent must be in [0, 100)");
   }
   const h = s.discogs?.cacheHours;
-  if (!Number.isInteger(h) || h < 0 || h > 168) {
-    throw new Error("settings: discogs.cacheHours must be an integer from 0 to 168");
+  if (!Number.isInteger(h) || h < 0 || h > MAX_CACHE_HOURS) {
+    throw new Error(`settings: discogs.cacheHours must be an integer from 0 to ${MAX_CACHE_HOURS}`);
   }
   parseOffer(s.offer);
   return s;

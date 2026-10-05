@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { openDb } from "../lib/db.ts";
 import {
   addItems, applyLookup, claimNextPending, countClaimable, countPending, createSession, deleteItem, deleteSession, getItem,
-  getSession, listItems, listSessions, pickRelease, releaseClaim, repriceSession, resetWorking, retryItem, setItemPick,
+  getSession, listItems, listSessions, pickRelease, releaseClaim, repriceSession, requeueExpired, resetWorking, retryItem, setItemPick,
   touchSession, updateItemFields, updateSession,
 } from "../lib/collection/store.ts";
 import type { Candidate } from "../lib/types.ts";
@@ -149,6 +149,29 @@ test("repriceSession moves only priced/no-price rows with a release, keeping sug
   assert.equal(getItem(db, b.id)!.status, "pending");
   assert.equal(getItem(db, c.id)!.status, "no-match");
   assert.equal(getItem(db, d.id)!.status, "priced");
+});
+
+test("requeueExpired re-prices only priced/no-price rows with a release fetched before the cutoff", () => {
+  const { db, s } = setup();
+  const other = createSession(db, { name: "B", defaultRecord: "NM", defaultSleeve: "NM" }, 100);
+  const [a, b, c, d, e] = addItems(db, s.id, [{ query: "A" }, { query: "B" }, { query: "C" }, { query: "D" }, { query: "E" }], G, 1);
+  const [f] = addItems(db, other.id, [{ query: "F" }], G, 1);
+  for (let i = 0; i < 6; i++) claimNextPending(db);
+  applyLookup(db, a.id, { status: "priced", releaseId: 1, release: cand(1), suggestions: { NM: 5 }, pricedAt: 10 });
+  applyLookup(db, b.id, { status: "no-price", releaseId: 2, release: cand(2), pricedAt: 10 });
+  applyLookup(db, c.id, { status: "priced", releaseId: 3, release: cand(3), suggestions: { NM: 5 }, pricedAt: 50 });
+  applyLookup(db, d.id, { status: "error", releaseId: 4, release: cand(4), error: "x", pricedAt: 10 });
+  applyLookup(db, e.id, { status: "priced", releaseId: 5, release: cand(5), pricedAt: null });
+  applyLookup(db, f.id, { status: "priced", releaseId: 6, release: cand(6), pricedAt: 10 });
+  assert.equal(requeueExpired(db, s.id, 50), 2);
+  assert.equal(getItem(db, a.id)!.status, "pending");
+  assert.equal(getItem(db, a.id)!.refresh, true);
+  assert.equal(getItem(db, b.id)!.status, "pending");
+  assert.equal(getItem(db, c.id)!.status, "priced");
+  assert.equal(getItem(db, d.id)!.status, "error");
+  assert.equal(getItem(db, e.id)!.status, "priced");
+  assert.equal(getItem(db, f.id)!.status, "priced");
+  assert.equal(requeueExpired(db, s.id, 50), 0, "already queued rows are left alone");
 });
 
 test("year change resets lookup columns; grade change does not", () => {

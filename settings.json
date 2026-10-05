@@ -21,7 +21,7 @@
   },
   "discogs": {
     "currency": "USD",
-    "cacheHours": 24
+    "cacheHours": 6
   },
   "offer": {
     "ladderPercents": [30, 40, 50, 60],

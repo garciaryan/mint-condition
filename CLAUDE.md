@@ -27,11 +27,15 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   started by `instrumentation.ts`) drains pending items through the shared client in `lib/discogs-client.ts`, so one
   throttle covers lookups and the worker. The worker writes only lookup columns, never grades, year or query.
 - Discogs answers (search, price suggestions, stats) are cached in SQLite (`discogs_cache`, `lib/discogs-cache.ts`)
-  for `discogs.cacheHours` (0 = off). Callers use `getLookupClient()`, which wraps the shared throttled client.
+  for `discogs.cacheHours` (0 = off, max 6). Callers use `getLookupClient()`, which wraps the shared throttled client.
   Lot Re-price and Retry (`items.refresh`) and the single-record "Refresh prices" bypass it; errors are never
   cached. Row `priced_at` is when Discogs answered, so cached prices show their real age.
 - `barcode-detector` is the only runtime dependency beyond Next/React; it is lazy-loaded by the camera scanner.
 - Discogs data is asking prices and suggestions, not confirmed sales. The UI should say so.
+- Discogs API terms (`lib/discogs-terms.ts`): no Discogs data shown more than 6 hours old (`MAX_CACHE_HOURS`; lot
+  rows past it are hidden by `hideExpired` and re-queued by `requeueExpired` when the lot or buy sheet opens);
+  "Data provided by Discogs" linked to the release next to the data (no `nofollow`); the not-affiliated notice in
+  `app/SiteFooter.tsx` on every page. Price data is Restricted Data: no commercial use, no transfer to third parties.
 
 ## Commands
 - `npm install`
@@ -56,7 +60,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   `app/settings/` (`SettingsForm`) · `app/api/settings/`
 - `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
   `lib/discogs-client.ts` shared client + `getLookupClient()` · `lib/discogs-cache.ts` response cache ·
-  `lib/relative-time.ts` · `lib/theme.ts` + `app/ThemeSwitch.tsx` (dark mode) · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
+  `lib/relative-time.ts` · `lib/discogs-terms.ts` + `app/SiteFooter.tsx` · `lib/theme.ts` + `app/ThemeSwitch.tsx` (dark mode) · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
 - `lib/collection/export.ts` (Discogs CSV, buy sheet rows) · `app/collection/[id]/print/` (buy sheet) ·
   `app/api/sessions/[id]/discogs.csv/`
 - `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,

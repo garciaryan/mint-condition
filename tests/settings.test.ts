@@ -72,8 +72,8 @@ test("settingsErrorPath extracts the dotted path", () => {
   assert.equal(settingsErrorPath("boom"), null);
 });
 
-test("discogs.cacheHours is a whole number from 0 to 168", () => {
+test("discogs.cacheHours is a whole number from 0 to 6 (Discogs terms: data at most 6 hours old)", () => {
   const withHours = (h: unknown) => ({ ...base, discogs: { ...base.discogs, cacheHours: h } });
-  for (const bad of [-1, 169, 1.5, "24", null]) assert.throws(() => parseSettings(withHours(bad)), /discogs\.cacheHours/);
-  for (const ok of [0, 168]) assert.doesNotThrow(() => parseSettings(withHours(ok)));
+  for (const bad of [-1, 7, 24, 1.5, "6", null]) assert.throws(() => parseSettings(withHours(bad)), /discogs\.cacheHours/);
+  for (const ok of [0, 6]) assert.doesNotThrow(() => parseSettings(withHours(ok)));
 });

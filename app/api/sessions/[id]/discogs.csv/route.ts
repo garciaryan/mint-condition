@@ -2,6 +2,7 @@
 import { csvFilename, toDiscogsCsv } from "../../../../../lib/collection/export.ts";
 import { errorJson, parseId, withSettings } from "../../../../../lib/collection/http.ts";
 import { getSession, listItems } from "../../../../../lib/collection/store.ts";
+import { hideExpired } from "../../../../../lib/collection/view.ts";
 import { getDb } from "../../../../../lib/db.ts";
 import { requireSession } from "../../../../../lib/route-auth.ts";
 
@@ -16,7 +17,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const db = getDb();
     const session = getSession(db, id);
     if (!session) return errorJson("not-found", 404, "Lot not found.");
-    return new Response(toDiscogsCsv(session.name, listItems(db, id), settings), {
+    return new Response(toDiscogsCsv(session.name, hideExpired(listItems(db, id), Date.now()), settings), {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="${csvFilename(session.name, id)}"`,
