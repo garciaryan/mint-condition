@@ -25,6 +25,7 @@ jobs:
   deploy:
     name: Deploy app
     needs: check
+    if: github.repository == 'garciaryan/mint-condition' # forks run the checks but don't deploy
     runs-on: ubuntu-latest
     concurrency: deploy-group # one deploy at a time; the app runs a single machine
     steps:
