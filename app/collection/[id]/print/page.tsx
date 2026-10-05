@@ -3,13 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buySheetRows } from "../../../../lib/collection/export.ts";
 import { parseId } from "../../../../lib/collection/http.ts";
-import { getSession, listItems } from "../../../../lib/collection/store.ts";
+import { getSession, listItems, requeueExpired } from "../../../../lib/collection/store.ts";
 import { cash, offerNotes } from "../../../../lib/collection/ui.ts";
-import { oldestPricedAt } from "../../../../lib/collection/view.ts";
+import { hideExpired, oldestPricedAt, PRICE_MAX_AGE_MS } from "../../../../lib/collection/view.ts";
 import { dbUnavailable, getDb } from "../../../../lib/db.ts";
 import { computeOffer, offerInputs } from "../../../../lib/offer.ts";
 import type { OfferSide } from "../../../../lib/offer.ts";
+import { DATA_CREDIT } from "../../../../lib/discogs-terms.ts";
 import { relativeTime } from "../../../../lib/relative-time.ts";
+import { kickWorker } from "../../../../lib/collection/worker.ts";
 import { getSettings } from "../../../../lib/settings-store.ts";
 import SiteHeader from "../../../SiteHeader.tsx";
 import PrintButton from "./PrintButton.tsx";
@@ -92,7 +94,10 @@ export default async function BuySheetPage({ params }: Props) {
     return <Problem message={`settings.json is invalid: ${e instanceof Error ? e.message : String(e)}`} />;
   }
 
-  const items = listItems(getDb(), lot.id);
+  // Rows past the 6-hour limit print without prices and are queued for a re-price.
+  const now = Date.now();
+  if (requeueExpired(getDb(), lot.id, now - PRICE_MAX_AGE_MS) > 0) void kickWorker();
+  const items = hideExpired(listItems(getDb(), lot.id), now);
   const inputs = offerInputs(lot, settings);
   const offer = computeOffer(items, inputs, settings);
   const rows = buySheetRows(items, settings, inputs);
@@ -204,7 +209,7 @@ export default async function BuySheetPage({ params }: Props) {
         </table>
 
         <footer className="sheet-foot muted small">
-          <p>Discogs asking prices and suggestions, not confirmed sales.</p>
+          <p>{DATA_CREDIT}: asking prices and suggestions, not confirmed sales.</p>
           {lot.unverified && <p>★ uses the lowered offer grades, so a record can show more than the pick threshold without a star.</p>}
           {oldest !== null && Date.now() - oldest > 3_600_000 && <p>Oldest prices: {relativeTime(oldest)}</p>}
         </footer>

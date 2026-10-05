@@ -1,7 +1,7 @@
 // PATCH/DELETE /api/items/:id
 import { errorJson, isObject, MAX_BODY, parseId, parseYear, readJson, withSettings } from "../../../../lib/collection/http.ts";
 import { deleteItem, getItem, getSession, pickRelease, setItemPick, updateItemFields } from "../../../../lib/collection/store.ts";
-import { toItemView } from "../../../../lib/collection/view.ts";
+import { hideExpired, toItemView } from "../../../../lib/collection/view.ts";
 import { kickWorker } from "../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../lib/db.ts";
 import { offerInputs, offerMarket } from "../../../../lib/offer.ts";
@@ -63,8 +63,9 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
       kick = true;
     }
     if (fields.year !== undefined && fields.year !== cur.year) kick = true;
-    let updated = updateItemFields(db, id, fields);
-    if (!updated) return notFound();
+    const changed = updateItemFields(db, id, fields);
+    if (!changed) return notFound();
+    let updated = hideExpired([changed], Date.now())[0];
     if (kick) void kickWorker();
     const inputs = offerInputs(getSession(db, updated.sessionId)!, settings);
     if (pick !== undefined) {
@@ -72,8 +73,9 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
       if (!offerMarket(updated, inputs, settings)) {
         return errorJson("bad-request", 400, "This record has no market value to cherry-pick.");
       }
-      updated = setItemPick(db, id, pick);
-      if (!updated) return notFound();
+      const picked = setItemPick(db, id, pick);
+      if (!picked) return notFound();
+      updated = hideExpired([picked], Date.now())[0];
     }
     return Response.json(toItemView(updated, settings, inputs));
   });

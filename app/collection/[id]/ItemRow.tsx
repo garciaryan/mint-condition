@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { ItemView } from "../../../lib/collection/view.ts";
+import { DATA_CREDIT, releaseUrl } from "../../../lib/discogs-terms.ts";
 import type { Grade } from "../../../lib/types.ts";
 import GradeSelect from "../../GradeSelect.tsx";
 import { Thumb } from "../../Picker.tsx";
@@ -110,6 +111,14 @@ export default function ItemRow({
       <div className="row-main">
         <div className="title">{title}</div>
         <div className="sub">{subline(item)}</div>
+        {item.release && (
+          <div className="sub">
+            <a href={releaseUrl(item.release.id)} target="_blank" rel="noreferrer">
+              {DATA_CREDIT}<span aria-hidden="true"> ↗</span>
+              <span className="sr-only"> for {title} (opens in a new tab)</span>
+            </a>
+          </div>
+        )}
       </div>
       <div className="row-grades">
         <span className="grade">

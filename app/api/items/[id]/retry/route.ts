@@ -1,7 +1,7 @@
 // POST /api/items/:id/retry: re-queue an error / no-match row; also clears a token pause.
 import { errorJson, parseId, withSettings } from "../../../../../lib/collection/http.ts";
 import { getSession, retryItem } from "../../../../../lib/collection/store.ts";
-import { toItemView } from "../../../../../lib/collection/view.ts";
+import { hideExpired, toItemView } from "../../../../../lib/collection/view.ts";
 import { offerInputs } from "../../../../../lib/offer.ts";
 import { kickWorker, resumeQueue } from "../../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../../lib/db.ts";
@@ -21,6 +21,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (r === "invalid-state") return errorJson("bad-request", 400, "Only records with an error or no match can be retried.");
     resumeQueue();
     void kickWorker();
-    return Response.json(toItemView(r, settings, offerInputs(getSession(db, r.sessionId)!, settings)));
+    return Response.json(toItemView(hideExpired([r], Date.now())[0], settings, offerInputs(getSession(db, r.sessionId)!, settings)));
   });
 }

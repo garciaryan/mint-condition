@@ -192,6 +192,17 @@ export function repriceSession(db: DatabaseSync, sessionId: number): number {
   return Number(res.changes);
 }
 
+/** Queues a fresh re-price for the lot's priced/no-price rows whose Discogs data was fetched before `before`. */
+export function requeueExpired(db: DatabaseSync, sessionId: number, before: number): number {
+  const res = db
+    .prepare(
+      `UPDATE items SET status = 'pending', refresh = 1 WHERE session_id = ? AND status IN ('priced','no-price')
+         AND release_id IS NOT NULL AND priced_at IS NOT NULL AND priced_at < ?`,
+    )
+    .run(sessionId, before);
+  return Number(res.changes);
+}
+
 export function deleteItem(db: DatabaseSync, id: number): boolean {
   return Number(db.prepare("DELETE FROM items WHERE id = ?").run(id).changes) > 0;
 }

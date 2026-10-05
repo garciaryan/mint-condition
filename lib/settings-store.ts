@@ -1,5 +1,6 @@
 // Saved settings (one SQLite row) layered over the settings.json defaults. Server-side only.
 import type { DatabaseSync } from "node:sqlite";
+import { MAX_CACHE_HOURS } from "./discogs-terms.ts";
 import { loadSettings, mergeSettings, parseSettings } from "./settings.ts";
 import type { Settings } from "./types.ts";
 
@@ -32,12 +33,19 @@ export function getSettings(db: DatabaseSync, defaultsPath?: string): SettingsSt
     if (typeof saved !== "object" || saved === null || Array.isArray(saved)) {
       throw new Error("settings: the saved settings are not an object");
     }
-    const settings = parseSettings(mergeSettings(defaults, saved));
+    const settings = parseSettings(capCacheHours(mergeSettings(defaults, saved)));
     return { settings, defaults, saved: true, updatedAt: row.updated_at, invalid: null };
   } catch (e) {
     const invalid = e instanceof Error ? e.message : String(e);
     return { settings: defaults, defaults, saved: true, updatedAt: row.updated_at, invalid };
   }
+}
+
+// Rows saved before the 6-hour cap may hold more; read them as the cap rather than dropping the whole row.
+function capCacheHours(merged: unknown): unknown {
+  const d = (merged as { discogs?: { cacheHours?: unknown } }).discogs;
+  if (typeof d?.cacheHours !== "number" || !Number.isInteger(d.cacheHours) || d.cacheHours <= MAX_CACHE_HOURS) return merged;
+  return { ...(merged as object), discogs: { ...d, cacheHours: MAX_CACHE_HOURS } };
 }
 
 /** The stored object as-is, the raw text if it is not valid JSON, or null when nothing is saved. */

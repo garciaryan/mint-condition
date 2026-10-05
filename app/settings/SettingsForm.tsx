@@ -53,7 +53,7 @@ const SECTIONS: { legend: string; note?: string; grid?: boolean; currency?: bool
   },
   {
     legend: "Discogs",
-    note: "Discogs answers are reused for this long. Re-price and Refresh always fetch fresh. 0 turns the cache off.",
+    note: "Discogs answers are reused for this long, at most 6 hours (Discogs terms). Re-price and Refresh always fetch fresh. 0 turns the cache off.",
     currency: true,
     keys: ["discogs.cacheHours"],
   },

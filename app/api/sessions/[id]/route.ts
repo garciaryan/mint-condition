@@ -1,9 +1,9 @@
 // GET/PATCH/DELETE /api/sessions/:id
 import { errorJson, isObject, MAX_BODY, parseAmount, parseId, parseName, readJson, withSettings } from "../../../../lib/collection/http.ts";
 import { exportCounts } from "../../../../lib/collection/export.ts";
-import { deleteSession, getSession, listItems, updateSession } from "../../../../lib/collection/store.ts";
-import { computeTotals, oldestPricedAt, queueState, toItemView } from "../../../../lib/collection/view.ts";
-import { isQueuePaused, msPerItem } from "../../../../lib/collection/worker.ts";
+import { deleteSession, getSession, listItems, requeueExpired, updateSession } from "../../../../lib/collection/store.ts";
+import { computeTotals, hideExpired, oldestPricedAt, PRICE_MAX_AGE_MS, queueState, toItemView } from "../../../../lib/collection/view.ts";
+import { isQueuePaused, kickWorker, msPerItem } from "../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../lib/db.ts";
 import { computeOffer, offerInputs } from "../../../../lib/offer.ts";
 import { requireSession } from "../../../../lib/route-auth.ts";
@@ -25,7 +25,10 @@ export async function GET(request: Request, { params }: Ctx): Promise<Response> 
     const db = getDb();
     const session = getSession(db, id);
     if (!session) return notFound();
-    const items = listItems(db, id);
+    // Opening a lot re-prices rows past the 6-hour limit; until they come back their prices are hidden.
+    const now = Date.now();
+    if (requeueExpired(db, id, now - PRICE_MAX_AGE_MS) > 0) void kickWorker();
+    const items = hideExpired(listItems(db, id), now);
     const totals = computeTotals(items, settings);
     const inputs = offerInputs(session, settings);
     return Response.json({

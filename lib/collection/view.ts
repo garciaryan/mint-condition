@@ -1,4 +1,5 @@
 // Server-side view logic: prices are calculated when read, never stored.
+import { MAX_CACHE_HOURS } from "../discogs-terms.ts";
 import { isPickRow, offerMarket } from "../offer.ts";
 import type { OfferInputs } from "../offer.ts";
 import { priceRecord, roundCents } from "../pricing.ts";
@@ -73,6 +74,19 @@ export type Totals = {
   /** Rows with a market value whose last refresh failed (error). Counted in `priced`. */
   stale: number;
 };
+
+/** Discogs API terms: data more than 6 hours behind discogs.com may not be displayed. */
+export const PRICE_MAX_AGE_MS = MAX_CACHE_HOURS * 3_600_000;
+
+/** The rows with Discogs suggestions and stats older than PRICE_MAX_AGE_MS removed, so nothing computed from them
+ * (prices, totals, offer, exports) shows expired data. Rows without a fetch time are left as they are. */
+export function hideExpired(items: ItemRow[], now: number): ItemRow[] {
+  return items.map((i) =>
+    i.pricedAt !== null && now - i.pricedAt > PRICE_MAX_AGE_MS && (i.suggestions || i.stats)
+      ? { ...i, suggestions: null, stats: null }
+      : i,
+  );
+}
 
 /** When the oldest Discogs data still shown in the lot was fetched, or null when there is none. Counts every row
  * holding suggestions, so a row whose re-price failed (still showing its earlier price) keeps its real age. */

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { parseThemeCookie, THEME_COOKIE } from "../lib/theme.ts";
+import SiteFooter from "./SiteFooter.tsx";
 import "./globals.css";
 
 export const metadata = { title: "Mint Condition" };
@@ -12,7 +13,7 @@ async function pinnedTheme() {
 export async function generateViewport() {
   const pinned = await pinnedTheme();
   const LIGHT = "#ffffff";
-  const DARK = "#1d1b18";
+  const DARK = "#1a3249";
   return {
     width: "device-width",
     initialScale: 1,
@@ -30,7 +31,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const theme = await pinnedTheme();
   return (
     <html lang="en" data-theme={theme ?? undefined}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }
