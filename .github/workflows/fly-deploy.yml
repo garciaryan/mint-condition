@@ -1,9 +1,13 @@
-# Deploys to Fly.io on every push to main, after tests, typecheck and build pass.
+# Runs tests, typecheck and build on every PR to main and every push to main; deploys to Fly.io only on pushes to
+# main. PRs from forks get no secrets.
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
 name: Fly Deploy
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -25,7 +29,8 @@ jobs:
   deploy:
     name: Deploy app
     needs: check
-    if: github.repository == 'garciaryan/mint-condition' # forks run the checks but don't deploy
+    # Only pushes to main on this repo deploy; PRs and forks just run the checks.
+    if: github.event_name == 'push' && github.repository == 'garciaryan/mint-condition'
     runs-on: ubuntu-latest
     concurrency: deploy-group # one deploy at a time; the app runs a single machine
     steps:
