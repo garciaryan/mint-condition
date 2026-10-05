@@ -9,6 +9,7 @@ import { Icon } from "./ItemRow.tsx";
 import { LOT_CUE_MS } from "../../../lib/camera.ts";
 import ScanFrame from "../../ScanFrame.tsx";
 import { useBarcodeCamera } from "../../useBarcodeCamera.ts";
+import { useFadeOut } from "../../useFadeOut.ts";
 import { useDialog } from "./useDialog.ts";
 
 /** Add result for one scanned code: the created item's id, or the error to show. */
@@ -53,6 +54,7 @@ export default function Scanner({
     });
   }
 
+  const fade = useFadeOut(() => onCloseRef.current());
   const camera = useBarcodeCamera(videoRef, handle, () => {
     onUnavailable();
     onCloseRef.current();
@@ -63,12 +65,19 @@ export default function Scanner({
 
   function close() {
     camera.stop();
-    onCloseRef.current();
+    fade.start();
   }
   useDialog(rootRef, close, { initialFocus: () => rootRef.current?.querySelector<HTMLElement>("button") });
 
   return (
-    <div className="scanner" role="dialog" aria-modal="true" aria-label="Scan barcodes" ref={rootRef} tabIndex={-1}>
+    <div
+      className={fade.closing ? "scanner closing" : "scanner"}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Scan barcodes"
+      ref={rootRef}
+      tabIndex={-1}
+    >
       <header className="scanner-head">
         <strong>
           Scanning · {grades.record} / {grades.sleeve}

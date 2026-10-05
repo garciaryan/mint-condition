@@ -17,3 +17,11 @@ test("an open menu closes when focus leaves it", () => {
   assert.equal(closeReason({ type: "focusin", inside: false }), "outside");
   assert.equal(closeReason({ type: "focusin", inside: true }), null);
 });
+
+test("a closing dialog hands focus back only if nothing else took it meanwhile", async () => {
+  const { shouldRestoreFocus } = await import("../lib/disclosure.ts");
+  assert.equal(shouldRestoreFocus({ onBody: true, insideDialog: false }), true);
+  assert.equal(shouldRestoreFocus({ onBody: false, insideDialog: true }), true);
+  // e.g. a search result heading focused while the scanner was fading out
+  assert.equal(shouldRestoreFocus({ onBody: false, insideDialog: false }), false);
+});
