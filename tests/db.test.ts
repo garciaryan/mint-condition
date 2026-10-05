@@ -68,7 +68,17 @@ test("migration 2 adds offer columns to a version-1 database", () => {
 test("migration 3 adds a one-row settings table to a version-2 database", () => {
   const db = new DatabaseSync(":memory:");
   migrate(db, migrations.slice(0, 2));
-  assert.equal(migrate(db, migrations), 3);
+  assert.equal(migrate(db, migrations.slice(0, 3)), 3);
   db.exec("insert into settings (id, json, updated_at) values (1, '{}', 1)");
   assert.throws(() => db.exec("insert into settings (id, json, updated_at) values (2, '{}', 1)"), /CHECK/);
+});
+
+test("migration 4 adds discogs_cache and items.refresh to a version-3 database", () => {
+  const db = new DatabaseSync(":memory:");
+  migrate(db, migrations.slice(0, 3));
+  db.exec("insert into sessions (id,name,default_record,default_sleeve,created_at,updated_at) values (1,'L','NM','NM',1,1)");
+  db.exec("insert into items (session_id,query,record_grade,sleeve_grade,status,created_at) values (1,'x','NM','NM','pending',1)");
+  assert.equal(migrate(db, migrations), 4);
+  assert.deepEqual({ ...(db.prepare("select refresh from items").get() as object) }, { refresh: 0 });
+  db.exec("insert into discogs_cache (key, json, fetched_at) values ('k', '1', 1)");
 });

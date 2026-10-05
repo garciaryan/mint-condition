@@ -39,6 +39,12 @@ ALTER TABLE items    ADD COLUMN pick           INTEGER;   -- null = automatic, 1
   json       TEXT    NOT NULL,                     -- full Settings object as saved
   updated_at INTEGER NOT NULL                      -- ms epoch
 );`,
+  `CREATE TABLE discogs_cache (
+  key        TEXT    PRIMARY KEY,   -- "search:<query>|<year or ->", "suggestions:<releaseId>", "stats:<releaseId>"
+  json       TEXT    NOT NULL,      -- the method's result, including empty search and null suggestions
+  fetched_at INTEGER NOT NULL       -- ms epoch, when Discogs answered
+);
+ALTER TABLE items ADD COLUMN refresh INTEGER NOT NULL DEFAULT 0;  -- 1 = the next lookup for this row skips the cache`,
 ];
 
 export function migrate(db: DatabaseSync, steps: string[]): number {
