@@ -29,6 +29,8 @@ export type ItemRow = {
   pricedAt: number | null;
   error: string | null;
   createdAt: number;
+  /** Cherry-pick pin: null = automatic (threshold), true/false = set by the owner. */
+  pick: boolean | null;
 };
 
 export type LookupPatch = {

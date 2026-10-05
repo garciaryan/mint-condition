@@ -34,6 +34,7 @@ const toItem = (r: Row, lite = false): ItemRow => ({
   pricedAt: (r.priced_at as number | null) ?? null,
   error: (r.error as string | null) ?? null,
   createdAt: r.created_at as number,
+  pick: null,
 });
 
 // ---- sessions ----

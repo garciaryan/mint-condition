@@ -16,7 +16,7 @@ let nextId = 1;
 const item = (o: Partial<ItemRow>): ItemRow => ({
   id: nextId++, sessionId: 1, query: "Q", year: null, record: "VG+", sleeve: "VG+", status: "pending",
   releaseId: null, release: null, candidates: null, suggestions: null, stats: null, pricedAt: null,
-  error: null, createdAt: 0, ...o,
+  error: null, createdAt: 0, pick: null, ...o,
 });
 const sugg = { NM: 40, "VG+": 30, VG: 20 };
 const stats = { lowestPrice: 12, currency: "USD", numForSale: 3 };
