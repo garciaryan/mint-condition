@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
 import type { NewLine } from "../../../lib/collection/types.ts";
 import type { Grade } from "../../../lib/types.ts";
 import GradeSelect from "../../GradeSelect.tsx";
+import { createSerialQueue } from "../../../lib/collection/ui.ts";
 import { api } from "./api.ts";
 import PasteList from "./PasteList.tsx";
 
@@ -26,20 +27,20 @@ export default function EntryBar({
   // Grades are lot-wide defaults that stay put between adds.
   const [record, setRecord] = useState<Grade>(defaultRecord);
   const [sleeve, setSleeve] = useState<Grade>(defaultSleeve);
-  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
+  const enqueue = useRef(createSerialQueue()).current;
 
-  async function post(lines: NewLine[]): Promise<string | null> {
-    const res = await api(`/api/sessions/${sessionId}/items`, "POST", { lines, record, sleeve });
+  async function post(lines: NewLine[], grades = { record, sleeve }): Promise<string | null> {
+    const res = await api(`/api/sessions/${sessionId}/items`, "POST", { lines, ...grades });
     if (!res.ok) return res.message;
     onAdded();
     return null;
   }
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
-    if (busy) return;
     const q = query.trim();
     if (!q) {
       setError("Enter a catalog number or barcode.");
@@ -51,18 +52,28 @@ export default function EntryBar({
       setError("Year must be four digits between 1890 and 2100, or left blank.");
       return;
     }
-    setBusy(true);
-    setError(null);
+    // Snapshot, clear and refocus at once so the next code can be typed while this one saves.
     const line: NewLine = y ? { query: q, year: Number(y) } : { query: q };
-    const err = await post([line]);
-    setBusy(false);
-    if (err) {
-      setError(err);
-      return;
-    }
+    const grades = { record, sleeve };
+    const rawQuery = query;
+    const rawYear = year;
     setQuery("");
     setYear("");
+    setError(null);
     queryRef.current?.focus();
+    setSaving((n) => n + 1);
+    void enqueue(() => post([line], grades)).then((err) => {
+      setSaving((n) => n - 1);
+      if (!err) return;
+      // Put the text back only if nothing has been typed since; always name the failed code.
+      if (queryRef.current && queryRef.current.value === "") {
+        setQuery(rawQuery);
+        setYear(rawYear);
+        setError(err);
+      } else {
+        setError(`Couldn't add "${q}": ${err}`);
+      }
+    });
   }
 
   return (
@@ -110,11 +121,12 @@ export default function EntryBar({
             <button type="button" className="secondary" hidden>
               Scan
             </button>
-            <button type="submit" disabled={busy}>
-              {busy ? "Adding…" : "Add"}
-            </button>
+            <button type="submit">Add</button>
           </div>
         </div>
+        <p className="small muted" role="status">
+          {saving > 1 ? `Saving ${saving}…` : ""}
+        </p>
         {error && (
           <p className="field-error" id="entry-error" role="alert">
             <span aria-hidden="true">⚠ </span>

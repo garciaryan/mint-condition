@@ -24,3 +24,26 @@ test("pasteSummary lists skipped lines", () => {
   assert.equal(pasteSummary(5, [2, 3]), "5 records, 2 lines skipped: lines 2, 3");
   assert.equal(pasteSummary(5, [1, 2, 3, 4, 5, 6]), "5 records, 6 lines skipped: lines 1, 2, 3, 4, 5, …");
 });
+
+import { createSerialQueue } from "../lib/collection/ui.ts";
+
+test("createSerialQueue runs jobs one at a time, in order, and survives rejection", async () => {
+  const enqueue = createSerialQueue();
+  const log: string[] = [];
+  let running = 0;
+  let maxRunning = 0;
+  const job = (name: string, ms: number, fail = false) => async () => {
+    running++;
+    maxRunning = Math.max(maxRunning, running);
+    log.push(`start ${name}`);
+    await new Promise((r) => setTimeout(r, ms));
+    running--;
+    log.push(`end ${name}`);
+    if (fail) throw new Error(name);
+    return name;
+  };
+  const results = await Promise.allSettled([enqueue(job("a", 30)), enqueue(job("b", 1, true)), enqueue(job("c", 1))]);
+  assert.equal(maxRunning, 1);
+  assert.deepEqual(log, ["start a", "end a", "start b", "end b", "start c", "end c"]);
+  assert.deepEqual(results.map((r) => r.status), ["fulfilled", "rejected", "fulfilled"]);
+});

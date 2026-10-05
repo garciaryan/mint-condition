@@ -43,3 +43,13 @@ export function pasteSummary(count: number, skippedLines: number[]): string {
   const n = skippedLines.length;
   return `${base}, ${n} ${n === 1 ? "line" : "lines"} skipped: ${n === 1 ? "line" : "lines"} ${shown}${more}`;
 }
+
+/** Runs async jobs strictly one at a time, in the order added. A rejected job does not block the next. */
+export function createSerialQueue(): <T>(job: () => Promise<T>) => Promise<T> {
+  let tail: Promise<unknown> = Promise.resolve();
+  return <T>(job: () => Promise<T>) => {
+    const run = tail.then(job, job);
+    tail = run.catch(() => {});
+    return run;
+  };
+}
