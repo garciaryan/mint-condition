@@ -1,5 +1,6 @@
 // Shared helpers for the collection route handlers. Server-side only.
-import { loadSettings } from "../settings.ts";
+import { getDb } from "../db.ts";
+import { getSettings } from "../settings-store.ts";
 import type { Settings } from "../types.ts";
 
 export function errorJson(kind: string, status: number, message: string): Response {
@@ -31,15 +32,12 @@ export function parseId(raw: string): number | null {
   return /^[1-9][0-9]{0,14}$/.test(raw) ? Number(raw) : null;
 }
 
-let settingsPath: string | undefined;
-export function __setSettingsPathForTests(path: string | null): void {
-  settingsPath = path ?? undefined;
-}
+export { __setSettingsPathForTests } from "../settings-store.ts";
 
 export function withSettings<T>(fn: (s: Settings) => T): T | Response {
   let settings: Settings;
   try {
-    settings = loadSettings(settingsPath);
+    settings = getSettings(getDb()).settings;
   } catch (e) {
     return errorJson("settings", 500, `settings.json is invalid: ${e instanceof Error ? e.message : e}`);
   }

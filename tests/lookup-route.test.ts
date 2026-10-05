@@ -1,18 +1,23 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { signSession } from "../lib/auth.ts";
+import { openDb } from "../lib/db.ts";
 import { POST as lookup } from "../app/api/lookup/route.ts";
 
 const KEYS = ["APP_PASSWORD_HASH", "SESSION_SECRET", "DISCOGS_TOKEN", "DISCOGS_USER_AGENT"];
 const saved = { ...process.env };
 const env = process.env as Record<string, string | undefined>;
+// The route reads settings from SQLite; never let a test open ./data/mint.db.
+const g = globalThis as unknown as Record<string, unknown>;
 before(() => {
+  g.__mintDb = openDb(":memory:");
   env.APP_PASSWORD_HASH = "scrypt$16384$8$1$x$y";
   env.SESSION_SECRET = "test-secret";
   delete env.DISCOGS_TOKEN;
   delete env.DISCOGS_USER_AGENT;
 });
 after(() => {
+  delete g.__mintDb;
   for (const k of KEYS) {
     if (saved[k] === undefined) delete env[k];
     else env[k] = saved[k];

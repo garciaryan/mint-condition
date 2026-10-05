@@ -3,7 +3,8 @@ import { getDiscogsClient } from "../../../lib/discogs-client.ts";
 import { httpStatus, missingEnv, parseLookupRequest, runLookup, toErrorResponse } from "../../../lib/lookup.ts";
 import type { LookupResponse } from "../../../lib/lookup.ts";
 import { requireSession } from "../../../lib/route-auth.ts";
-import { loadSettings } from "../../../lib/settings.ts";
+import { getDb } from "../../../lib/db.ts";
+import { getSettings } from "../../../lib/settings-store.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function POST(request: Request): Promise<Response> {
 
   let settings;
   try {
-    settings = loadSettings();
+    settings = getSettings(getDb()).settings;
   } catch (e) {
     return reply({ status: "error", kind: "settings", message: `settings.json is invalid: ${e instanceof Error ? e.message : e}` });
   }
