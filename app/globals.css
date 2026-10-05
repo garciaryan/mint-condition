@@ -1943,3 +1943,67 @@ kbd {
     height: var(--control-h);
   }
 }
+
+/* Settings page */
+.settings-section {
+  margin: 0 0 16px;
+  min-width: 0;
+}
+
+.settings-section legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.settings-section legend + * {
+  clear: both;
+}
+
+.settings-section > p {
+  margin: 0 0 12px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.settings-grid.sleeve {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.field-hint {
+  font-weight: 400;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.settings-actions button[type="submit"]:disabled,
+.settings-actions button.secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.settings-status:empty {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .settings-grid.sleeve {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
