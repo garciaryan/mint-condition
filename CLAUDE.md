@@ -66,7 +66,8 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   `fly.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`
 
 - `lib/settings-store.ts` (saved settings over defaults) · `lib/settings-form.ts` (form conversion, client-safe) ·
-  `app/settings/` (`SettingsForm`) · `app/api/settings/`
+  `lib/settings-help.ts` (what each setting changes; every field must have help, tested) ·
+  `app/settings/` (`SettingsForm`, `HelpTip` ⓘ toggle) · `app/api/settings/`
 - `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
   `lib/discogs-client.ts` shared client + `getLookupClient()` · `lib/discogs-cache.ts` response cache ·
   `lib/relative-time.ts` · `lib/discogs-terms.ts` + `app/SiteFooter.tsx` · `lib/theme.ts` + `app/ThemeSwitch.tsx` (dark mode) · `lib/route-auth.ts` per-route session check · `instrumentation.ts`

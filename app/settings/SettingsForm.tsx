@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { settingHelp } from "../../lib/settings-help.ts";
 import { FIELD_KEYS, formatDefault, formView, fromForm, parseLadder, toForm } from "../../lib/settings-form.ts";
 import type { FieldKey, SettingsForm as Form } from "../../lib/settings-form.ts";
 import { GRADES } from "../../lib/types.ts";
 import type { Settings } from "../../lib/types.ts";
+import HelpTip from "./HelpTip.tsx";
 
 type State = {
   settings: Settings;
@@ -239,7 +241,8 @@ export default function SettingsForm() {
     const showDefault = form![k].trim() !== toForm(state!.defaults)[k];
     const hintId = `${k}-hint`;
     const errId = `${k}-error`;
-    const describedBy = [showDefault ? hintId : null, error ? errId : null].filter(Boolean).join(" ") || undefined;
+    const helpId = `${k}-help`;
+    const describedBy = [helpId, showDefault ? hintId : null, error ? errId : null].filter(Boolean).join(" ");
     const common = {
       id: k,
       "aria-invalid": error ? true : undefined,
@@ -248,7 +251,10 @@ export default function SettingsForm() {
     };
     return (
       <div className="field" key={k}>
-        <label htmlFor={k}>{label(k)}</label>
+        <div className="field-label">
+          <label htmlFor={k}>{label(k)}</label>
+          <HelpTip id={helpId} label={label(k)} text={settingHelp(k)} />
+        </div>
         {k === "offer.openingPercent" ? (
           <select {...common} value={form![k]} onChange={(e) => edit(k, e.target.value)}>
             {openingOptions.map((o) => (

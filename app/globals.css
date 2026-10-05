@@ -2313,6 +2313,59 @@ kbd {
   font-weight: 400;
 }
 
+/* Settings help: an ⓘ after the label opens a short note under it, in the flow (never past the screen edge). */
+.field-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.help-tip {
+  display: contents;
+}
+
+.help-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 44px tap target around a small icon, without pushing the label row taller. */
+  width: var(--control-h);
+  height: var(--control-h);
+  margin: -14px -10px -14px -8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.help-toggle:hover,
+.help-toggle[aria-expanded="true"] {
+  color: var(--accent-hover);
+}
+
+.help-bubble {
+  flex-basis: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  background: var(--accent-tint);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+  animation: drop-in var(--dur) var(--ease);
+}
+
+.help-bubble[hidden] {
+  display: none;
+}
+
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
