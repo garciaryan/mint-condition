@@ -137,8 +137,32 @@ test("401 pauses the queue until resumed", async () => {
 test("concurrent kicks process each row exactly once, oldest first", async () => {
   const { db } = setup(["A", "B", "C"]);
   const f = fake({ search: async () => { await new Promise((r) => setTimeout(r, 5)); return []; } });
-  await Promise.all([kickWorker({ db, client: f.client }), kickWorker({ db, client: f.client })]);
+  const first = kickWorker({ db, client: f.client });
+  assert.equal(kickWorker({ db, client: f.client }), first);
+  await first;
   assert.deepEqual(f.calls, ["search:A", "search:B", "search:C"]);
+});
+
+test("keep-alive pings run while the loop works and stop after it ends", async () => {
+  const { db } = setup(["A", "B"]);
+  let pings = 0;
+  const f = fake({ search: async () => { await new Promise((r) => setTimeout(r, 40)); return []; } });
+  await kickWorker({ db, client: f.client, keepAlive: () => { pings++; }, keepAliveMs: 10 });
+  assert.ok(pings >= 2, `expected pings while pending, got ${pings}`);
+  const after = pings;
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(pings, after);
+});
+
+test("an unexpected loop error releases the claimed row and does not spin", async () => {
+  const { db, items } = setup(["A"]);
+  const f = fake();
+  let nowCalls = 0;
+  await kickWorker({ db, client: f.client, now: () => { nowCalls++; throw new Error("clock broke"); } });
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(getItem(db, items[0].id)!.status, "pending");
+  assert.equal(nowCalls, 1);
+  assert.equal(f.calls.length, 0);
 });
 
 test("item deleted during lookup stays deleted", async () => {

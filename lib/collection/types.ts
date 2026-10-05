@@ -22,6 +22,8 @@ export type ItemRow = {
   releaseId: number | null;
   release: Candidate | null;
   candidates: Candidate[] | null;
+  /** Set by list reads, which leave `candidates` null to avoid parsing it. */
+  candidateCount?: number;
   suggestions: PriceSuggestions | null;
   stats: MarketplaceStats | null;
   pricedAt: number | null;

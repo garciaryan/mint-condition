@@ -78,8 +78,8 @@ a phone and finish it on a laptop.
    - **Paste a list**: one record per line, with an optional year after a comma or tab (`SD 7208, 1971`). Up to
      500 lines; bad lines are reported and the rest are added.
 3. **Let it work.** A background worker looks each record up on Discogs, one at a time at the Discogs rate limit.
-   It keeps going with the phone locked or the page closed, and picks up where it left off if the server has
-   been asleep. Rows show their state (Queued, Looking up, To pick, Priced, No match, No price data, or Error with a Retry button).
+   It keeps going with the phone locked or the page closed (while lookups are queued the server keeps itself
+   awake); if the server was asleep, it resumes as soon as the app is opened. Rows show their state (Queued, Looking up, To pick, Priced, No match, No price data, or Error with a Retry button).
 4. **To pick.** A record that matches several pressings waits in the "To pick" queue. Open it, choose the
    pressing, and it's priced. The rest of the lot isn't held up.
 5. **Totals.** The bar shows low / suggested / high market value for the lot plus coverage, for example

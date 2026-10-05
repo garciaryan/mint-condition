@@ -17,7 +17,7 @@ const toSession = (r: Row): SessionRow => ({
 const parse = <T>(v: unknown): T | null => (typeof v === "string" ? (JSON.parse(v) as T) : null);
 const json = (v: unknown): string | null => (v == null ? null : JSON.stringify(v));
 
-const toItem = (r: Row): ItemRow => ({
+const toItem = (r: Row, lite = false): ItemRow => ({
   id: r.id as number,
   sessionId: r.session_id as number,
   query: r.query as string,
@@ -27,7 +27,8 @@ const toItem = (r: Row): ItemRow => ({
   status: r.status as ItemStatus,
   releaseId: (r.release_id as number | null) ?? null,
   release: parse(r.release_json),
-  candidates: parse(r.candidates_json),
+  candidates: lite ? null : parse(r.candidates_json),
+  candidateCount: (r.candidate_count as number | null) ?? undefined,
   suggestions: parse(r.suggestions_json),
   stats: parse(r.stats_json),
   pricedAt: (r.priced_at as number | null) ?? null,
@@ -90,11 +91,16 @@ export function getItem(db: DatabaseSync, id: number): ItemRow | null {
   return r ? toItem(r) : null;
 }
 
+// List reads skip the (large) candidate JSON and carry only its length.
+const LIST_COLUMNS = `id, session_id, query, year, record_grade, sleeve_grade, status, release_id, release_json,
+  suggestions_json, stats_json, priced_at, error, created_at,
+  CASE WHEN candidates_json IS NULL THEN 0 ELSE json_array_length(candidates_json) END AS candidate_count`;
+
 export function listItems(db: DatabaseSync, sessionId: number): ItemRow[] {
   return db
-    .prepare("SELECT * FROM items WHERE session_id = ? ORDER BY created_at DESC, id DESC")
+    .prepare(`SELECT ${LIST_COLUMNS} FROM items WHERE session_id = ? ORDER BY created_at DESC, id DESC`)
     .all(sessionId)
-    .map(toItem);
+    .map((r) => toItem(r, true));
 }
 
 export function addItems(
@@ -211,6 +217,10 @@ export function applyLookup(db: DatabaseSync, id: number, patch: LookupPatch): b
   }
   const res = db.prepare(`UPDATE items SET ${sets.join(", ")} WHERE id = ? AND status = 'working'`).run(...values, id);
   return Number(res.changes) > 0;
+}
+
+export function releaseClaim(db: DatabaseSync, id: number): void {
+  db.prepare("UPDATE items SET status = 'pending' WHERE id = ? AND status = 'working'").run(id);
 }
 
 export function resetWorking(db: DatabaseSync): number {

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { openDb } from "../lib/db.ts";
 import {
   addItems, applyLookup, claimNextPending, countPending, createSession, deleteItem, deleteSession, getItem,
-  getSession, listItems, listSessions, pickRelease, repriceSession, resetWorking, retryItem, touchSession,
+  getSession, listItems, listSessions, pickRelease, releaseClaim, repriceSession, resetWorking, retryItem, touchSession,
   updateItemFields, updateSession,
 } from "../lib/collection/store.ts";
 import type { Candidate } from "../lib/types.ts";
@@ -220,4 +220,23 @@ test("applyLookup leaves omitted columns untouched and clears explicit nulls", (
   assert.equal(c.releaseId, null);
   assert.equal(c.release, null);
   assert.deepEqual(c.suggestions, { NM: 10 });
+});
+
+test("listItems reports candidate_count without parsing candidates; releaseClaim returns a working row", () => {
+  const db = openDb(":memory:");
+  const s = createSession(db, { name: "L", defaultRecord: "NM", defaultSleeve: "NM" }, 1);
+  const [a, b] = addItems(db, s.id, [{ query: "A" }, { query: "B" }], { record: "NM", sleeve: "NM" }, 1);
+  db.prepare("UPDATE items SET status = 'to-pick', candidates_json = ? WHERE id = ?").run(JSON.stringify([cand(1), cand(2), cand(3)]), a.id);
+  const rows = listItems(db, s.id);
+  const ra = rows.find((r) => r.id === a.id)!;
+  assert.equal(ra.candidates, null);
+  assert.equal(ra.candidateCount, 3);
+  assert.equal(rows.find((r) => r.id === b.id)!.candidateCount, 0);
+  assert.deepEqual(getItem(db, a.id)!.candidates?.length, 3);
+
+  db.prepare("UPDATE items SET status = 'working' WHERE id = ?").run(b.id);
+  releaseClaim(db, b.id);
+  assert.equal(getItem(db, b.id)!.status, "pending");
+  releaseClaim(db, a.id);
+  assert.equal(getItem(db, a.id)!.status, "to-pick");
 });
