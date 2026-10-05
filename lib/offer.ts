@@ -75,11 +75,11 @@ export function computeOffer(items: ItemRow[], inputs: OfferInputs, settings: Se
   }
   const bulkCount = items.length - picks;
   const bulk = inputs.bulkEach * bulkCount;
-  const pickWalkAway = Math.max(
-    0,
-    dollars(pickNet * (1 - o.marginPercent / 100) - o.overheadPerRecord * picks - inputs.lotOverhead),
-  );
-  const wholeWalkAway = dollars(pickWalkAway + bulk);
+  // What the picks leave after margin and overhead. It can be negative when the lot overhead is more than the picks
+  // cover; the whole-lot walk-away still has to pay for that, so only the final amounts are floored at 0.
+  const pickRoom = pickNet * (1 - o.marginPercent / 100) - o.overheadPerRecord * picks - inputs.lotOverhead;
+  const pickWalkAway = Math.max(0, dollars(pickRoom));
+  const wholeWalkAway = Math.max(0, dollars(pickRoom + bulk));
   return {
     inputs: { ...inputs, unverifiedSteps: o.unverifiedSteps, overheadPerRecord: o.overheadPerRecord, marginPercent: o.marginPercent },
     openingPercent: o.openingPercent,

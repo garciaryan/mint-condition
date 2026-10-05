@@ -44,9 +44,11 @@ No network, fs or DB. Inputs are `ItemRow[]`, the lot's offer inputs and `Settin
 **Per lot**
 - `picks` = count of pick rows, `pickValue` = Σ `market.suggested` over picks, `pickNet` = Σ `net` over picks.
 - `bulkCount` = all other rows (non-pick priced rows plus unpriced rows). `unpricedCount` is reported separately.
-- `pickWalkAway = max(0, floor(pickNet × (1 − marginPercent / 100) − overheadPerRecord × picks − lotOverhead))`.
-- `wholeWalkAway = pickWalkAway + bulkEach × bulkCount`, rounded down to whole dollars. Bulk records are counted at
-  cost: per-record overhead applies to picks only, since bulk goes to dollar bins without new sleeves or listing.
+- `pickRoom = pickNet × (1 − marginPercent / 100) − overheadPerRecord × picks − lotOverhead` (can be negative).
+- `pickWalkAway = max(0, floor(pickRoom))`.
+- `wholeWalkAway = max(0, floor(pickRoom + bulkEach × bulkCount))`. The whole lot still has to pay for any lot
+  overhead the picks don't cover (amended after final review). Bulk records are counted at cost: per-record overhead
+  applies to picks only, since bulk goes to dollar bins without new sleeves or listing.
 
 | | Pick-only offer | Whole-lot offer |
 |---|---|---|

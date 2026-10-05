@@ -111,3 +111,17 @@ test("scan filter", () => {
   g("A", 0);
   assert.equal(g("A", 3000), true);
 });
+
+test("canPick follows the offer grades, not the displayed ones", () => {
+  const unverified = { ...INPUTS, unverified: true };
+  // VG+ has data, the lowered VG does not: priced on screen, but not pickable in an unverified lot.
+  const lost = item({ status: "priced", record: "VG+", sleeve: "NM", suggestions: { "VG+": 30 } });
+  assert.equal(toItemView(lost, settings, INPUTS).canPick, true);
+  assert.equal(toItemView(lost, settings, unverified).canPick, false);
+  // VG+ has no data, the lowered VG does: no price on screen, yet a pick the owner must be able to unpin.
+  const gained = item({ status: "priced", record: "VG+", sleeve: "NM", suggestions: { VG: 20 } });
+  const v = toItemView(gained, settings, unverified);
+  assert.equal(v.market, null);
+  assert.equal(v.isPick, true);
+  assert.equal(v.canPick, true);
+});

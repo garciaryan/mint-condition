@@ -62,7 +62,15 @@ test("unverified lowers both grades; a missing grade becomes unpriced", () => {
 
 test("lot overhead floors pick walk-away at 0", () => {
   const o = computeOffer([A, B, C], { ...base, lotOverhead: 20 }, settings);
-  assert.equal(o.pickOnly.walkAway, 0); assert.equal(o.wholeLot.walkAway, 1);
+  assert.equal(o.pickOnly.walkAway, 0); assert.equal(o.wholeLot.walkAway, 0);
+});
+
+test("whole-lot walk-away still pays for lot overhead the picks can't cover", () => {
+  // Picks keep 17.04 after margin and per-record overhead; lot overhead 20 leaves -2.96; 10 bulk rows add 5.
+  const bulk = Array.from({ length: 10 }, (_, i) => ({ ...C, id: 1000 + i }));
+  const o = computeOffer([A, ...bulk], { ...base, lotOverhead: 20 }, settings);
+  assert.equal(o.pickOnly.walkAway, 0);
+  assert.equal(o.wholeLot.walkAway, 2);
 });
 
 test("nothing priced yet: zero picks, whole lot is bulk", () => {

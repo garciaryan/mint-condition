@@ -122,7 +122,7 @@ export default function ItemRow({
         </span>
       </div>
       <div className={`row-price${dim ? " dim" : ""}`}>
-        {item.market && (
+        {item.canPick && (
           <button
             type="button"
             className={`star${item.isPick ? " on" : ""}`}
