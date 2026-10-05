@@ -30,6 +30,9 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   Lot Re-price and Retry (`items.refresh`) and the single-record "Refresh prices" bypass it; errors are never
   cached. Row `priced_at` is when Discogs answered, so cached prices show their real age.
 - `barcode-detector` is the only runtime dependency beyond Next/React; it is lazy-loaded by the camera scanner.
+- Font: Kanit (400/500/600/700, latin) via `next/font/google` in `app/layout.tsx`, self-hosted at build time.
+  Kanit has proportional digits and no `tnum`, so every `font-variant-numeric: tabular-nums` rule also sets
+  `font-family: var(--font-numeric)` (system font); `tests/font.test.ts` checks it. Only use the loaded weights.
 - Discogs data is asking prices and suggestions, not confirmed sales. The UI should say so.
 - Discogs API terms (`lib/discogs-terms.ts`): no Discogs data shown more than 6 hours old (`MAX_CACHE_HOURS`; lot
   rows past it are hidden by `hideExpired` and re-queued by `requeueExpired` when the lot or buy sheet opens);

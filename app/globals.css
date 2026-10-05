@@ -39,7 +39,10 @@
   --t-interactive: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
     border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
     transform var(--dur-fast) var(--ease);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Kanit (self-hosted by next/font in app/layout.tsx). It has no even-width digits, so anything that lines numbers
+     up uses --font-numeric instead. */
+  --font-numeric: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-kanit), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--ink);
 }
 
@@ -756,6 +759,7 @@ a {
   font-size: 26px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
 }
 
 .range {
@@ -764,6 +768,7 @@ a {
   align-items: flex-end;
   gap: 8px;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
 }
 
 .range span {
@@ -794,6 +799,7 @@ a {
   margin: 2px 0 0;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
 }
 
 /* Lots list */
@@ -861,6 +867,7 @@ a {
   font-size: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
 }
 
 .lot-total small {
@@ -1001,6 +1008,7 @@ textarea:focus-visible {
 
 .totals .t span {
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
   font-size: 18px;
   font-weight: 600;
 }
@@ -1217,6 +1225,7 @@ kbd {
 .row-price {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
 }
 
 .row-price b {
@@ -1774,6 +1783,7 @@ kbd {
     font-size: 24px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    font-family: var(--font-numeric);
   }
 
   .totals-mini {
@@ -2094,6 +2104,7 @@ kbd {
   color: var(--ink);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
   text-align: left;
   cursor: pointer;
 }
@@ -2136,6 +2147,7 @@ kbd {
   width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
   font-size: 15px;
 }
 
@@ -2188,6 +2200,7 @@ kbd {
   margin: 8px 0 0;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
 }
 
 .walk-away b {
