@@ -2007,3 +2007,7 @@ kbd {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.settings-currency {
+  margin: 12px 0 0;
+}

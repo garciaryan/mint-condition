@@ -70,3 +70,10 @@ test("corrupt JSON in the row falls back to defaults with a reason", () => {
 test("an invalid settings.json still throws", () => {
   assert.throws(() => getSettings(db, "/nonexistent/settings.json"));
 });
+
+test("cache hours are saved while currency still follows the file", () => {
+  saveSettings(db, { discogs: { cacheHours: 6, currency: "EUR" } });
+  const s = getSettings(db).settings;
+  assert.equal(s.discogs.cacheHours, 6);
+  assert.equal(s.discogs.currency, defaults.discogs.currency);
+});

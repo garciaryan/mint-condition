@@ -101,3 +101,13 @@ test("formView: a valid state loads clean; an invalid saved row is saveable with
   assert.equal(bad.saveable, true);
   assert.equal(bad.showErrors, true);
 });
+
+test("cache hours field round-trips and is limited to 0–168 whole hours", () => {
+  const f = toForm(defaults);
+  assert.equal(f["discogs.cacheHours"], "24");
+  assert.equal(formatDefault("discogs.cacheHours", defaults), "24");
+  const r = fromForm({ ...f, "discogs.cacheHours": "0" });
+  assert.ok(r.ok);
+  assert.equal(r.value.discogs.cacheHours, 0);
+  for (const bad of ["-1", "169", "2.5", ""]) assert.equal(fromForm({ ...f, "discogs.cacheHours": bad }).ok, false, bad);
+});
