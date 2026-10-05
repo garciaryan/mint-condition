@@ -2054,3 +2054,119 @@ a.action-link:hover {
 .export-hint {
   margin: 6px 0 0;
 }
+
+/* Buy sheet (/collection/:id/print) */
+.sheet .print-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sheet-head h1 {
+  margin: 0 0 4px;
+}
+
+.sheet-head p {
+  margin: 0 0 4px;
+}
+
+.sheet-offers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 16px 0 8px;
+}
+
+.sheet-ladder {
+  border-collapse: collapse;
+}
+
+.sheet-ladder caption {
+  text-align: left;
+  font-weight: 700;
+  padding-bottom: 4px;
+}
+
+.sheet-ladder th,
+.sheet-ladder td {
+  padding: 2px 12px 2px 0;
+  text-align: left;
+  font-weight: 400;
+}
+
+.sheet-offer p {
+  margin: 4px 0 0;
+}
+
+.sheet-counts {
+  margin: 0 0 16px;
+}
+
+.sheet-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sheet-table th,
+.sheet-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 6px 8px 6px 0;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.sheet-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sheet-table .box {
+  font-size: 1.2em;
+  width: 1.5em;
+}
+
+.sheet-foot {
+  margin-top: 16px;
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  .topbar,
+  .print-controls {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000;
+    font-size: 10.5pt;
+  }
+
+  .sheet {
+    padding: 0;
+    max-width: none;
+  }
+
+  .sheet .muted {
+    color: #333;
+  }
+
+  .sheet-table th,
+  .sheet-table td {
+    border-bottom: 1px solid #999;
+  }
+
+  .sheet-table thead {
+    display: table-header-group;
+  }
+
+  .sheet-table tr {
+    break-inside: avoid;
+  }
+}
