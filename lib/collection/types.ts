@@ -46,6 +46,8 @@ export type ItemRow = {
   createdAt: number;
   /** Cherry-pick pin: null = automatic (threshold), true/false = set by the owner. */
   pick: boolean | null;
+  /** The next lookup skips the Discogs cache (set by re-price and retry). */
+  refresh: boolean;
 };
 
 export type LookupPatch = {

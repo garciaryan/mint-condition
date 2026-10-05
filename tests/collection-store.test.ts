@@ -283,3 +283,19 @@ test("setItemPick pins and survives re-price and lookup", () => {
   assert.equal(setItemPick(db, it.id, false)!.pick, false);
   assert.equal(setItemPick(db, 9999, true), null);
 });
+
+test("reprice and retry set refresh; applyLookup clears it", () => {
+  const { db, s } = setup();
+  const [a, b] = addItems(db, s.id, [{ query: "A" }, { query: "B" }], G, 1);
+  assert.equal(getItem(db, a.id)!.refresh, false);
+  claimNextPending(db);
+  applyLookup(db, a.id, { status: "priced", releaseId: 1, suggestions: { NM: 1 }, stats: null, pricedAt: 1 });
+  assert.equal(repriceSession(db, s.id), 1);
+  assert.equal(getItem(db, a.id)!.refresh, true);
+  claimNextPending(db);
+  applyLookup(db, a.id, { status: "priced", pricedAt: 2 });
+  assert.equal(getItem(db, a.id)!.refresh, false);
+  claimNextPending(db);
+  applyLookup(db, b.id, { status: "error", error: "boom" });
+  assert.equal((retryItem(db, b.id) as { refresh: boolean }).refresh, true);
+});

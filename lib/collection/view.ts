@@ -74,6 +74,15 @@ export type Totals = {
   stale: number;
 };
 
+/** When the oldest priced row's Discogs data was fetched, or null when nothing is priced. */
+export function oldestPricedAt(items: ItemRow[]): number | null {
+  let oldest: number | null = null;
+  for (const i of items) {
+    if (i.status === "priced" && i.pricedAt !== null && (oldest === null || i.pricedAt < oldest)) oldest = i.pricedAt;
+  }
+  return oldest;
+}
+
 export function computeTotals(items: ItemRow[], settings: Settings): Totals {
   const t: Totals = { low: 0, suggested: 0, high: 0, total: items.length, priced: 0, toPick: 0, noPrice: 0, problems: 0, pending: 0, refreshing: 0, stale: 0 };
   for (const item of items) {

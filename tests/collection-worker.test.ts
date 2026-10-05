@@ -5,6 +5,7 @@ import { addItems, createSession, deleteItem, getItem, resetWorking, updateItemF
 import { __resetWorkerForTests, isQueuePaused, kickWorker, processItem, resumeQueue } from "../lib/collection/worker.ts";
 import { DiscogsError } from "../lib/discogs.ts";
 import type { LookupClient } from "../lib/lookup.ts";
+import { live } from "./helpers/live-client.ts";
 import type { Candidate, MarketplaceStats, PriceSuggestions } from "../lib/types.ts";
 
 const cand = (id: number): Candidate => ({ id, title: `T${id}`, year: 1970, country: "US", label: "L", catno: "C", format: "LP", thumb: null });
@@ -15,14 +16,14 @@ type Script = {
   search?: (q: string, y?: number) => Promise<Candidate[]> | Candidate[];
   suggestions?: (id: number) => Promise<PriceSuggestions | null> | PriceSuggestions | null;
 };
-function fake(script: Script = {}) {
+function fake(script: Script = {}, at = 0, seen?: { fresh: (boolean | undefined)[] }) {
   const calls: string[] = [];
   const client: LookupClient = {
     async searchByCatno(q, y) { calls.push(`search:${q}`); return script.search ? script.search(q, y) : [cand(1)]; },
     async priceSuggestions(id) { calls.push(`sugg:${id}`); return script.suggestions ? script.suggestions(id) : SUG; },
     async marketplaceStats(id) { calls.push(`stats:${id}`); return STATS; },
   };
-  return { client, calls };
+  return { client: live(client, () => at, seen), calls };
 }
 const setup = (queries: string[] = ["A"]) => {
   const db = openDb(":memory:");
@@ -51,7 +52,7 @@ test("several matches go to to-pick", async () => {
 
 test("one match is priced in the same call, in order search, suggestions, stats", async () => {
   const { db, items } = setup();
-  const f = fake({ search: () => [cand(7)] });
+  const f = fake({ search: () => [cand(7)] }, 777);
   await kickWorker({ db, client: f.client, now: () => 777 });
   assert.deepEqual(f.calls, ["search:A", "sugg:7", "stats:7"]);
   const r = getItem(db, items[0].id)!;
@@ -69,7 +70,7 @@ test("null suggestions and missing grade give no-price", async () => {
   let n = 0;
   await kickWorker({
     db,
-    client: fake({ suggestions: () => (n++ === 0 ? null : { NM: 5 }) }).client,
+    client: fake({ suggestions: () => (n++ === 0 ? null : { NM: 5 }) }, 9).client,
     now: () => 9,
   });
   const first = getItem(db, items[0].id)!;
@@ -234,4 +235,33 @@ test("processItem with a release id skips the search", async () => {
   assert.deepEqual(f.calls, ["sugg:5", "stats:5"]);
   assert.equal(patch.status, "priced");
   assert.equal("release" in patch, false);
+});
+
+test("processItem passes fresh from the row and prices at the data's age", async () => {
+  const { items } = setup();
+  const seen = { fresh: [] as (boolean | undefined)[] };
+  const patch = await processItem(fake({}, 400, seen).client, { ...items[0], releaseId: 1, refresh: true }, 900);
+  assert.deepEqual(seen.fresh, [true, true]);
+  assert.equal(patch.pricedAt, 400);
+});
+
+test("pricedAt is the older of suggestions and stats", async () => {
+  const { items } = setup();
+  const inner: LookupClient = {
+    async searchByCatno() { return [cand(1)]; },
+    async priceSuggestions() { return SUG; },
+    async marketplaceStats() { return STATS; },
+  };
+  const patch = await processItem(live(inner, (m) => (m === "stats" ? 300 : 500)), { ...items[0], releaseId: 1 }, 900);
+  assert.equal(patch.pricedAt, 300);
+});
+
+test("retrying a no-match searches fresh; a normal row uses the cache", async () => {
+  const { items } = setup();
+  const seen = { fresh: [] as (boolean | undefined)[] };
+  await processItem(fake({ search: () => [] }, 0, seen).client, { ...items[0], refresh: true }, 1);
+  assert.deepEqual(seen.fresh, [true]);
+  const seen2 = { fresh: [] as (boolean | undefined)[] };
+  await processItem(fake({}, 0, seen2).client, items[0], 1);
+  assert.deepEqual(seen2.fresh, [false, false, false]);
 });

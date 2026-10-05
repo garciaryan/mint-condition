@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { computeTotals, marketFor, queueState, toItemView } from "../lib/collection/view.ts";
+import { computeTotals, marketFor, oldestPricedAt, queueState, toItemView } from "../lib/collection/view.ts";
 import { createScanFilter, defaultLotName, pollDelayMs } from "../lib/collection/ui.ts";
 import { priceRecord } from "../lib/pricing.ts";
 import { offerInputs } from "../lib/offer.ts";
@@ -18,7 +18,7 @@ let nextId = 1;
 const item = (o: Partial<ItemRow>): ItemRow => ({
   id: nextId++, sessionId: 1, query: "Q", year: null, record: "VG+", sleeve: "VG+", status: "pending",
   releaseId: null, release: null, candidates: null, suggestions: null, stats: null, pricedAt: null,
-  error: null, createdAt: 0, pick: null, ...o,
+  error: null, createdAt: 0, pick: null, refresh: false, ...o,
 });
 const sugg = { NM: 40, "VG+": 30, VG: 20 };
 const stats = { lowestPrice: 12, currency: "USD", numForSale: 3 };
@@ -124,4 +124,16 @@ test("canPick follows the offer grades, not the displayed ones", () => {
   assert.equal(v.market, null);
   assert.equal(v.isPick, true);
   assert.equal(v.canPick, true);
+});
+
+test("oldestPricedAt is the smallest pricedAt among priced rows", () => {
+  const rows = [
+    item({ status: "priced", pricedAt: 300 }),
+    item({ status: "priced", pricedAt: 100 }),
+    item({ status: "no-price", pricedAt: 50 }),
+    item({ status: "pending" }),
+  ];
+  assert.equal(oldestPricedAt(rows), 100);
+  assert.equal(oldestPricedAt([item({ status: "no-price", pricedAt: 5 })]), null);
+  assert.equal(oldestPricedAt([]), null);
 });
