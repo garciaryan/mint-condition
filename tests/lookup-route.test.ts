@@ -55,3 +55,25 @@ test("lookup route 503s when auth is misconfigured", async () => {
     env.SESSION_SECRET = "test-secret";
   }
 });
+
+test("lookup route reports a database that won't open as a database error", async () => {
+  const savedDir = process.env.DATA_DIR;
+  const db = g.__mintDb;
+  delete g.__mintDb;
+  process.env.DATA_DIR = "/dev/null/nope";
+  env.DISCOGS_TOKEN = "dummy";
+  env.DISCOGS_USER_AGENT = "dummy/1";
+  try {
+    const v = await signSession("test-secret", Date.now());
+    const r = await call(`mc_session=${v}`);
+    assert.equal(r.status, 500);
+    const b = await r.json();
+    assert.equal(b.kind, "database");
+  } finally {
+    if (savedDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = savedDir;
+    delete env.DISCOGS_TOKEN;
+    delete env.DISCOGS_USER_AGENT;
+    g.__mintDb = db;
+  }
+});

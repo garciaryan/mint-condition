@@ -113,3 +113,19 @@ test("an invalid settings.json is a 500 settings error", async () => {
   assert.equal((await PUT(req("PUT", {}))).status, 500);
   assert.equal((await DELETE(req("DELETE"))).status, 500);
 });
+
+test("a database that won't open is a 500 database error on every handler", async () => {
+  const savedDir = process.env.DATA_DIR;
+  delete g.__mintDb;
+  process.env.DATA_DIR = "/dev/null/nope";
+  try {
+    for (const r of [await GET(req("GET")), await PUT(req("PUT", {})), await DELETE(req("DELETE"))]) {
+      assert.equal(r.status, 500);
+      assert.equal((await j(r)).kind, "database");
+    }
+  } finally {
+    if (savedDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = savedDir;
+    delete g.__mintDb;
+  }
+});
