@@ -35,7 +35,8 @@ Success:
 
 Discogs inventory upload: comma-separated, first row is a header of lower-case field names; required `release_id`,
 `price`, `media_condition`. Exact spellings below come from Discogs' help article (not readable from this
-environment; confirmed by a real upload on staging before merge).
+environment). Confirmed by a real upload on staging (2026-10-04): the columns below, including `status` `Draft` and
+`private_notes`, are accepted and create draft listings.
 
 Columns, in order:
 
