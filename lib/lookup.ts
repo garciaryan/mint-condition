@@ -1,6 +1,7 @@
 // Lookup orchestration for the web page: request validation, search-or-price, and error mapping.
 // No network of its own; the Discogs client is passed in.
 import { DiscogsError } from "./discogs.ts";
+import type { CachedLookupClient } from "./discogs-cache.ts";
 import { priceRecord } from "./pricing.ts";
 import type { PriceResult } from "./pricing.ts";
 import { isGrade } from "./types.ts";
@@ -14,29 +15,34 @@ export type LookupRequest = {
   areaCode?: string;
   /** Set once the user has picked a pressing (or to re-price one); skips the search. */
   releaseId?: number;
+  /** Re-fetch suggestions and stats from Discogs instead of the cache (only with releaseId). */
+  fresh?: boolean;
 };
+
+/** When the prices came from Discogs (the older of suggestions and stats), and whether that was before this lookup. */
+type Age = { fetchedAt: number; cached: boolean };
 
 export type LookupErrorKind = "bad-request" | "missing-env" | "settings" | "bad-token" | "rate-limited" | "upstream" | "auth" | "forbidden";
 
 export type LookupResponse =
   | { status: "candidates"; candidates: Candidate[] }
   | { status: "no-match" }
-  | {
+  | ({
       status: "no-price";
       /** no-suggestions: Discogs has none for the release, or the seller account isn't set up. */
       reason: "no-suggestions" | "grade-missing";
       releaseId: number;
       release: Candidate | null;
       stats: MarketplaceStats;
-    }
-  | {
+    } & Age)
+  | ({
       status: "priced";
       releaseId: number;
       release: Candidate | null;
       stats: MarketplaceStats;
       currency: string;
       result: PriceResult;
-    }
+    } & Age)
   | { status: "error"; kind: LookupErrorKind; message: string };
 
 export type LookupClient = {
@@ -67,8 +73,11 @@ export function parseLookupRequest(body: unknown): Parsed {
   const sleeve = String(b.sleeve ?? "");
   if (!isGrade(record) || !isGrade(sleeve)) return { ok: false, message: "Pick a record grade and a sleeve grade." };
 
+  if (b.fresh !== undefined && typeof b.fresh !== "boolean") return { ok: false, message: "fresh must be true or false." };
+  if (b.fresh === true && releaseId === undefined) return { ok: false, message: "fresh needs a release id." };
+
   const areaCode = typeof b.areaCode === "string" && b.areaCode.trim() ? b.areaCode.trim() : undefined;
-  return { ok: true, value: { catno, year, record, sleeve, areaCode, releaseId } };
+  return { ok: true, value: { catno, year, record, sleeve, areaCode, releaseId, ...(b.fresh === true ? { fresh: true } : {}) } };
 }
 
 /** Names of required env vars that are unset. Never returns their values. */
@@ -100,20 +109,31 @@ export function httpStatus(res: LookupResponse): number {
  * Search when no release is chosen; one match goes straight to pricing, several return
  * candidates for the picker. With a release id, prices that release.
  */
-export async function runLookup(client: LookupClient, req: LookupRequest, settings: Settings): Promise<LookupResponse> {
+export async function runLookup(
+  client: CachedLookupClient,
+  req: LookupRequest,
+  settings: Settings,
+  now: () => number = Date.now,
+): Promise<LookupResponse> {
+  const startedAt = now();
   let releaseId = req.releaseId;
   let release: Candidate | null = null;
 
   if (releaseId === undefined) {
-    const candidates = await client.searchByCatno(req.catno, req.year);
+    const { value: candidates } = await client.searchByCatno(req.catno, req.year);
     if (candidates.length === 0) return { status: "no-match" };
     if (candidates.length > 1) return { status: "candidates", candidates };
     release = candidates[0];
     releaseId = release.id;
   }
 
-  const [suggestions, stats] = await Promise.all([client.priceSuggestions(releaseId), client.marketplaceStats(releaseId)]);
-  if (!suggestions) return { status: "no-price", reason: "no-suggestions", releaseId, release, stats };
+  const opts = { fresh: req.fresh };
+  const [sugg, st] = await Promise.all([client.priceSuggestions(releaseId, opts), client.marketplaceStats(releaseId, opts)]);
+  const suggestions = sugg.value;
+  const stats = st.value;
+  const fetchedAt = Math.min(sugg.fetchedAt, st.fetchedAt);
+  const age: Age = { fetchedAt, cached: fetchedAt < startedAt };
+  if (!suggestions) return { status: "no-price", reason: "no-suggestions", releaseId, release, stats, ...age };
 
   const result = priceRecord({
     suggestions,
@@ -123,7 +143,7 @@ export async function runLookup(client: LookupClient, req: LookupRequest, settin
     areaCode: req.areaCode,
     settings,
   });
-  if (!result) return { status: "no-price", reason: "grade-missing", releaseId, release, stats };
+  if (!result) return { status: "no-price", reason: "grade-missing", releaseId, release, stats, ...age };
 
-  return { status: "priced", releaseId, release, stats, currency: stats.currency ?? settings.discogs.currency, result };
+  return { status: "priced", releaseId, release, stats, currency: stats.currency ?? settings.discogs.currency, result, ...age };
 }

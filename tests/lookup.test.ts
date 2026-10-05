@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DiscogsError } from "../lib/discogs.ts";
+import { live } from "./helpers/live-client.ts";
+import type { Method } from "./helpers/live-client.ts";
 import { httpStatus, missingEnv, parseLookupRequest, runLookup, toErrorResponse } from "../lib/lookup.ts";
 import type { LookupClient, LookupRequest } from "../lib/lookup.ts";
 import { parseSettings } from "../lib/settings.ts";
@@ -13,11 +15,15 @@ const mk = (id: number, year: number | null = 1971): Candidate => ({
   id, title: `Release ${id}`, year, country: "US", label: "Atlantic", catno: "SD 7208", format: "Vinyl, LP", thumb: null,
 });
 
-function fakeClient(opts: {
-  candidates?: Candidate[];
-  suggestions?: PriceSuggestions | null;
-  stats?: MarketplaceStats;
-}) {
+function fakeClient(
+  opts: {
+    candidates?: Candidate[];
+    suggestions?: PriceSuggestions | null;
+    stats?: MarketplaceStats;
+  },
+  fetchedAt: (method: Method) => number = () => 0,
+  seen?: { fresh: (boolean | undefined)[] },
+) {
   const calls: string[] = [];
   const client: LookupClient = {
     async searchByCatno(catno, year) {
@@ -33,7 +39,7 @@ function fakeClient(opts: {
       return opts.stats ?? { lowestPrice: 25, currency: "USD", numForSale: 4 };
     },
   };
-  return { client, calls };
+  return { client: live(client, fetchedAt, seen), calls };
 }
 
 const req: LookupRequest = { catno: "SD 7208", year: 1971, record: "VG+", sleeve: "VG" };
@@ -136,4 +142,51 @@ test("runLookup falls back to the settings currency when nothing is listed", asy
   const res = await runLookup(client, { ...req, releaseId: 1 }, settings);
   assert.equal(res.status, "priced");
   if (res.status === "priced") assert.equal(res.currency, settings.discogs.currency);
+});
+
+test("runLookup reports cached prices and their age", async () => {
+  const { client } = fakeClient({ candidates: [mk(1)] }, () => 1000);
+  const res = await runLookup(client, req, settings, () => 5000);
+  assert.equal(res.status, "priced");
+  assert.equal(res.status === "priced" && res.cached, true);
+  assert.equal(res.status === "priced" && res.fetchedAt, 1000);
+});
+
+test("fresh data is not reported as cached", async () => {
+  const { client } = fakeClient({ candidates: [mk(1)] }, () => 5000);
+  const res = await runLookup(client, req, settings, () => 5000);
+  assert.equal(res.status === "priced" && res.cached, false);
+});
+
+test("no-price results carry cached and fetchedAt too", async () => {
+  const { client } = fakeClient({ candidates: [mk(1)], suggestions: null }, () => 1000);
+  const res = await runLookup(client, req, settings, () => 5000);
+  assert.equal(res.status, "no-price");
+  assert.equal(res.status === "no-price" && res.cached, true);
+});
+
+test("fresh reaches suggestions and stats but not search", async () => {
+  const seen = { fresh: [] as (boolean | undefined)[] };
+  const { client } = fakeClient({}, () => 0, seen);
+  await runLookup(client, { ...req, releaseId: 9, fresh: true }, settings);
+  assert.deepEqual(seen.fresh, [true, true]);
+  const seen2 = { fresh: [] as (boolean | undefined)[] };
+  await runLookup(fakeClient({ candidates: [mk(1)] }, () => 0, seen2).client, req, settings);
+  assert.deepEqual(seen2.fresh, [undefined, undefined, undefined]);
+});
+
+test("fetchedAt is the older of suggestions and stats", async () => {
+  const { client } = fakeClient({}, (m) => (m === "suggestions" ? 2000 : 1000));
+  const res = await runLookup(client, { ...req, releaseId: 9 }, settings, () => 5000);
+  assert.equal(res.status === "priced" && res.fetchedAt, 1000);
+});
+
+test("parseLookupRequest accepts fresh only with a release id", () => {
+  const b = { catno: "X", record: "NM", sleeve: "NM" };
+  const ok = parseLookupRequest({ ...b, releaseId: 5, fresh: true });
+  assert.equal(ok.ok && ok.value.fresh, true);
+  assert.equal(parseLookupRequest({ ...b, fresh: true }).ok, false);
+  assert.equal(parseLookupRequest({ ...b, releaseId: 5, fresh: "yes" }).ok, false);
+  const plain = parseLookupRequest({ ...b, releaseId: 5 });
+  assert.equal(plain.ok && plain.value.fresh, undefined);
 });
