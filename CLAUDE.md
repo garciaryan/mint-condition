@@ -36,7 +36,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 ## Layout
 - `lib/types.ts` grades and shared types · `lib/settings.ts` settings loader/validator
 - `lib/discogs.ts` API client (throttled, retries 429, catno variants, barcode detection, year filter)
-- `lib/pricing.ts` pricing logic · `lib/lookup.ts` lookup flow for the API route · `lib/form.ts` client-side
+- `lib/pricing.ts` pricing logic · `lib/offer.ts` offer ladder/walk-away/picks (pure) · `lib/lookup.ts` lookup flow for the API route · `lib/form.ts` client-side
   form checks and picker grouping · `tests/` unit tests
 - `scripts/lookup.ts` CLI · `app/` Next.js UI (`api/lookup/route.ts`, `Lookup.tsx`, `globals.css`)
 - `lib/auth.ts` (session signing, authMode, limiter, health config) · `lib/password.ts` (hashing) · `lib/gate.ts` +
@@ -47,7 +47,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
   `lib/discogs-client.ts` shared client · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
 - `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,
-  `PickPanel`, `TotalsBar`, `ItemRow`) · `app/api/sessions/` and `app/api/items/` · shared `app/Picker.tsx`,
+  `PickPanel`, `TotalsBar`, `OfferPanel`, `ItemRow`) · `app/api/sessions/` and `app/api/items/` · shared `app/Picker.tsx`,
   `app/GradeSelect.tsx`, `app/SiteHeader.tsx`, `app/NavLinks.tsx`
 
 ## Status
@@ -70,6 +70,8 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   cookie, foreign Origin 403). Phone check on mobile data passed (log in, price a record).
 - Phase 4 collection mode (2026-10-04): built on feat/collection-mode; 150 tests passing; deploy + phone check
   pending. Spec: `docs/superpowers/specs/2026-10-04-collection-mode-design.md`.
+- Phase 5 offer calculator (2026-10-04): built on feat/offer-calculator; 186 tests passing; migration 2 (lot offer
+  inputs, row `pick`); deploy + phone check pending. Spec: `docs/superpowers/specs/2026-10-04-offer-calculator-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns
@@ -90,7 +92,6 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 7. Add tests for any new pure logic; keep `npm test` and `npm run typecheck` green.
 
 ## Later phases (do not start unless asked)
-5. Offer calculator: offer ladder (30/40/50/60%), overhead, margin, cherry-pick vs bulk split,
-   unverified-condition discount (downgrade grades for remote buys). 6. SQLite cache + settings UI (24h cache).
+6. SQLite cache + settings UI (24h cache).
 7. CSV export, printable buy sheet. 8. Track price paid and sold price to learn the user's own offer percentage.
    The user has no offer-percentage rule of thumb; default ladder starts at 40%.
