@@ -1,7 +1,10 @@
 // Lot exports: the Discogs inventory-upload CSV and the printable buy sheet's rows. Pure.
+import { isPickRow } from "../offer.ts";
+import type { OfferInputs } from "../offer.ts";
 import { priceRecord } from "../pricing.ts";
 import type { Grade, Settings } from "../types.ts";
-import type { ItemRow } from "./types.ts";
+import type { ItemRow, ItemStatus } from "./types.ts";
+import { marketFor } from "./view.ts";
 
 /** Condition names exactly as Discogs' inventory upload expects them. */
 export const DISCOGS_GRADE: Record<Grade, string> = {
@@ -77,4 +80,58 @@ export function csvFilename(lotName: string, lotId: number): string {
     .slice(0, 60)
     .replace(/-+$/, "");
   return `${slug || `lot-${lotId}`}-discogs.csv`;
+}
+
+export type BuySheetRow = {
+  id: number;
+  query: string;
+  /** Release title; null when no pressing is chosen. */
+  title: string | null;
+  /** "label · year" from the parts that exist; "" when none. */
+  detail: string;
+  record: Grade;
+  sleeve: Grade;
+  /** Market suggested value at the row's grades. */
+  suggested: number | null;
+  sell: number | null;
+  isPick: boolean;
+  /** Null when priced; otherwise why there is no value. */
+  statusLabel: string | null;
+};
+
+const STATUS_LABEL: Record<ItemStatus, string | null> = {
+  priced: null,
+  "no-match": "No match",
+  "to-pick": "To pick",
+  "no-price": "No price",
+  error: "Error",
+  pending: "Looking up",
+  working: "Looking up",
+};
+
+/** Rows for the printed buy sheet: picks first, then by suggested value (high to low); rows without a value last, in
+ * lot order. */
+export function buySheetRows(items: ItemRow[], settings: Settings, inputs: OfferInputs): BuySheetRow[] {
+  const rows = items.map((item): BuySheetRow => {
+    const market = marketFor(item, settings);
+    const priced = item.suggestions
+      ? priceRecord({ suggestions: item.suggestions, lowestListing: item.stats?.lowestPrice ?? null, record: item.record, sleeve: item.sleeve, settings })
+      : null;
+    return {
+      id: item.id,
+      query: item.query,
+      title: item.release?.title ?? null,
+      detail: [item.release?.label, item.release?.year].filter(Boolean).join(" · "),
+      record: item.record,
+      sleeve: item.sleeve,
+      suggested: market?.suggested ?? null,
+      sell: priced?.sell.price ?? null,
+      isPick: isPickRow(item, inputs, settings),
+      statusLabel: market ? STATUS_LABEL[item.status] : (STATUS_LABEL[item.status] ?? "No price"),
+    };
+  });
+  const valued = rows.filter((r) => r.suggested !== null);
+  const rest = rows.filter((r) => r.suggested === null);
+  valued.sort((a, b) => Number(b.isPick) - Number(a.isPick) || (b.suggested ?? 0) - (a.suggested ?? 0));
+  return [...valued, ...rest];
 }

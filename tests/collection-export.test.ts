@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { csvFilename, DISCOGS_GRADE, exportCounts, toDiscogsCsv } from "../lib/collection/export.ts";
+import { buySheetRows, csvFilename, DISCOGS_GRADE, exportCounts, toDiscogsCsv } from "../lib/collection/export.ts";
+import { marketFor } from "../lib/collection/view.ts";
+import { offerInputs } from "../lib/offer.ts";
 import type { ItemRow } from "../lib/collection/types.ts";
 import { priceRecord } from "../lib/pricing.ts";
 import { parseSettings } from "../lib/settings.ts";
@@ -80,4 +82,41 @@ test("csvFilename slugs the lot name and falls back to the id", () => {
   assert.equal(csvFilename("Café ☕", 3), "caf-discogs.csv");
   assert.equal(csvFilename("!!!", 3), "lot-3-discogs.csv");
   assert.equal(csvFilename("a".repeat(100), 3), `${"a".repeat(60)}-discogs.csv`);
+});
+
+const INPUTS = offerInputs({ unverified: false, pickThreshold: 25, bulkEach: null, lotOverhead: 0 }, settings);
+const rel = (o: object = {}) => ({ id: 101, title: "Blue", year: 1971, country: "US", label: "Atlantic", catno: "SD 1", format: "LP", thumb: null, ...o });
+
+test("buy sheet: picks first, then suggested value high to low, unpriced last in lot order", () => {
+  const rows = buySheetRows([
+    item({ id: 1, status: "no-match" }),
+    priced({ id: 2, record: "VG", sleeve: "VG" }),
+    priced({ id: 3, record: "NM", sleeve: "NM" }),
+    item({ id: 4, status: "to-pick" }),
+    priced({ id: 5, record: "VG+", sleeve: "VG+" }),
+    priced({ id: 6, record: "G+", sleeve: "G+" }),
+  ], settings, INPUTS);
+  assert.deepEqual(rows.map((r) => r.id), [3, 5, 2, 6, 1, 4]);
+  assert.deepEqual(rows.map((r) => r.isPick), [true, true, false, false, false, false]);
+  assert.deepEqual(rows.map((r) => r.statusLabel), [null, null, null, null, "No match", "To pick"]);
+});
+
+test("buy sheet row fields", () => {
+  const it = priced({ id: 1, record: "VG+", sleeve: "VG", release: rel(), query: "SD 1" });
+  const [r] = buySheetRows([it], settings, INPUTS);
+  const p = priceRecord({ suggestions: sugg, lowestListing: null, record: "VG+", sleeve: "VG", settings })!;
+  assert.deepEqual(r, {
+    id: 1, query: "SD 1", title: "Blue", detail: "Atlantic · 1971", record: "VG+", sleeve: "VG",
+    suggested: marketFor(it, settings)!.suggested, sell: p.sell.price, isPick: true, statusLabel: null,
+  });
+  assert.equal(buySheetRows([priced({ release: rel({ label: "", year: null }) })], settings, INPUTS)[0].detail, "");
+  assert.equal(buySheetRows([item({ status: "no-match" })], settings, INPUTS)[0].title, null);
+  const label = (status: ItemRow["status"]) => buySheetRows([item({ status })], settings, INPUTS)[0].statusLabel;
+  assert.equal(label("no-price"), "No price");
+  assert.equal(label("error"), "Error");
+  assert.equal(label("pending"), "Looking up");
+  assert.equal(label("working"), "Looking up");
+  const row = buySheetRows([item({ status: "no-price", releaseId: 5 })], settings, INPUTS)[0];
+  assert.equal(row.suggested, null);
+  assert.equal(row.sell, null);
 });
