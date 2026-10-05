@@ -1,7 +1,5 @@
 // What each setting changes, shown behind the ⓘ button on /settings. Client-safe, pure.
 import type { FieldKey } from "./settings-form.ts";
-import { GRADE_NAMES } from "./types.ts";
-import type { Grade } from "./types.ts";
 
 const HELP: Partial<Record<FieldKey, string>> = {
   "sell.undercutPercent":
@@ -25,10 +23,11 @@ const HELP: Partial<Record<FieldKey, string>> = {
     "How long Discogs answers are reused before asking again. At most 6 (Discogs terms); 0 turns the cache off.",
 };
 
-export function settingHelp(key: FieldKey): string {
-  const own = HELP[key];
-  if (own) return own;
-  const grade = key.split(".")[1] as Grade;
-  const name = GRADE_NAMES[grade].replace(/ \(.*\)$/, "");
-  return `Share of market value kept when the sleeve is ${name}. Market value = the Discogs suggestion for the record grade × this.`;
+/** One note for the whole sleeve grid, on its section heading. */
+export const SLEEVE_HELP =
+  "Market value = the Discogs suggestion for the record grade × the sleeve's percentage. A VG sleeve at 85% keeps 85% of the record's value.";
+
+/** Help for one field, or null for the sleeve grades (they share SLEEVE_HELP). */
+export function settingHelp(key: FieldKey): string | null {
+  return HELP[key] ?? null;
 }

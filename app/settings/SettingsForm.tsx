@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { settingHelp } from "../../lib/settings-help.ts";
+import { SLEEVE_HELP, settingHelp } from "../../lib/settings-help.ts";
 import { FIELD_KEYS, formatDefault, formView, fromForm, parseLadder, toForm } from "../../lib/settings-form.ts";
 import type { FieldKey, SettingsForm as Form } from "../../lib/settings-form.ts";
 import { GRADES } from "../../lib/types.ts";
@@ -35,11 +35,15 @@ const LABELS: Partial<Record<FieldKey, string>> = {
 };
 const label = (k: FieldKey) => LABELS[k] ?? `${k.split(".")[1]} sleeve (%)`;
 
-const SECTIONS: { legend: string; note?: string; grid?: boolean; currency?: boolean; keys: FieldKey[] }[] = [
+// The sleeve grid shares one help note, on its heading; each sleeve input points at it too.
+const SLEEVE_HELP_ID = "sleeve-help";
+
+const SECTIONS: { legend: string; note?: string; help?: string; grid?: boolean; currency?: boolean; keys: FieldKey[] }[] = [
   { legend: "Selling", keys: ["sell.undercutPercent", "sell.floor", "sell.discogsFeePercent"] },
   {
     legend: "Sleeve condition",
     note: "Share of market value kept for each sleeve grade.",
+    help: SLEEVE_HELP,
     grid: true,
     keys: GRADES.map((g) => `sleeveMultipliers.${g}` as FieldKey),
   },
@@ -238,7 +242,8 @@ export default function SettingsForm() {
     const showDefault = form![k].trim() !== toForm(state!.defaults)[k];
     const hintId = `${k}-hint`;
     const errId = `${k}-error`;
-    const helpId = `${k}-help`;
+    const help = settingHelp(k);
+    const helpId = help ? `${k}-help` : SLEEVE_HELP_ID;
     const describedBy = [helpId, showDefault ? hintId : null, error ? errId : null].filter(Boolean).join(" ");
     const common = {
       id: k,
@@ -250,7 +255,7 @@ export default function SettingsForm() {
       <div className="field" key={k}>
         <div className="field-label">
           <label htmlFor={k}>{label(k)}</label>
-          <HelpTip id={helpId} label={label(k)} text={settingHelp(k)} />
+          {help && <HelpTip id={helpId} label={label(k)} text={help} />}
         </div>
         {k === "offer.openingPercent" ? (
           <select {...common} value={form![k]} onChange={(e) => edit(k, e.target.value)}>
@@ -298,7 +303,10 @@ export default function SettingsForm() {
       )}
       {SECTIONS.map((s) => (
         <fieldset className="card settings-section" key={s.legend} disabled={busy}>
-          <legend>{s.legend}</legend>
+          <legend className={s.help ? "with-help" : undefined}>
+            {s.legend}
+            {s.help && <HelpTip id={SLEEVE_HELP_ID} label={s.legend} text={s.help} />}
+          </legend>
           {s.note && <p className="muted small">{s.note}</p>}
           <div className={s.grid ? "settings-grid sleeve" : "settings-grid"}>{s.keys.map(field)}</div>
           {s.currency && (

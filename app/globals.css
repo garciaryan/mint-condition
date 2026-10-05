@@ -2403,6 +2403,14 @@ kbd {
   font-weight: 700;
 }
 
+/* A heading with an ⓘ: the note opens under the heading, full width. */
+.settings-section legend.with-help {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
 .settings-section legend + * {
   clear: both;
 }
