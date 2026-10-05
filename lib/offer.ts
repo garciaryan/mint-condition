@@ -63,7 +63,7 @@ function side(percents: number[], amountAt: (percent: number) => number, walkAwa
 
 export function computeOffer(items: ItemRow[], inputs: OfferInputs, settings: Settings): OfferView {
   const o = settings.offer;
-  const feeKeep = 1 - settings.local.discogsFeePercent / 100;
+  const feeKeep = 1 - settings.sell.discogsFeePercent / 100;
   let picks = 0, unpricedCount = 0, pickValue = 0, pickNet = 0;
   for (const item of items) {
     const market = offerMarket(item, inputs, settings);

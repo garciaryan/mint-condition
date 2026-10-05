@@ -3,11 +3,11 @@
 Price a vinyl record from its catalog number (or barcode) and condition, using Discogs marketplace data.
 
 Enter a catalog number, the pressing year, and the record and sleeve grades. Mint Condition finds the matching
-pressing on Discogs and gives you three numbers:
+pressing on Discogs and gives you:
 
 - **Market value**: a low / suggested / high range for your copy's condition.
-- **Sell price**: what to list it for on Discogs to undercut comparable copies.
-- **Local price**: what to ask in person, next to what you'd actually net on Discogs after fees.
+- **Sell price**: what to list it for on Discogs to undercut comparable copies, and what you'd net after the
+  Discogs fee.
 
 For buying collections, **collection mode** prices a whole lot of records at once and works out what to offer the
 seller: an opening offer, a ladder to negotiate up, and the most you can pay and still make your margin.
@@ -86,8 +86,8 @@ push, change the `if:` line in `.github/workflows/fly-deploy.yml` to your repo a
    work), or a UPC/EAN barcode. A USB barcode scanner works too: it types the digits and presses Enter.
 2. **Pressing year** (optional). Narrows the search to pressings within a year of it.
 3. **Record grade and sleeve grade**, on the Goldmine scale: M, NM, VG+, VG, G+, G, F, P.
-4. **Local sale** (optional). Turn it on to see a local asking price; add an area code to apply a regional
-   multiplier.
+
+Or tap the barcode icon to scan the barcode with your phone's camera (HTTPS only).
 
 If several pressings match, you'll get a list grouped by year with cover thumbnails, label, country and format.
 Pick the one that matches your copy. Changing a grade afterwards re-prices the same pressing straight away.
@@ -161,10 +161,9 @@ The pick threshold, bulk price and lot overhead are set per lot. The ladder, mar
 
 - **Market value**: the Discogs price suggestion for your record grade, multiplied by a sleeve-condition
   multiplier. The range runs from the next grade down to the next grade up.
-- **Sell price**: market value minus an undercut percentage, never below a floor. It's flagged when it comes out
-  above the cheapest current listing, since that copy may be in worse shape.
-- **Local price**: market value × a local discount × the area-code multiplier. Shown next to what selling on
-  Discogs would net after the seller fee.
+- **Sell price**: market value minus an undercut percentage, never below a floor, shown with what you'd net
+  after the Discogs seller fee. It's flagged when it comes out above the cheapest current listing, since that copy
+  may be in worse shape.
 - **Offers** (lots only): the ladder is a percentage of the cherry-picks' suggested value, plus the flat bulk price
   for everything else. The walk-away starts from what the picks would net at the sell price after the Discogs fee.
   It then takes off your margin and overhead, and adds the bulk at cost. Details are under
@@ -185,17 +184,16 @@ pins one on this browser. Printing always uses the light palette.
 
 ## Settings
 
-**Settings** in the nav edits the sleeve multipliers, the undercut and minimum sell price, the local price and
-Discogs fee, the default area multiplier, and the offer ladder, opening offer, margin, overhead, pick threshold,
-bulk price and unverified steps, and how many hours Discogs answers are cached (0 to 6; 0 turns the cache off).
+**Settings** in the nav edits the sleeve multipliers, the undercut, minimum sell price and Discogs fee, the offer
+ladder, opening offer, margin, overhead, pick threshold, bulk price and unverified steps, and how many hours
+Discogs answers are cached (0 to 6; 0 turns the cache off). Each field's ⓘ says what it changes.
 Multipliers are shown as percentages (a VG sleeve keeps 85% of market value).
 
 - A save applies straight away to new lookups and to every lot, including lots you already made offers on.
 - Each changed field shows its default; **Reset to defaults** goes back to [`settings.json`](settings.json).
 - Saved values live in the database and win over `settings.json`. A setting added to the file later still gets
   its default.
-- The currency follows your Discogs seller account and isn't editable. Regional multipliers by area code are
-  still set in `settings.json` only.
+- The currency follows your Discogs seller account and isn't editable.
 
 ## Discogs terms
 

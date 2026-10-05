@@ -65,11 +65,11 @@ test("PUT saves and GET reflects it; DELETE resets", async () => {
 
 test("PUT with a string number is a 400 naming the field and stores nothing", async () => {
   const cur = (await j(await GET(req("GET")))).settings;
-  const r = await PUT(req("PUT", { ...cur, local: { ...cur.local, localDiscountMultiplier: "0.8" } }));
+  const r = await PUT(req("PUT", { ...cur, sell: { ...cur.sell, discogsFeePercent: "9" } }));
   assert.equal(r.status, 400);
   const b = await j(r);
   assert.equal(b.kind, "bad-request");
-  assert.equal(b.field, "local.localDiscountMultiplier");
+  assert.equal(b.field, "sell.discogsFeePercent");
   assert.equal((await j(await GET(req("GET")))).saved, false);
 });
 

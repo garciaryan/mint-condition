@@ -7,11 +7,8 @@ const HELP: Partial<Record<FieldKey, string>> = {
   "sell.undercutPercent":
     "How far below the Discogs suggestion to list, so yours is the cheaper copy. Sell price = market value minus this %.",
   "sell.floor": "The sell price never goes below this, however low the market value is.",
-  "local.localDiscountMultiplier": "In-person asking price as a share of market value, before the area multiplier.",
-  "local.discogsFeePercent":
-    "Discogs' seller fee. Used for \"net on Discogs\" next to the local price, and for what picks would net in an offer's walk-away.",
-  "local.defaultRegionMultiplier":
-    "Scales the local price when no area code is entered, or the area code has no multiplier of its own (those are set in settings.json).",
+  "sell.discogsFeePercent":
+    "Discogs' seller fee. Used for what you'd net at the sell price, and for what picks would net in an offer's walk-away.",
   "offer.ladderPercents":
     "The offer steps, as % of the cherry-picks' suggested value, lowest first, separated by commas.",
   "offer.openingPercent": "Which ladder step to open with.",

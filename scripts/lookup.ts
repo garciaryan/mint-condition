@@ -1,4 +1,4 @@
-// CLI: npm run lookup -- <catno|barcode> <year> <recordGrade> <sleeveGrade> [areaCode] [--id <releaseId>]
+// CLI: npm run lookup -- <catno|barcode> <year> <recordGrade> <sleeveGrade> [--id <releaseId>]
 // Reads DISCOGS_TOKEN and DISCOGS_USER_AGENT from .env.local (loaded by the npm script).
 import { DiscogsClient } from "../lib/discogs.ts";
 import { priceRecord } from "../lib/pricing.ts";
@@ -18,10 +18,10 @@ if (idFlag !== -1) {
   forcedId = Number(args[idFlag + 1]);
   args.splice(idFlag, 2);
 }
-const [catno, yearArg, recordArg, sleeveArg, areaCode] = args;
+const [catno, yearArg, recordArg, sleeveArg] = args;
 
 if (!catno || !yearArg || !recordArg || !sleeveArg) {
-  fail("Usage: npm run lookup -- <catno|barcode> <year> <recordGrade> <sleeveGrade> [areaCode] [--id <releaseId>]\nGrades: M NM VG+ VG G+ G F P", 1);
+  fail("Usage: npm run lookup -- <catno|barcode> <year> <recordGrade> <sleeveGrade> [--id <releaseId>]\nGrades: M NM VG+ VG G+ G F P", 1);
 }
 if (!isGrade(recordArg) || !isGrade(sleeveArg)) {
   fail("Invalid grade. Use one of: M NM VG+ VG G+ G F P", 1);
@@ -60,7 +60,6 @@ const result = priceRecord({
   lowestListing: stats.lowestPrice,
   record: recordArg,
   sleeve: sleeveArg,
-  areaCode,
   settings,
 });
 if (!result) {
@@ -71,4 +70,4 @@ const cur = stats.currency ?? settings.discogs.currency;
 console.log(`\nFor sale on Discogs: ${stats.numForSale}, lowest listing: ${stats.lowestPrice ?? "n/a"} ${cur}`);
 console.log(`Market value : ${result.market.low} - ${result.market.suggested} - ${result.market.high} ${cur} (low / suggested / high)`);
 console.log(`Sell price   : ${result.sell.price} ${cur}${result.sell.aboveLowestListing ? "  (above the cheapest current listing)" : ""}`);
-console.log(`Local sale   : ${result.local.price} ${cur} (region x${result.local.regionMultiplier}); Discogs net after fee: ${result.local.discogsNet}`);
+console.log(`Net on Discogs after the ${settings.sell.discogsFeePercent}% fee: ${result.sell.net} ${cur}`);

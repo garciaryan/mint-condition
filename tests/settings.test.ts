@@ -57,12 +57,16 @@ test("mergeSettings treats a non-object saved value as nothing saved", () => {
   assert.deepEqual(mergeSettings(base, "x"), base);
 });
 
-test("local and sell fields must be numbers and errors name the field", () => {
-  const withLocal = (l: object) => ({ ...base, local: { ...base.local, ...l } });
-  assert.throws(() => parseSettings(withLocal({ localDiscountMultiplier: "0.8" })), /local\.localDiscountMultiplier/);
-  assert.throws(() => parseSettings(withLocal({ defaultRegionMultiplier: 0 })), /local\.defaultRegionMultiplier/);
-  assert.throws(() => parseSettings(withLocal({ discogsFeePercent: null })), /local\.discogsFeePercent/);
-  assert.throws(() => parseSettings({ ...base, sell: { ...base.sell, floor: "1" } }), /sell\.floor/);
+test("sell fields must be numbers and errors name the field", () => {
+  const withSell = (v: object) => ({ ...base, sell: { ...base.sell, ...v } });
+  assert.throws(() => parseSettings(withSell({ discogsFeePercent: null })), /sell\.discogsFeePercent/);
+  assert.throws(() => parseSettings(withSell({ discogsFeePercent: 100 })), /sell\.discogsFeePercent/);
+  assert.throws(() => parseSettings(withSell({ floor: "1" })), /sell\.floor/);
+});
+
+test("local sale is gone from the defaults", () => {
+  assert.equal("local" in base, false);
+  assert.equal(base.sell.discogsFeePercent, 9);
 });
 
 test("settingsErrorPath extracts the dotted path", () => {

@@ -5,10 +5,8 @@ import {
   downgrade,
   gradeAbove,
   gradeBelow,
-  localPrice,
   marketValue,
   priceRecord,
-  regionMultiplierFor,
   sellPrice,
 } from "../lib/pricing.ts";
 import { parseSettings } from "../lib/settings.ts";
@@ -87,37 +85,17 @@ test("sell price flags when it is above the cheapest listing", () => {
   assert.equal(sellPrice(m, 60, settings).aboveLowestListing, false);
 });
 
-test("local price applies the discount and the area-code multiplier", () => {
-  const custom = parseSettings({
-    ...settings,
-    local: { ...settings.local, regionMultipliers: { "415": 1.2 } },
-  });
-  const m = marketValue(suggestions, "NM", "NM", custom)!;
-  const s = sellPrice(m, null, custom);
-  const sf = localPrice(m, s, "415", custom);
-  assert.equal(sf.regionMultiplier, 1.2);
-  assert.equal(sf.price, 38.4); // 40 * 0.8 * 1.2
-  const other = localPrice(m, s, "999", custom);
-  assert.equal(other.regionMultiplier, 1);
-  assert.equal(other.price, 32); // 40 * 0.8
-});
-
-test("discogsNet backs out the seller fee", () => {
+test("sell price carries what you'd net on Discogs after the seller fee", () => {
   const m = marketValue(suggestions, "NM", "NM", settings)!;
-  const s = sellPrice(m, null, settings); // 38.80
-  assert.equal(localPrice(m, s, undefined, settings).discogsNet, 35.31); // 38.80 * 0.91
-});
-
-test("region multiplier defaults when no area code is given", () => {
-  assert.equal(regionMultiplierFor(undefined, settings), 1);
-  assert.equal(regionMultiplierFor(" 415 ", settings), 1);
+  assert.equal(sellPrice(m, null, settings).net, 35.31); // 38.80 * 0.91
 });
 
 test("priceRecord runs the whole pipeline and returns null without data", () => {
   const r = priceRecord({ suggestions, lowestListing: 22, record: "VG", sleeve: "VG+", settings })!;
   assert.equal(r.market.suggested, 19); // 20 * 0.95
   assert.equal(r.sell.price, 18.43); // 19 * 0.97
-  assert.equal(r.local.price, 15.2); // 19 * 0.8
+  assert.equal(r.sell.net, 16.77); // 18.43 * 0.91
+  assert.equal("local" in r, false, "local sale was dropped");
   assert.equal(priceRecord({ suggestions: {}, lowestListing: null, record: "VG", sleeve: "VG", settings }), null);
 });
 

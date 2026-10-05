@@ -1,8 +1,8 @@
 # Mint Condition
 
 Single-user web app (Next.js App Router + TypeScript), hosted on Fly.io, that prices vinyl records using the Discogs API.
-Input: catalog number, pressing year, record grade, sleeve grade (optionally an area code). Output: fair market
-value range, sell price, and local-sale price. Later phases add collection (bulk buying) tools.
+Input: catalog number (or barcode), pressing year, record grade, sleeve grade. Output: fair market value range and
+sell price (with the net after the Discogs fee). Collection (bulk buying) tools build on it.
 
 ## Decisions already made
 - Hosted on Fly.io (one machine, SQLite on a volume at `/data`), single-password login (`APP_PASSWORD_HASH` +
@@ -17,10 +17,12 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Discogs requires a descriptive `User-Agent` (`DISCOGS_USER_AGENT`).
 - Keep `lib/pricing.ts` and `lib/offer.ts` as **pure functions** (no network, no fs, no DB). All tunables come from
   `settings.json`, overridden by the saved row edited on `/settings` (`lib/settings-store.ts`); routes read settings
-  through `getSettings(getDb())`. Currency and region multipliers come only from the file.
+  through `getSettings(getDb())`. Currency comes only from the file.
 - Price meanings: *market value* = Discogs suggestion for the record grade x sleeve multiplier (range = next grade
-  down to next grade up). *Sell price* = market x (1 - undercut), floored. *Local price* = market x local discount x
-  area-code multiplier, shown next to what the user would net on Discogs after fees.
+  down to next grade up). *Sell price* = market x (1 - undercut), floored, with *net* = sell x (1 - Discogs fee).
+  Local-sale pricing was removed (2026-10-05): pricing records for sale off Discogs with Discogs data is close to the
+  terms' "circumvent Our marketplace" example. Don't bring it back. The fee is `sell.discogsFeePercent`; rows saved
+  with the old `local.discogsFeePercent` are read through `moveLegacyFee` in `lib/settings-store.ts`.
 - Collection mode: lot prices are computed at read time (`lib/collection/view.ts`) from stored per-grade Discogs
   suggestions and stats, so grade changes cost no API call. One in-process lookup worker (`lib/collection/worker.ts`,
   started by `instrumentation.ts`) drains pending items through the shared client in `lib/discogs-client.ts`, so one
@@ -53,7 +55,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - `npm install`
 - `npm test` (Node's built-in test runner, no extra deps; Node 22.13+)
 - `npm run typecheck`
-- `npm run lookup -- "<catno|barcode>" <year> <recordGrade> <sleeveGrade> [areaCode] [--id <releaseId>]` (CLI check)
+- `npm run lookup -- "<catno|barcode>" <year> <recordGrade> <sleeveGrade> [--id <releaseId>]` (CLI check)
 - `npm run dev` -> http://localhost:3000
 - `npm run hash-password` (interactive; prints `APP_PASSWORD_HASH`) · deploy and ops: see `DEPLOY.md`
 

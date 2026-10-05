@@ -20,12 +20,9 @@ export function parseSettings(raw: unknown): Settings {
   if (!isNum(s.sell?.floor) || s.sell.floor < 0) {
     throw new Error("settings: sell.floor must be >= 0");
   }
-  const l = s.local;
-  for (const key of ["localDiscountMultiplier", "defaultRegionMultiplier"] as const) {
-    if (!isNum(l?.[key]) || l[key] <= 0) throw new Error(`settings: local.${key} must be > 0`);
-  }
-  if (!isNum(l.discogsFeePercent) || l.discogsFeePercent < 0 || l.discogsFeePercent >= 100) {
-    throw new Error("settings: local.discogsFeePercent must be in [0, 100)");
+  const fee = s.sell.discogsFeePercent;
+  if (!isNum(fee) || fee < 0 || fee >= 100) {
+    throw new Error("settings: sell.discogsFeePercent must be in [0, 100)");
   }
   const h = s.discogs?.cacheHours;
   if (!Number.isInteger(h) || h < 0 || h > MAX_CACHE_HOURS) {
