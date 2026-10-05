@@ -9,6 +9,21 @@ export type SessionRow = {
   defaultSleeve: Grade;
   createdAt: number;
   updatedAt: number;
+  /** Offer inputs. Null threshold/bulk = use the settings default. */
+  unverified: boolean;
+  pickThreshold: number | null;
+  bulkEach: number | null;
+  lotOverhead: number;
+};
+
+export type SessionPatch = {
+  name?: string;
+  defaultRecord?: Grade;
+  defaultSleeve?: Grade;
+  unverified?: boolean;
+  pickThreshold?: number | null;
+  bulkEach?: number | null;
+  lotOverhead?: number;
 };
 
 export type ItemRow = {

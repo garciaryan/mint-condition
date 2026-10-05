@@ -1,7 +1,7 @@
 // Data layer for lots (sessions) and their records (items). Plain functions over node:sqlite.
 import type { DatabaseSync } from "node:sqlite";
 import type { Grade } from "../types.ts";
-import type { ItemRow, ItemStatus, LookupPatch, NewLine, SessionRow } from "./types.ts";
+import type { ItemRow, ItemStatus, LookupPatch, NewLine, SessionPatch, SessionRow } from "./types.ts";
 
 type Row = Record<string, unknown>;
 
@@ -12,6 +12,10 @@ const toSession = (r: Row): SessionRow => ({
   defaultSleeve: r.default_sleeve as Grade,
   createdAt: r.created_at as number,
   updatedAt: r.updated_at as number,
+  unverified: r.unverified === 1,
+  pickThreshold: (r.pick_threshold as number | null) ?? null,
+  bulkEach: (r.bulk_each as number | null) ?? null,
+  lotOverhead: r.lot_overhead as number,
 });
 
 const parse = <T>(v: unknown): T | null => (typeof v === "string" ? (JSON.parse(v) as T) : null);
@@ -34,7 +38,7 @@ const toItem = (r: Row, lite = false): ItemRow => ({
   pricedAt: (r.priced_at as number | null) ?? null,
   error: (r.error as string | null) ?? null,
   createdAt: r.created_at as number,
-  pick: null,
+  pick: r.pick == null ? null : r.pick === 1,
 });
 
 // ---- sessions ----
@@ -59,18 +63,22 @@ export function listSessions(db: DatabaseSync): SessionRow[] {
   return db.prepare("SELECT * FROM sessions ORDER BY updated_at DESC, id DESC").all().map(toSession);
 }
 
-export function updateSession(
-  db: DatabaseSync,
-  id: number,
-  patch: { name?: string; defaultRecord?: Grade; defaultSleeve?: Grade },
-  now: number,
-): SessionRow | null {
+export function updateSession(db: DatabaseSync, id: number, patch: SessionPatch, now: number): SessionRow | null {
   const cur = getSession(db, id);
   if (!cur) return null;
-  db.prepare("UPDATE sessions SET name = ?, default_record = ?, default_sleeve = ?, updated_at = ? WHERE id = ?").run(
-    patch.name ?? cur.name,
-    patch.defaultRecord ?? cur.defaultRecord,
-    patch.defaultSleeve ?? cur.defaultSleeve,
+  // undefined = leave unchanged; an explicit null (threshold, bulk) resets to the settings default.
+  const v = <K extends keyof SessionPatch & keyof SessionRow>(k: K) => (patch[k] !== undefined ? patch[k] : cur[k]);
+  db.prepare(
+    `UPDATE sessions SET name = ?, default_record = ?, default_sleeve = ?, unverified = ?, pick_threshold = ?,
+       bulk_each = ?, lot_overhead = ?, updated_at = ? WHERE id = ?`,
+  ).run(
+    v("name")!,
+    v("defaultRecord")!,
+    v("defaultSleeve")!,
+    v("unverified") ? 1 : 0,
+    v("pickThreshold") ?? null,
+    v("bulkEach") ?? null,
+    v("lotOverhead")!,
     now,
     id,
   );
@@ -94,7 +102,7 @@ export function getItem(db: DatabaseSync, id: number): ItemRow | null {
 
 // List reads skip the (large) candidate JSON and carry only its length.
 const LIST_COLUMNS = `id, session_id, query, year, record_grade, sleeve_grade, status, release_id, release_json,
-  suggestions_json, stats_json, priced_at, error, created_at,
+  suggestions_json, stats_json, priced_at, error, created_at, pick,
   CASE WHEN candidates_json IS NULL THEN 0 ELSE json_array_length(candidates_json) END AS candidate_count`;
 
 export function listItems(db: DatabaseSync, sessionId: number): ItemRow[] {
@@ -159,6 +167,11 @@ export function pickRelease(db: DatabaseSync, id: number, releaseId: number): It
     "UPDATE items SET release_id = ?, release_json = ?, candidates_json = NULL, status = 'pending' WHERE id = ? AND status = 'to-pick'",
   ).run(chosen.id, JSON.stringify(chosen), id);
   return getItem(db, id)!;
+}
+
+export function setItemPick(db: DatabaseSync, id: number, pick: boolean): ItemRow | null {
+  const res = db.prepare("UPDATE items SET pick = ? WHERE id = ?").run(pick ? 1 : 0, id);
+  return Number(res.changes) > 0 ? getItem(db, id) : null;
 }
 
 export function retryItem(db: DatabaseSync, id: number): ItemRow | "not-found" | "invalid-state" {
