@@ -37,8 +37,10 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   `app/SiteFooter.tsx` on every page. Price data is Restricted Data: no commercial use, no transfer to third parties.
 
 - Released as self-hosted, MIT-licensed (`LICENSE`): each person runs their own copy (locally or their own Fly app)
-  with their own Discogs token and IP rate limit; there is no shared public instance. Deploy jobs in both workflows
-  are guarded by `if: github.repository == 'garciaryan/mint-condition'` so forks only run checks. Never commit
+  with their own Discogs token and IP rate limit; there is no shared public instance. The workflow runs the checks on PRs
+  and pushes to `main`; the deploy job only runs on pushes to `main` of `garciaryan/mint-condition`. Once public,
+  ruleset "Protect main": PR required (0 approvals), "Test and build" must pass, no force-push or deletion; admin
+  (the owner) can bypass. Never commit
   secrets; the repo is public.
 
 ## Commands
