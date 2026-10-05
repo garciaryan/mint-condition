@@ -18,6 +18,11 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Price meanings: *market value* = Discogs suggestion for the record grade x sleeve multiplier (range = next grade
   down to next grade up). *Sell price* = market x (1 - undercut), floored. *Local price* = market x local discount x
   area-code multiplier, shown next to what the user would net on Discogs after fees.
+- Collection mode: lot prices are computed at read time (`lib/collection/view.ts`) from stored per-grade Discogs
+  suggestions and stats, so grade changes cost no API call. One in-process lookup worker (`lib/collection/worker.ts`,
+  started by `instrumentation.ts`) drains pending items through the shared client in `lib/discogs-client.ts`, so one
+  throttle covers lookups and the worker. The worker writes only lookup columns, never grades, year or query.
+- `barcode-detector` is the only runtime dependency beyond Next/React; it is lazy-loaded by the camera scanner.
 - Discogs data is asking prices and suggestions, not confirmed sales. The UI should say so.
 
 ## Commands
@@ -39,6 +44,12 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - `app/login/`, `app/api/login|logout|health` · `scripts/hash-password.ts` · `Dockerfile`, `docker-entrypoint.sh`,
   `fly.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`
 
+- `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
+  `lib/discogs-client.ts` shared client · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
+- `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,
+  `PickPanel`, `TotalsBar`, `ItemRow`) · `app/api/sessions/` and `app/api/items/` · shared `app/Picker.tsx`,
+  `app/GradeSelect.tsx`, `app/SiteHeader.tsx`, `app/NavLinks.tsx`
+
 ## Status
 - Phase 1 (Discogs client) and phase 2 (pricing module): done. Verified against the live API (2026-10-04):
   price_suggestions keys and marketplace stats fields match. Search now pages (100/page, up to 3 pages) and sorts
@@ -56,8 +67,9 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   format). 55 tests passing.
 - Go online (2026-10-04): deployed to https://mint-condition.fly.dev (app `mint-condition`, region `sjc`, one
   machine, volume `mint_data`). Remote image build OK; smoke checks pass (health 200, `/` → login, API 401 without
-  cookie, foreign Origin 403). Phone check on mobile data passed (log in, price a record). Phase 4 (collection mode) gets its own spec next
-  and will build on `lib/db.ts` migrations.
+  cookie, foreign Origin 403). Phone check on mobile data passed (log in, price a record).
+- Phase 4 collection mode (2026-10-04): built on feat/collection-mode; 150 tests passing; deploy + phone check
+  pending. Spec: `docs/superpowers/specs/2026-10-04-collection-mode-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns
@@ -78,8 +90,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 7. Add tests for any new pure logic; keep `npm test` and `npm run typecheck` green.
 
 ## Later phases (do not start unless asked)
-4. Collection mode: sessions, keyboard-first batch entry, bulk paste of catalog numbers, lot-wide default grades,
-   running totals. 5. Offer calculator: offer ladder (30/40/50/60%), overhead, margin, cherry-pick vs bulk split,
+5. Offer calculator: offer ladder (30/40/50/60%), overhead, margin, cherry-pick vs bulk split,
    unverified-condition discount (downgrade grades for remote buys). 6. SQLite cache + settings UI (24h cache).
 7. CSV export, printable buy sheet. 8. Track price paid and sold price to learn the user's own offer percentage.
    The user has no offer-percentage rule of thumb; default ladder starts at 40%.

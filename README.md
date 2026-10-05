@@ -65,6 +65,31 @@ Pick the one that matches your copy. Changing a grade afterwards re-prices the s
 The result card shows the three prices, how many copies are for sale on Discogs, the lowest current listing, and a
 link to the release on Discogs.
 
+## Collection mode
+
+Price a whole lot at **/collection** (**Lots** in the header). Lots are saved on the server, so you can start one on
+a phone and finish it on a laptop.
+
+1. **Create a lot.** Name it and set the default record and sleeve grades; new records start with those.
+2. **Add records**, any of three ways:
+   - **Quick add**: type a catalog number or barcode and press Enter. A USB scanner works the same way.
+   - **Scan**: the phone camera reads barcodes and keeps scanning. Barcodes are mostly on records from the 1980s
+     on, so older ones need typing.
+   - **Paste a list**: one record per line, with an optional year after a comma or tab (`SD 7208, 1971`). Up to
+     500 lines; bad lines are reported and the rest are added.
+3. **Let it work.** A background worker looks each record up on Discogs, one at a time at the Discogs rate limit.
+   It keeps going with the phone locked or the page closed, and picks up where it left off if the server has
+   been asleep. Rows show their state (Queued, Looking up, To pick, Priced, No match, No price data, or Error with a Retry button).
+4. **To pick.** A record that matches several pressings waits in the "To pick" queue. Open it, choose the
+   pressing, and it's priced. The rest of the lot isn't held up.
+5. **Totals.** The bar shows low / suggested / high market value for the lot plus coverage, for example
+   "62 of 70 priced · 4 to pick …", so you can see how much of the total is still missing.
+6. **Grades and re-pricing.** Changing a record's grades re-prices it instantly from the stored Discogs
+   suggestions, with no new request. **Re-price all** fetches fresh figures from Discogs for the whole lot.
+
+Totals use the same market value as the single lookup. Like everything here they are asking prices and
+suggestions, not sales.
+
 ## How prices are worked out
 
 - **Market value**: the Discogs price suggestion for your record grade, multiplied by a sleeve-condition
@@ -101,14 +126,24 @@ npm run hash-password  # make an APP_PASSWORD_HASH for the login (interactive)
 app/                   Next.js App Router UI
   page.tsx             page shell
   Lookup.tsx           form, pressing picker, result card
+  Picker.tsx, GradeSelect.tsx  shared by the lookup page and lots
+  SiteHeader.tsx, NavLinks.tsx header and nav
+  collection/          /collection lots list; [id]/ is one lot (entry bar, camera scanner, paste, to-pick
+                       panel, totals, rows)
   login/               login page
-  api/lookup/route.ts  POST /api/lookup: the only place Discogs is called from
+  api/lookup/route.ts  POST /api/lookup: Discogs lookups for the single-record page (lots use the worker)
+  api/sessions/        lots: list/create, one lot, add items (bulk), re-price all
+  api/items/[id]/      edit, retry, candidates (to-pick)
   api/login, logout    session cookie in and out
   api/health           public health check (database + which config is set)
 middleware.ts          runs the login gate on every request
+instrumentation.ts     starts the lookup worker when the server boots
 lib/
   discogs.ts           Discogs client: throttled, retries on 429, catno variants, barcode detection
   pricing.ts           pricing logic (pure functions)
+  discogs-client.ts    one shared Discogs client per process (one throttle for lookups and the worker)
+  route-auth.ts        per-route session check
+  collection/          lots: types, store (SQLite), parse (paste), view (pure totals/prices), ui, worker
   lookup.ts            request validation, search-or-price flow, error mapping
   form.ts              client-side form checks and picker grouping
   auth.ts, password.ts session cookies, login limiter, password hashing
@@ -124,10 +159,6 @@ Dockerfile, fly.toml   Fly.io deployment
 
 ## Roadmap
 
-- **Collection mode** (in progress): price a whole lot at once. Add records by typing, USB scanner, phone camera or
-  pasting a list; pressings that need a choice wait in a "to pick" queue while lookups carry on in the background;
-  saved lots show a running low / suggested / high total and can be finished on another device.
-  Design: [docs/superpowers/specs/2026-10-04-collection-mode-design.md](docs/superpowers/specs/2026-10-04-collection-mode-design.md)
 - Offer calculator for buying collections
 - Price cache and a settings page
 - CSV export and a printable buy sheet
