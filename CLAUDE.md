@@ -70,7 +70,8 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   `app/api/sessions/[id]/discogs.csv/`
 - `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,
   `PickPanel`, `TotalsBar`, `OfferPanel`, `ItemRow`) · `app/api/sessions/` and `app/api/items/` · shared `app/Picker.tsx`,
-  `app/GradeSelect.tsx`, `app/SiteHeader.tsx`, `app/NavLinks.tsx`
+  `app/GradeSelect.tsx`, `app/SiteHeader.tsx`, `app/NavLinks.tsx`, `app/SiteMenu.tsx` (header links behind a Menu
+  button at 480px and below), `app/useDisclosure.ts` + `lib/disclosure.ts` (dropdowns: header menu, lot Actions)
 
 ## Status
 - Phase 1 (Discogs client) and phase 2 (pricing module): done. Verified against the live API (2026-10-04):

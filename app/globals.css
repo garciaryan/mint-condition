@@ -162,6 +162,16 @@ body {
 }
 
 /* Site header: brand, nav, optional log out, one row on desktop. */
+/* Header menu: inline on wider screens (the wrappers don't box anything), a Menu button and panel on phones. */
+.site-menu,
+.site-menu-panel {
+  display: contents;
+}
+
+.topbar .menu-toggle {
+  display: none;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -1373,6 +1383,67 @@ kbd {
   margin-top: 16px;
 }
 
+/* Dropdown (lot actions): a list of actions under its toggle button. */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 260px;
+  max-width: calc(100vw - 2 * var(--gutter));
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+
+.dropdown-panel .dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink);
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dropdown-panel .dropdown-item:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--neutral-soft);
+}
+
+.dropdown-panel .dropdown-item:disabled,
+.dropdown-panel .dropdown-item[aria-disabled="true"] {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.dropdown-panel .dropdown-item.danger {
+  color: var(--danger);
+}
+
+.dropdown-hint {
+  margin: 0 12px 6px;
+}
+
+.dropdown-sep {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
 /* Tablet: two-column form, prices stack under market value. */
 @media (max-width: 768px) {
   .form {
@@ -1469,9 +1540,43 @@ kbd {
   }
 
   .topbar {
-    flex-wrap: wrap;
+    position: relative;
     padding-top: 6px;
     padding-bottom: 6px;
+  }
+
+  .topbar .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-h);
+  }
+
+  .site-menu-panel {
+    display: none;
+  }
+
+  .site-menu-panel.open {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px var(--gutter) 16px;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+
+  .site-menu-panel .nav {
+    flex-direction: column;
+  }
+
+  .site-menu-panel .theme-switch select {
+    width: 100%;
   }
 
   .nav a,
@@ -1560,16 +1665,6 @@ kbd {
 
   .lot-head .meta {
     flex-basis: 100%;
-  }
-
-  .lot-actions {
-    flex-basis: 100%;
-  }
-
-  .lot-actions button,
-  .lot-actions .action-link {
-    flex: 1;
-    justify-content: center;
   }
 
   .totals {
@@ -2167,33 +2262,6 @@ kbd {
 button.link:disabled {
   opacity: 0.6;
   cursor: progress;
-}
-
-/* Lot export and print links, styled like the quiet secondary buttons */
-.action-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--control-h);
-  padding: 10px 22px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--muted);
-  font-weight: 500;
-  text-decoration: none;
-}
-
-a.action-link:hover {
-  background: var(--bg);
-}
-
-.action-link[aria-disabled="true"] {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.export-hint {
-  margin: 6px 0 0;
 }
 
 /* Buy sheet (/collection/:id/print) */

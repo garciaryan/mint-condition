@@ -5,8 +5,8 @@ import { readFileSync } from "node:fs";
 const footer = readFileSync("app/SiteFooter.tsx", "utf8");
 const css = readFileSync("app/globals.css", "utf8");
 
-test("footer links to GitHub and Buy Me a Coffee in a new tab, without third-party scripts", () => {
-  assert.match(footer, /href="https:\/\/github\.com\/garciaryan"/);
+test("footer links to the docs (repo README) and Buy Me a Coffee in a new tab, without third-party scripts", () => {
+  assert.match(footer, /href="https:\/\/github\.com\/garciaryan\/mint-condition#readme"[^>]*>\s*Docs/);
   assert.match(footer, /href="https:\/\/www\.buymeacoffee\.com\/rgarciadev"/);
   assert.equal(footer.match(/target="_blank"/g)?.length, 2);
   assert.doesNotMatch(footer, /<script|nofollow/);

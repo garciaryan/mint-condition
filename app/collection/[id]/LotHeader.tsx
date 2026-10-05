@@ -5,6 +5,7 @@ import type { KeyboardEvent } from "react";
 import type { SessionRow } from "../../../lib/collection/types.ts";
 import { exportHint } from "../../../lib/collection/export.ts";
 import { relativeTime } from "../../../lib/relative-time.ts";
+import { useDisclosure } from "../../useDisclosure.ts";
 import { api } from "./api.ts";
 import { useDialog } from "./useDialog.ts";
 
@@ -29,7 +30,7 @@ export default function LotHeader({
   const [repricing, setRepricing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const cancelled = useRef(false);
-  const deleteTrigger = useRef<HTMLButtonElement>(null);
+  const menu = useDisclosure();
 
   // Follow the server name unless the user is mid-edit.
   useEffect(() => {
@@ -104,31 +105,71 @@ export default function LotHeader({
         Lot · {created} · defaults {session.defaultRecord} / {session.defaultSleeve}
       </p>
       <div className="lot-actions">
-        <button type="button" className="secondary quiet" onClick={reprice} disabled={repricing}>
-          {repricing ? "Re-pricing…" : "Re-price all"}
-        </button>
+        <div ref={menu.root} className="dropdown">
+          <button
+            ref={menu.button}
+            type="button"
+            className="secondary"
+            aria-expanded={menu.open}
+            aria-controls="lot-actions-menu"
+            onClick={menu.toggle}
+          >
+            {repricing ? "Re-pricing…" : "Actions"}
+            <span aria-hidden="true"> ▾</span>
+          </button>
+          {menu.open && (
+            <ul id="lot-actions-menu" className="dropdown-panel">
+              <li>
+                <button
+                  type="button"
+                  className="dropdown-item"
+                  disabled={repricing}
+                  onClick={() => {
+                    menu.close();
+                    void reprice();
+                  }}
+                >
+                  Re-price all
+                </button>
+              </li>
+              <li>
+                {exportCounts.exportable > 0 ? (
+                  <a className="dropdown-item" href={`/api/sessions/${session.id}/discogs.csv`} aria-describedby="lot-export-hint">
+                    Export for Discogs
+                  </a>
+                ) : (
+                  <span className="dropdown-item" role="link" aria-disabled="true" tabIndex={0} aria-describedby="lot-export-hint">
+                    Export for Discogs
+                  </span>
+                )}
+                <p className="dropdown-hint muted small" id="lot-export-hint">
+                  {exportHint(exportCounts)}
+                </p>
+              </li>
+              <li>
+                <a className="dropdown-item" href={`/collection/${session.id}/print`}>
+                  Print buy sheet
+                </a>
+              </li>
+              <li className="dropdown-sep">
+                <button
+                  type="button"
+                  className="dropdown-item danger"
+                  onClick={() => {
+                    menu.close();
+                    setConfirming(true);
+                  }}
+                >
+                  Delete lot
+                </button>
+              </li>
+            </ul>
+          )}
+        </div>
         {oldestPricedAt !== null && Date.now() - oldestPricedAt > 3_600_000 && (
           <span className="meta muted small price-age">Oldest prices: {relativeTime(oldestPricedAt)}</span>
         )}
-        {exportCounts.exportable > 0 ? (
-          <a className="action-link" href={`/api/sessions/${session.id}/discogs.csv`} aria-describedby="lot-export-hint">
-            Export for Discogs
-          </a>
-        ) : (
-          <span className="action-link" role="link" aria-disabled="true" tabIndex={0} aria-describedby="lot-export-hint">
-            Export for Discogs
-          </span>
-        )}
-        <a className="action-link" href={`/collection/${session.id}/print`}>
-          Print buy sheet
-        </a>
-        <button type="button" className="secondary danger" ref={deleteTrigger} onClick={() => setConfirming(true)}>
-          Delete lot
-        </button>
       </div>
-      <p className="meta muted small export-hint" id="lot-export-hint">
-        {exportHint(exportCounts)}
-      </p>
       {nameError && (
         <p className="field-error lot-name-error" id="lot-name-error" role="alert">
           <span aria-hidden="true">⚠ </span>
@@ -138,7 +179,7 @@ export default function LotHeader({
       {confirming && (
         <ConfirmDelete
           session={session}
-          trigger={deleteTrigger.current}
+          trigger={menu.button.current}
           onCancel={() => setConfirming(false)}
           onDeleted={onDeleted}
         />
