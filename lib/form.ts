@@ -34,3 +34,9 @@ export function groupCandidates(candidates: Candidate[], filter: string, year?: 
     : [{ title: "All pressings", items: shown }];
   return groups.filter((g) => g.items.length > 0);
 }
+
+/** After a search or pick shows a pressing, the catalog number and year clear for the next record. They stay when
+ * you may need to fix them: a pressing list, no match, or an error. */
+export function clearsInputs(status: "priced" | "no-price" | "candidates" | "no-match" | "error"): boolean {
+  return status === "priced" || status === "no-price";
+}

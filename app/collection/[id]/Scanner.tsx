@@ -1,37 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { Grade } from "../../../lib/types.ts";
-import { STATUS_INFO, createScanFilter, displayStatus } from "../../../lib/collection/ui.ts";
+import { STATUS_INFO, displayStatus } from "../../../lib/collection/ui.ts";
 import type { ItemView } from "../../../lib/collection/view.ts";
 import { money } from "./api.ts";
 import { Icon } from "./ItemRow.tsx";
+import { useBarcodeCamera } from "../../useBarcodeCamera.ts";
 import { useDialog } from "./useDialog.ts";
-
-const FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
-
-type Detector = { detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string }>> };
-type DetectorCtor = {
-  new (opts: { formats: string[] }): Detector;
-  getSupportedFormats(): Promise<string[]>;
-};
 
 /** Add result for one scanned code: the created item's id, or the error to show. */
 export type ScanAddResult = { ok: true; id: number } | { ok: false; message: string };
 export type ScanAdd = (code: string) => Promise<ScanAddResult>;
 
 type Entry = { key: number; code: string; itemId?: number; error?: string };
-
-async function loadDetector(): Promise<Detector> {
-  const native = (globalThis as { BarcodeDetector?: DetectorCtor }).BarcodeDetector;
-  if (native) {
-    try {
-      if ((await native.getSupportedFormats()).includes("ean_13")) return new native({ formats: FORMATS });
-    } catch {}
-  }
-  const { BarcodeDetector } = await import("barcode-detector/ponyfill");
-  return new (BarcodeDetector as unknown as DetectorCtor)({ formats: FORMATS });
-}
 
 export default function Scanner({
   grades,
@@ -52,113 +34,36 @@ export default function Scanner({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [last, setLast] = useState("");
-  const [blocked, setBlocked] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
   const onCodeRef = useRef(onCode);
   onCodeRef.current = onCode;
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
-  const onUnavailableRef = useRef(onUnavailable);
-  onUnavailableRef.current = onUnavailable;
-  const stopRef = useRef<() => void>(() => {});
+  const nextId = useRef(1);
+
+  function handle(code: string) {
+    const id = nextId.current++;
+    setLast(code);
+    setEntries((list) => [{ key: id, code }, ...list]);
+    void onCodeRef.current(code).then((res) => {
+      setEntries((list) =>
+        list.map((e) => (e.key === id ? (res.ok ? { ...e, itemId: res.id } : { ...e, error: res.message }) : e)),
+      );
+    });
+  }
+
+  const camera = useBarcodeCamera(videoRef, handle, () => {
+    onUnavailable();
+    onCloseRef.current();
+  });
+  const blocked = camera.state.kind === "blocked";
+  const problem = camera.state.kind === "problem" ? camera.state.message : null;
+  const ready = camera.state.kind === "ready";
 
   function close() {
-    stopRef.current();
+    camera.stop();
     onCloseRef.current();
   }
   useDialog(rootRef, close, { initialFocus: () => rootRef.current?.querySelector<HTMLElement>("button") });
-
-  useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let stream: MediaStream | null = null;
-    const accept = createScanFilter();
-    let nextId = 1;
-
-    function stop() {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-      stream?.getTracks().forEach((t) => t.stop());
-      stream = null;
-      if (videoRef.current) videoRef.current.srcObject = null;
-    }
-    stopRef.current = stop;
-
-    function handle(code: string) {
-      const id = nextId++;
-      navigator.vibrate?.(60);
-      setLast(code);
-      setEntries((list) => [{ key: id, code }, ...list]);
-      void onCodeRef.current(code).then((res) => {
-        setEntries((list) =>
-          list.map((e) => (e.key === id ? (res.ok ? { ...e, itemId: res.id } : { ...e, error: res.message }) : e)),
-        );
-      });
-    }
-
-    async function run() {
-      let detector: Detector;
-      try {
-        detector = await loadDetector();
-      } catch {
-        if (!cancelled) {
-          onUnavailableRef.current();
-          onCloseRef.current();
-        }
-        return;
-      }
-      if (cancelled) return;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: false,
-        });
-      } catch (e) {
-        if (cancelled) return;
-        if ((e as { name?: string } | null)?.name === "NotAllowedError") setBlocked(true);
-        else setProblem("Couldn't start the camera. Close this and type the number instead.");
-        return;
-      }
-      if (cancelled) {
-        stream.getTracks().forEach((t) => t.stop());
-        return;
-      }
-      const video = videoRef.current;
-      if (!video) return;
-      video.srcObject = stream;
-      try {
-        await video.play();
-      } catch {}
-      setReady(true);
-
-      let failures = 0;
-      async function tick() {
-        if (cancelled) return;
-        try {
-          if (video && video.readyState >= 2) {
-            const found = await detector.detect(video);
-            failures = 0;
-            if (!cancelled && found.length > 0) {
-              const code = found[0].rawValue;
-              if (accept(code, Date.now())) handle(code);
-            }
-          }
-        } catch {
-          // Skip a bad frame, but give up if detection keeps failing (e.g. the WASM never loaded).
-          if (++failures >= 8 && !cancelled) {
-            stop();
-            setProblem("The scanner couldn't start (check your connection). Type the number instead.");
-            return;
-          }
-        }
-        if (!cancelled) timer = setTimeout(tick, 250);
-      }
-      void tick();
-    }
-    void run();
-    return stop;
-  }, []);
 
   return (
     <div className="scanner" role="dialog" aria-modal="true" aria-label="Scan barcodes" ref={rootRef} tabIndex={-1}>

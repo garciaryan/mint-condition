@@ -1,9 +1,10 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { DATA_CREDIT, releaseUrl } from "../lib/discogs-terms.ts";
-import { fieldErrors } from "../lib/form.ts";
+import { clearsInputs, fieldErrors } from "../lib/form.ts";
 import { relativeTime } from "../lib/relative-time.ts";
 import type { FieldErrors } from "../lib/form.ts";
 import type { LookupResponse } from "../lib/lookup.ts";
@@ -11,6 +12,10 @@ import { GRADE_NAMES } from "../lib/types.ts";
 import type { Candidate, Grade } from "../lib/types.ts";
 import GradeSelect from "./GradeSelect.tsx";
 import Picker, { Thumb } from "./Picker.tsx";
+import ScanButton from "./ScanButton.tsx";
+
+// Loaded only when the scan icon is pressed, so the camera code and detector stay out of the page bundle.
+const LookupScanner = dynamic(() => import("./LookupScanner.tsx"), { ssr: false });
 
 type Priced = Extract<LookupResponse, { status: "priced" | "no-price" }>;
 type LookupError = Extract<LookupResponse, { status: "error" }>;
@@ -33,6 +38,8 @@ export default function Lookup() {
   const [local, setLocal] = useState(false);
   const [areaCode, setAreaCode] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [scanning, setScanning] = useState(false);
+  const [scanUnavailable, setScanUnavailable] = useState<string | null>(null);
 
   const [view, setView] = useState<View>({ kind: "idle" });
   const [busy, setBusy] = useState<Busy>(null);
@@ -101,7 +108,7 @@ export default function Lookup() {
   async function price(
     id: number,
     picked: Candidate | null,
-    opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; focus?: boolean; fresh?: boolean } = {},
+    opts: { grades?: { record: Grade; sleeve: Grade }; area?: string; focus?: boolean; fresh?: boolean; clear?: boolean } = {},
   ) {
     const grades = opts.grades ?? { record, sleeve };
     const area = opts.area ?? (local ? areaCode.trim() : "");
@@ -115,15 +122,23 @@ export default function Lookup() {
     setPricedArea(area);
     if (opts.focus) focusNext.current = true;
     show(res);
+    if (opts.clear && clearsInputs(res.status)) clearInputs();
   }
 
-  async function search(fresh = false) {
-    const key = `${catno.trim()}|${year.trim()}`;
-    const searchedYear = Number(year) || undefined;
+  // Ready for the next record; grades, local sale and the shown result stay.
+  function clearInputs() {
+    setCatno("");
+    setYear("");
+    setErrors({});
+  }
+
+  async function search(fresh = false, q: { catno: string; year: string } = { catno, year }) {
+    const key = `${q.catno.trim()}|${q.year.trim()}`;
+    const searchedYear = Number(q.year) || undefined;
     const area = local ? areaCode.trim() : "";
-    retry.current = () => void search(fresh);
+    retry.current = () => void search(fresh, q);
     pending.current = null;
-    const res = await lookup({ catno, year, record, sleeve, areaCode: area, ...(fresh ? { fresh: true } : {}) }, "search");
+    const res = await lookup({ catno: q.catno, year: q.year, record, sleeve, areaCode: area, ...(fresh ? { fresh: true } : {}) }, "search");
     if (!res) return;
     setSearchedKey(res.status === "error" ? null : key);
     setCandidates(res.status === "candidates" ? { kind: "candidates", candidates: res.candidates, year: searchedYear } : null);
@@ -137,6 +152,14 @@ export default function Lookup() {
     }
     focusNext.current = true;
     show(res, { year: searchedYear });
+    if (clearsInputs(res.status)) clearInputs();
+  }
+
+  function onScanned(code: string) {
+    setScanning(false);
+    setCatno(code);
+    setErrors({});
+    void search(false, { catno: code, year });
   }
 
   function onSubmit(e: FormEvent) {
@@ -196,22 +219,25 @@ export default function Lookup() {
           <label htmlFor="catno">
             Catalog number or barcode <span className="req" aria-hidden="true">*</span>
           </label>
-          <input
-            id="catno"
-            ref={catnoRef}
-            value={catno}
-            onChange={(e) => setCatno(e.target.value)}
-            onBlur={() => errors.catno && validateField("catno")}
-            placeholder="SD 7208 or 075678135812"
-            enterKeyHint="search"
-            autoFocus
-            required
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            aria-invalid={errors.catno ? true : undefined}
-            aria-describedby={errors.catno ? "catno-error" : undefined}
-          />
+          <div className="input-row">
+            <input
+              id="catno"
+              ref={catnoRef}
+              value={catno}
+              onChange={(e) => setCatno(e.target.value)}
+              onBlur={() => errors.catno && validateField("catno")}
+              placeholder="SD 7208 or 075678135812"
+              enterKeyHint="search"
+              autoFocus
+              required
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              aria-invalid={errors.catno ? true : undefined}
+              aria-describedby={errors.catno ? "catno-error" : undefined}
+            />
+            <ScanButton onScan={() => setScanning(true)} unavailable={scanUnavailable} />
+          </div>
           {errors.catno && (
             <p className="field-error" id="catno-error">
               {errors.catno}
@@ -277,6 +303,13 @@ export default function Lookup() {
           </button>
         </div>
       </form>
+      {scanning && (
+        <LookupScanner
+          onCode={onScanned}
+          onClose={() => setScanning(false)}
+          onUnavailable={() => setScanUnavailable("This browser can't read barcodes. Type the number instead.")}
+        />
+      )}
 
       <p className="sr-only" role="status">
         {statusText}
@@ -314,7 +347,7 @@ export default function Lookup() {
             )}
             {view.kind === "error" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
             {view.kind === "candidates" && (
-              <Picker candidates={view.candidates} year={view.year} onPick={(c) => void price(c.id, c, { focus: true })} />
+              <Picker candidates={view.candidates} year={view.year} onPick={(c) => void price(c.id, c, { focus: true, clear: true })} />
             )}
             {view.kind === "result" && (
               <ResultCard

@@ -1,12 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
 import type { NewLine } from "../../../lib/collection/types.ts";
 import type { ItemView } from "../../../lib/collection/view.ts";
 import type { Grade } from "../../../lib/types.ts";
 import GradeSelect from "../../GradeSelect.tsx";
+import ScanButton from "../../ScanButton.tsx";
 import { createSerialQueue } from "../../../lib/collection/ui.ts";
 import { api } from "./api.ts";
 import type { ScanAddResult } from "./Scanner.tsx";
@@ -47,11 +48,9 @@ export default function EntryBar({
   const [failReason, setFailReason] = useState<string | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const enqueue = useRef(createSerialQueue()).current;
-  const [canScan, setCanScan] = useState(false);
   const [scanning, setScanning] = useState(false);
-  useEffect(() => {
-    setCanScan(typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia);
-  }, []);
+  // Set when the scanner opened but no barcode detector could load.
+  const [scanUnavailable, setScanUnavailable] = useState<string | null>(null);
 
   // Scans use the same serial queue as typed adds: one line, no year, the grades at scan time.
   function addScanned(code: string): Promise<ScanAddResult> {
@@ -155,9 +154,7 @@ export default function EntryBar({
             <GradeSelect id="entry-sleeve" value={sleeve} onChange={setSleeve} />
           </div>
           <div className="entry-buttons">
-            <button type="button" className="secondary" hidden={!canScan} onClick={() => setScanning(true)}>
-              Scan
-            </button>
+            <ScanButton onScan={() => setScanning(true)} unavailable={scanUnavailable} />
             <button type="submit">Add</button>
           </div>
         </div>
@@ -211,7 +208,7 @@ export default function EntryBar({
           currency={currency}
           onCode={addScanned}
           onClose={() => setScanning(false)}
-          onUnavailable={() => setCanScan(false)}
+          onUnavailable={() => setScanUnavailable("This browser can't read barcodes. Type the number instead.")}
         />
       )}
     </section>
