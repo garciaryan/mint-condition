@@ -17,6 +17,7 @@ import { PATCH as patchItem, DELETE as deleteItem } from "../app/api/items/[id]/
 import { POST as resumeSession } from "../app/api/sessions/[id]/resume/route.ts";
 import { POST as retryItem } from "../app/api/items/[id]/retry/route.ts";
 import { GET as getCandidates } from "../app/api/items/[id]/candidates/route.ts";
+import { GET as exportCsv } from "../app/api/sessions/[id]/discogs.csv/route.ts";
 
 const KEYS = ["APP_PASSWORD_HASH", "SESSION_SECRET", "DISCOGS_TOKEN", "DISCOGS_USER_AGENT"];
 const saved = { ...process.env };
@@ -416,4 +417,42 @@ test("lot GET includes oldestPricedAt", async () => {
     body = await j(await getSession(req("GET"), ctx(String(lot.id))));
   }
   assert.equal(typeof body.oldestPricedAt, "number");
+});
+
+async function namedPricedLot(name: string) {
+  const { body: lot } = await newLot({ name, defaultRecord: "VG+", defaultSleeve: "VG" });
+  await addItems(req("POST", { lines: [{ query: "A" }], record: "VG+", sleeve: "VG" }), ctx(String(lot.id)));
+  const deadline = Date.now() + 2000;
+  let body = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  while (body.totals.priced < 1 && Date.now() < deadline) {
+    await new Promise((res) => setTimeout(res, 10));
+    body = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  }
+  return { lot, body };
+}
+
+test("CSV export: auth, bad id, unknown lot", async () => {
+  assert.equal((await exportCsv(req("GET", undefined, false), ctx("1"))).status, 401);
+  assert.equal((await exportCsv(req("GET"), ctx("abc"))).status, 400);
+  assert.equal((await exportCsv(req("GET"), ctx("999"))).status, 404);
+});
+
+test("CSV export downloads the lot as a Discogs file", async () => {
+  const { lot } = await namedPricedLot("Café Sale");
+  const r = await exportCsv(req("GET"), ctx(String(lot.id)));
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get("content-type"), "text/csv; charset=utf-8");
+  assert.equal(r.headers.get("content-disposition"), 'attachment; filename="caf-sale-discogs.csv"');
+  assert.equal(r.headers.get("cache-control"), "no-store");
+  const text = await r.text();
+  assert.ok(text.startsWith("release_id,price,"));
+  assert.equal(text.trimEnd().split("\r\n").length, 2);
+});
+
+test("lot GET includes exportCounts", async () => {
+  const { body: lot } = await newLot();
+  const empty = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  assert.deepEqual(empty.exportCounts, { exportable: 0, lookingUp: 0, skipped: 0 });
+  const { body } = await namedPricedLot("L");
+  assert.deepEqual(body.exportCounts, { exportable: 1, lookingUp: 0, skipped: 0 });
 });

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { SessionRow } from "../../../lib/collection/types.ts";
+import { exportHint } from "../../../lib/collection/export.ts";
 import { relativeTime } from "../../../lib/relative-time.ts";
 import { api } from "./api.ts";
 import { useDialog } from "./useDialog.ts";
@@ -10,12 +11,14 @@ import { useDialog } from "./useDialog.ts";
 export default function LotHeader({
   session,
   oldestPricedAt,
+  exportCounts,
   onChanged,
   onDeleted,
   onError,
 }: {
   session: SessionRow;
   oldestPricedAt: number | null;
+  exportCounts: { exportable: number; lookingUp: number; skipped: number };
   onChanged: () => void;
   onDeleted: () => void;
   onError: (message: string) => void;
@@ -107,10 +110,25 @@ export default function LotHeader({
         {oldestPricedAt !== null && Date.now() - oldestPricedAt > 3_600_000 && (
           <span className="meta muted small price-age">Oldest prices: {relativeTime(oldestPricedAt)}</span>
         )}
+        {exportCounts.exportable > 0 ? (
+          <a className="action-link" href={`/api/sessions/${session.id}/discogs.csv`} aria-describedby="lot-export-hint">
+            Export for Discogs
+          </a>
+        ) : (
+          <span className="action-link" aria-disabled="true" aria-describedby="lot-export-hint">
+            Export for Discogs
+          </span>
+        )}
+        <a className="action-link" href={`/collection/${session.id}/print`}>
+          Print buy sheet
+        </a>
         <button type="button" className="secondary danger" ref={deleteTrigger} onClick={() => setConfirming(true)}>
           Delete lot
         </button>
       </div>
+      <p className="meta muted small export-hint" id="lot-export-hint">
+        {exportHint(exportCounts)}
+      </p>
       {nameError && (
         <p className="field-error lot-name-error" id="lot-name-error" role="alert">
           <span aria-hidden="true">⚠ </span>
