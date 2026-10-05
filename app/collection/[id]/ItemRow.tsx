@@ -16,6 +16,7 @@ export const ICONS = {
   warn: "M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
   x: "M18 6 6 18M6 6l12 12",
   clock: "M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z",
+  star: "m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9L12 3Z",
 } as const;
 
 export function Icon({ name }: { name: keyof typeof ICONS }) {
@@ -68,6 +69,7 @@ export default function ItemRow({
   item,
   currency,
   onGrade,
+  onStar,
   onPick,
   onRetry,
   onRemove,
@@ -75,6 +77,7 @@ export default function ItemRow({
   item: ItemView;
   currency: string;
   onGrade: (id: number, patch: { record?: Grade; sleeve?: Grade }) => Promise<boolean>;
+  onStar: (id: number, pick: boolean) => void;
   onPick: (item: ItemView, trigger: HTMLButtonElement) => void;
   onRetry: (id: number) => void;
   onRemove: (item: ItemView) => void;
@@ -118,7 +121,21 @@ export default function ItemRow({
           <GradeSelect id={`slv-${item.id}`} value={sleeve} onChange={(g) => change("sleeve", g)} label={`Sleeve grade for ${title}`} />
         </span>
       </div>
-      <div className={`row-price${dim ? " dim" : ""}`}>{marketCell(item, currency)}</div>
+      <div className={`row-price${dim ? " dim" : ""}`}>
+        {item.market && (
+          <button
+            type="button"
+            className={`star${item.isPick ? " on" : ""}`}
+            aria-pressed={item.isPick}
+            aria-label={`Cherry-pick ${title}`}
+            title="Cherry-pick"
+            onClick={() => onStar(item.id, !item.isPick)}
+          >
+            <Icon name="star" />
+          </button>
+        )}
+        <div className="row-value">{marketCell(item, currency)}</div>
+      </div>
       <div className="row-status">
         <span className={`status ${st.cls}`}>
           {st.icon === "spinner" ? <span className="spinner" aria-hidden="true" /> : <Icon name={st.icon} />}
