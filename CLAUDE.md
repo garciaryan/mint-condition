@@ -17,7 +17,8 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Never expose `DISCOGS_TOKEN` to the browser. All Discogs calls go through Next route handlers or server actions.
 - Discogs requires a descriptive `User-Agent` (`DISCOGS_USER_AGENT`).
 - Keep `lib/pricing.ts` and `lib/offer.ts` as **pure functions** (no network, no fs, no DB). All tunables come from
-  `settings.json`.
+  `settings.json`, overridden by the saved row edited on `/settings` (`lib/settings-store.ts`); routes read settings
+  through `getSettings(getDb())`. Currency and region multipliers come only from the file.
 - Price meanings: *market value* = Discogs suggestion for the record grade x sleeve multiplier (range = next grade
   down to next grade up). *Sell price* = market x (1 - undercut), floored. *Local price* = market x local discount x
   area-code multiplier, shown next to what the user would net on Discogs after fees.
@@ -47,6 +48,8 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - `app/login/`, `app/api/login|logout|health` · `scripts/hash-password.ts` · `Dockerfile`, `docker-entrypoint.sh`,
   `fly.toml`, `fly.staging.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`, `fly-deploy-staging.yml`
 
+- `lib/settings-store.ts` (saved settings over defaults) · `lib/settings-form.ts` (form conversion, client-safe) ·
+  `app/settings/` (`SettingsForm`) · `app/api/settings/`
 - `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
   `lib/discogs-client.ts` shared client · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
 - `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,
@@ -71,10 +74,13 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Go online (2026-10-04): deployed to https://mint-condition.fly.dev (app `mint-condition`, region `sjc`, one
   machine, volume `mint_data`). Remote image build OK; smoke checks pass (health 200, `/` → login, API 401 without
   cookie, foreign Origin 403). Phone check on mobile data passed (log in, price a record).
-- Phase 4 collection mode (2026-10-04): built on feat/collection-mode; 150 tests passing; deploy + phone check
-  pending. Spec: `docs/superpowers/specs/2026-10-04-collection-mode-design.md`.
-- Phase 5 offer calculator (2026-10-04): built on feat/offer-calculator; 186 tests passing; migration 2 (lot offer
-  inputs, row `pick`); deploy + phone check pending. Spec: `docs/superpowers/specs/2026-10-04-offer-calculator-design.md`.
+- Phase 4 collection mode (2026-10-04): merged and deployed; checked on prod.
+  Spec: `docs/superpowers/specs/2026-10-04-collection-mode-design.md`.
+- Phase 5 offer calculator (2026-10-04): merged and deployed (migration 2: lot offer inputs, row `pick`); checked on
+  prod. Spec: `docs/superpowers/specs/2026-10-04-offer-calculator-design.md`.
+- Phase 6a settings UI (2026-10-04): built on feat/settings-ui; 220 tests passing; migration 3 (`settings` table);
+  staging check pending. Spec: `docs/superpowers/specs/2026-10-04-settings-ui-design.md`. Phase 6b (24h Discogs
+  cache, adds `cacheHours` to the page) is next.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns
@@ -95,6 +101,6 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 7. Add tests for any new pure logic; keep `npm test` and `npm run typecheck` green.
 
 ## Later phases (do not start unless asked)
-6. SQLite cache + settings UI (24h cache).
+6b. SQLite cache of Discogs responses (24h, `discogs.cacheHours` on the settings page).
 7. CSV export, printable buy sheet. 8. Track price paid and sold price to learn the user's own offer percentage.
    The user has no offer-percentage rule of thumb; default ladder starts at 40%.

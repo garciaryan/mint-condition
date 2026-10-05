@@ -118,7 +118,7 @@ For a remote buy from photos, switch on **Condition unverified**: every record i
 and sleeve) for the offer only.
 
 The pick threshold, bulk price and lot overhead are set per lot. The ladder, margin (30%), overhead per record
-($1.50) and unverified steps are in the `offer` block of `settings.json`.
+($1.50) and unverified steps are on the [Settings](#settings) page.
 
 ## How prices are worked out
 
@@ -133,9 +133,20 @@ The pick threshold, bulk price and lot overhead are set per lot. The ladder, mar
   It then takes off your margin and overhead, and adds the bulk at cost. Details are under
   [Offers](#offers).
 
-Every number above comes from [`settings.json`](settings.json). Edit it to change the sleeve multipliers, the
-undercut and floor, the Discogs fee, the local discount, regional multipliers by area code, the currency, and the
-offer ladder, margin and defaults.
+Every number above can be changed on the [Settings](#settings) page.
+
+## Settings
+
+**Settings** in the nav edits the sleeve multipliers, the undercut and minimum sell price, the local price and
+Discogs fee, the default area multiplier, and the offer ladder, opening offer, margin, overhead, pick threshold,
+bulk price and unverified steps. Multipliers are shown as percentages (a VG sleeve keeps 85% of market value).
+
+- A save applies straight away to new lookups and to every lot, including lots you already made offers on.
+- Each changed field shows its default; **Reset to defaults** goes back to [`settings.json`](settings.json).
+- Saved values live in the database and win over `settings.json`. A setting added to the file later still gets
+  its default.
+- The currency follows your Discogs seller account and isn't editable. Regional multipliers by area code are
+  still set in `settings.json` only.
 
 ## Command-line lookup
 
@@ -166,9 +177,11 @@ app/                   Next.js App Router UI
   collection/          /collection lots list; [id]/ is one lot (entry bar, camera scanner, paste, to-pick
                        panel, totals, offer panel, rows)
   login/               login page
+  settings/            /settings page (SettingsForm)
   api/lookup/route.ts  POST /api/lookup: Discogs lookups for the single-record page (lots use the worker)
   api/sessions/        lots: list/create, one lot, add items (bulk), re-price all
   api/items/[id]/      edit, retry, candidates (to-pick)
+  api/settings/        GET/PUT/DELETE saved settings
   api/login, logout    session cookie in and out
   api/health           public health check (database + which config is set)
 middleware.ts          runs the login gate on every request
@@ -185,16 +198,18 @@ lib/
   auth.ts, password.ts session cookies, login limiter, password hashing
   gate.ts              decides who gets through (pure function)
   db.ts, migrations.ts SQLite on the Fly volume, versioned migrations
-  settings.ts          settings.json loader and validator
+  settings.ts          settings.json loader, validator, merge of saved values over defaults
+  settings-store.ts    saved settings (one SQLite row) over the settings.json defaults
+  settings-form.ts     settings page form: percent conversion and field checks (client-safe)
   types.ts             grades and shared types
 scripts/               command-line lookup, password hashing
 tests/                 unit tests
-settings.json          pricing tunables
+settings.json          pricing tunable defaults
 Dockerfile, fly.toml   Fly.io deployment
 ```
 
 ## Roadmap
 
-- Price cache and a settings page
+- Price cache
 - CSV export and a printable buy sheet
 - Tracking what you paid and sold for, to learn your own offer percentage
