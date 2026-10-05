@@ -28,7 +28,11 @@ export function getSettings(db: DatabaseSync, defaultsPath?: string): SettingsSt
   const row = readRow(db);
   if (!row) return { settings: defaults, defaults, saved: false, updatedAt: null, invalid: null };
   try {
-    const settings = parseSettings(mergeSettings(defaults, JSON.parse(row.json)));
+    const saved: unknown = JSON.parse(row.json);
+    if (typeof saved !== "object" || saved === null || Array.isArray(saved)) {
+      throw new Error("settings: the saved settings are not an object");
+    }
+    const settings = parseSettings(mergeSettings(defaults, saved));
     return { settings, defaults, saved: true, updatedAt: row.updated_at, invalid: null };
   } catch (e) {
     const invalid = e instanceof Error ? e.message : String(e);
