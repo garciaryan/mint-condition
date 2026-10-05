@@ -544,6 +544,11 @@ a {
   margin: 16px 0;
 }
 
+/* No default paragraph margin at a card's edges, so a one-line card (a notice) is evenly spaced. */
+.card p:first-child {
+  margin-top: 0;
+}
+
 .card p:last-child {
   margin-bottom: 0;
 }
