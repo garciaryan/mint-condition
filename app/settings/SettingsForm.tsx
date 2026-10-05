@@ -122,8 +122,23 @@ export default function SettingsForm() {
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    // In-app links navigate client-side, so beforeunload never fires for them; ask here instead.
+    const guard = (e: MouseEvent) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.defaultPrevented) return;
+      const link = (e.target as Element | null)?.closest?.("a");
+      if (!link || link.hasAttribute("target") || !link.href) return;
+      if (new URL(link.href).origin !== location.origin) return;
+      if (!confirm("You have unsaved changes. Leave without saving?")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    document.addEventListener("click", guard, true);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      document.removeEventListener("click", guard, true);
+    };
   }, [dirty]);
 
   useEffect(() => {
