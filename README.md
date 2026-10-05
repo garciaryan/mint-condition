@@ -18,7 +18,9 @@ Mint Condition is **self-hosted**: there is no shared public site. You run your 
 token, so your lookups use your own Discogs rate limit (60 requests a minute per IP address) and your price data
 stays with you.
 
-If it saves you money at a record fair, you can [buy me a coffee](https://www.buymeacoffee.com/rgarciadev).
+If it saves you money at a record fair, you can buy me a coffee:
+
+<a href="https://www.buymeacoffee.com/rgarciadev"><img src="https://img.buymeacoffee.com/button-api/?text=buy%20me%20a%20coffee&emoji=&slug=rgarciadev&button_colour=06bcc1&font_colour=000000&font_family=Inter&outline_colour=000000&coffee_colour=FFDD00" alt="Buy me a coffee" height="44"></a>
 
 ## Ways to run it
 
