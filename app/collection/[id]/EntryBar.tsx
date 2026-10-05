@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
 import type { NewLine } from "../../../lib/collection/types.ts";
 import type { Grade } from "../../../lib/types.ts";
@@ -8,6 +9,9 @@ import GradeSelect from "../../GradeSelect.tsx";
 import { createSerialQueue } from "../../../lib/collection/ui.ts";
 import { api } from "./api.ts";
 import PasteList from "./PasteList.tsx";
+
+// Loaded only when Scan is opened, so the camera code and detector stay out of the page bundle.
+const Scanner = dynamic(() => import("./Scanner.tsx"), { ssr: false });
 
 export default function EntryBar({
   sessionId,
@@ -31,6 +35,18 @@ export default function EntryBar({
   const [error, setError] = useState<string | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const enqueue = useRef(createSerialQueue()).current;
+  const [canScan, setCanScan] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const scanButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    setCanScan(typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia);
+  }, []);
+
+  // Scans use the same serial queue as typed adds: one line, no year, the grades at scan time.
+  function addScanned(code: string): Promise<string | null> {
+    const grades = { record, sleeve };
+    return enqueue(() => post([{ query: code }], grades));
+  }
 
   async function post(lines: NewLine[], grades = { record, sleeve }): Promise<string | null> {
     const res = await api(`/api/sessions/${sessionId}/items`, "POST", { lines, ...grades });
@@ -117,8 +133,7 @@ export default function EntryBar({
             <GradeSelect id="entry-sleeve" value={sleeve} onChange={setSleeve} />
           </div>
           <div className="entry-buttons">
-            {/* Task 7 wires the scanner and removes `hidden`. */}
-            <button type="button" className="secondary" hidden>
+            <button type="button" className="secondary" hidden={!canScan} ref={scanButtonRef} onClick={() => setScanning(true)}>
               Scan
             </button>
             <button type="submit">Add</button>
@@ -146,6 +161,14 @@ export default function EntryBar({
         <div id="paste-panel">
           <PasteList onAdd={post} />
         </div>
+      )}
+      {scanning && (
+        <Scanner
+          grades={{ record, sleeve }}
+          onCode={addScanned}
+          onClose={() => setScanning(false)}
+          onUnavailable={() => setCanScan(false)}
+        />
       )}
     </section>
   );
