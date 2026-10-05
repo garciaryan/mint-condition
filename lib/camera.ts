@@ -16,3 +16,13 @@ export function browserCameraSupport(): CameraSupport {
   if (typeof window === "undefined") return cameraSupport({ secure: false, getUserMedia: false });
   return cameraSupport({ secure: window.isSecureContext, getUserMedia: !!navigator.mediaDevices?.getUserMedia });
 }
+
+/** How long the ✓ stays in a lot scanner's frame after a read (the next read replaces it). */
+export const LOT_CUE_MS = 700;
+/** How long the one-shot scanner shows the ✓ before closing and searching. */
+export const LOOKUP_HOLD_MS = 500;
+
+/** Whether the scan ✓ should still show: from the read until `holdMs` later. */
+export function scanCueVisible(lastAt: number | null, now: number, holdMs: number): boolean {
+  return lastAt !== null && now >= lastAt && now - lastAt < holdMs;
+}

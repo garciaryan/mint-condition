@@ -2098,6 +2098,53 @@ kbd {
   pointer-events: none;
 }
 
+/* A successful read: the frame turns cyan and pulses once, with ✓ and the code in the middle. */
+.scanner-frame.hit {
+  border-color: var(--fill);
+  animation: scan-pulse 320ms var(--ease);
+}
+
+@keyframes scan-pulse {
+  40% {
+    transform: scale(1.04);
+  }
+}
+
+.scan-cue {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+  animation: fade-in var(--dur-fast) var(--ease);
+}
+
+.scan-cue-check {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--fill);
+  color: var(--fill-ink);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scan-cue-code {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--fill-ink);
+  font-family: var(--font-numeric);
+  font-weight: 600;
+  font-size: 15px;
+}
+
 .scanner-wait {
   position: absolute;
   inset: 0;
