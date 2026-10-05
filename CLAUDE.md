@@ -37,6 +37,11 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   "Data provided by Discogs" linked to the release next to the data (no `nofollow`); the not-affiliated notice in
   `app/SiteFooter.tsx` on every page. Price data is Restricted Data: no commercial use, no transfer to third parties.
 
+- Released as self-hosted, MIT-licensed (`LICENSE`): each person runs their own copy (locally or their own Fly app)
+  with their own Discogs token and IP rate limit; there is no shared public instance. Deploy jobs in both workflows
+  are guarded by `if: github.repository == 'garciaryan/mint-condition'` so forks only run checks. Never commit
+  secrets; the repo is public.
+
 ## Commands
 - `npm install`
 - `npm test` (Node's built-in test runner, no extra deps; Node 22.13+)

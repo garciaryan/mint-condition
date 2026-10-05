@@ -14,23 +14,34 @@ seller: an opening offer, a ladder to negotiate up, and the most you can pay and
 
 > Discogs figures are asking prices and price suggestions, not confirmed sales. Treat them as a guide.
 
-## Hosted version
+Mint Condition is **self-hosted**: there is no shared public site. You run your own copy with your own Discogs
+token, so your lookups use your own Discogs rate limit (60 requests a minute per IP address) and your price data
+stays with you.
 
-The app runs at **https://mint-condition.fly.dev** behind a single password, so it works from a phone on-site.
-Log in once and the session lasts 30 days; **Log out** is in the page header. After 5 wrong passwords from the same
-connection, logins pause for 15 minutes.
+If it saves you money at a record fair, you can [buy me a coffee](https://www.buymeacoffee.com/rgarciadev).
 
-Every push to `main` is tested and then deployed automatically. Setup, secrets, changing the password, logs and
-backups are covered in [DEPLOY.md](DEPLOY.md).
+## Ways to run it
+
+| | On your computer | Your own Fly.io app |
+|---|---|---|
+| Good for | Pricing a pile at home | Pricing on your phone at a shop or fair |
+| Setup | `npm install`, then `npm run dev` | About 15 minutes with [DEPLOY.md](DEPLOY.md) |
+| Login | Off (only you can reach it) | One password, 30-day sessions |
+| Camera barcode scanner | On the same computer only | Yes, on your phone |
+| Cost | Free | A few dollars a month on Fly (the machine sleeps when idle; check Fly's current pricing) |
+
+Opening a computer copy from your phone over Wi-Fi (`http://192.168.x.x:3000`) works for typing catalog numbers,
+but phone browsers only allow the camera on HTTPS, so the scanner needs the Fly version.
 
 ## Requirements
 
 - Node.js 22.13 or newer
-- A Discogs **seller** account and a personal access token from
-  [discogs.com/settings/developers](https://www.discogs.com/settings/developers). Price suggestions are only
-  returned for seller accounts with their seller settings (including a payment method) completed.
+- A Discogs account set up to sell, and a personal access token from
+  [discogs.com/settings/developers](https://www.discogs.com/settings/developers) (**Generate new token**).
+  Discogs only returns price suggestions to accounts whose seller settings are complete, including a payment
+  method. You don't have to list anything. Without that, lookups find the pressing but show "No price data".
 
-## Setup
+## Run it on your computer
 
 ```sh
 npm install
@@ -42,7 +53,7 @@ Fill in `.env.local`:
 | Variable | What it is |
 |---|---|
 | `DISCOGS_TOKEN` | Your personal access token. It stays on the server and is never sent to the browser. |
-| `DISCOGS_USER_AGENT` | A descriptive User-Agent, which Discogs requires, e.g. `VinylPricer/0.1 (+you@example.com)`. |
+| `DISCOGS_USER_AGENT` | A descriptive User-Agent with your own contact, which Discogs requires, e.g. `MintCondition/0.1 (+you@example.com)`. |
 
 Then start the app:
 
@@ -50,8 +61,22 @@ Then start the app:
 npm run dev
 ```
 
-and open http://localhost:3000. Locally there's no login unless you set `APP_PASSWORD_HASH` and `SESSION_SECRET`
-in `.env.local` too (see [DEPLOY.md](DEPLOY.md)).
+and open http://localhost:3000. Data is kept in `data/mint.db` (SQLite). Locally there's no login unless you set
+`APP_PASSWORD_HASH` and `SESSION_SECRET` in `.env.local` too (see [DEPLOY.md](DEPLOY.md)).
+
+For a faster local server, run `npm run build` once and then `npm start`.
+
+## Run it on Fly.io
+
+[DEPLOY.md](DEPLOY.md) walks through it: install `flyctl`, create the app and a 1 GB volume, set four secrets
+(Discogs token, user agent, password hash, session secret) and deploy. Pick your own app name; `mint-condition` is
+taken. It also covers changing the password, logs, backups and smoke checks.
+
+Run exactly **one** machine (`--ha=false` on the first deploy). The database, login limiter and Discogs throttle
+all live on that one machine.
+
+If you fork the repo, the GitHub Actions deploy jobs only run on the original repo; to deploy your fork on every
+push, change the `if:` line in `.github/workflows/fly-deploy.yml` to your repo and add a `FLY_API_TOKEN` secret.
 
 ## Using it
 
@@ -66,7 +91,7 @@ If several pressings match, you'll get a list grouped by year with cover thumbna
 Pick the one that matches your copy. Changing a grade afterwards re-prices the same pressing straight away.
 
 The result card shows the three prices, how many copies are for sale on Discogs, the lowest current listing, and a
-link to the release on Discogs.
+**Data provided by Discogs** link to the release.
 
 ## Collection mode
 
@@ -143,10 +168,11 @@ The pick threshold, bulk price and lot overhead are set per lot. The ladder, mar
   It then takes off your margin and overhead, and adds the bulk at cost. Details are under
   [Offers](#offers).
 
-Discogs answers are reused for up to 24 hours (set on the [Settings](#settings) page), so re-grading a record or
+Discogs answers are reused for up to 6 hours (set on the [Settings](#settings) page), so re-grading a record or
 opening it again is instant. When prices come from that cache the card says how old they are, with **Refresh
 prices** to fetch them fresh; a lot's **Re-price all** and **Retry** always fetch fresh, and a lot shows how old its
-oldest prices are.
+oldest prices are. Lot prices older than 6 hours are hidden and fetched again when you open the lot (see
+[Discogs terms](#discogs-terms)).
 
 Every number above can be changed on the [Settings](#settings) page.
 
@@ -159,7 +185,7 @@ pins one on this browser. Printing always uses the light palette.
 
 **Settings** in the nav edits the sleeve multipliers, the undercut and minimum sell price, the local price and
 Discogs fee, the default area multiplier, and the offer ladder, opening offer, margin, overhead, pick threshold,
-bulk price and unverified steps, and how many hours Discogs answers are cached (0 turns the cache off).
+bulk price and unverified steps, and how many hours Discogs answers are cached (0 to 6; 0 turns the cache off).
 Multipliers are shown as percentages (a VG sleeve keeps 85% of market value).
 
 - A save applies straight away to new lookups and to every lot, including lots you already made offers on.
@@ -168,6 +194,24 @@ Multipliers are shown as percentages (a VG sleeve keeps 85% of market value).
   its default.
 - The currency follows your Discogs seller account and isn't editable. Regional multipliers by area code are
   still set in `settings.json` only.
+
+## Discogs terms
+
+Each copy uses its owner's Discogs token, so whoever runs a copy agrees to the
+[Discogs API Terms of Use](https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use). The app
+is built to follow them:
+
+- No Discogs data is shown more than 6 hours old: the cache is capped at 6 hours, and older lot prices are hidden
+  until they are fetched again.
+- Discogs data carries a **Data provided by Discogs** link to the release, and every page has the required
+  not-affiliated notice in the footer.
+
+What the app can't enforce is how it's used. Discogs treats marketplace data, including price suggestions, as
+restricted: it may not be used commercially or passed on to third parties. Run your copy for yourself; don't put
+it up as a public or paid service for other people.
+
+This application uses Discogs' API but is not affiliated with, sponsored or endorsed by Discogs. 'Discogs' is a
+trademark of Zink Media, LLC.
 
 ## Command-line lookup
 
@@ -195,6 +239,7 @@ app/                   Next.js App Router UI
   Lookup.tsx           form, pressing picker, result card
   Picker.tsx, GradeSelect.tsx  shared by the lookup page and lots
   SiteHeader.tsx, NavLinks.tsx header and nav
+  SiteFooter.tsx       footer: links and the Discogs notice
   collection/          /collection lots list; [id]/ is one lot (entry bar, camera scanner, paste, to-pick
                        panel, totals, offer panel, rows)
   login/               login page
@@ -215,13 +260,14 @@ lib/
   discogs-cache.ts     SQLite cache of Discogs answers in front of that client
   collection/export.ts Discogs inventory CSV and buy sheet rows (pure functions)
   relative-time.ts     "3 hours ago" formatting
+  discogs-terms.ts     what the Discogs API terms require: 6-hour limit, notice and credit text
   route-auth.ts        per-route session check
   collection/          lots: types, store (SQLite), parse (paste), view (pure totals/prices), ui, worker
   lookup.ts            request validation, search-or-price flow, error mapping
   form.ts              client-side form checks and picker grouping
   auth.ts, password.ts session cookies, login limiter, password hashing
   gate.ts              decides who gets through (pure function)
-  db.ts, migrations.ts SQLite on the Fly volume, versioned migrations
+  db.ts, migrations.ts SQLite (data/ locally, the Fly volume in production), versioned migrations
   settings.ts          settings.json loader, validator, merge of saved values over defaults
   settings-store.ts    saved settings (one SQLite row) over the settings.json defaults
   settings-form.ts     settings page form: percent conversion and field checks (client-safe)
@@ -235,3 +281,7 @@ Dockerfile, fly.toml   Fly.io deployment
 ## Roadmap
 
 - Tracking what you paid and sold for, to learn your own offer percentage
+
+## License
+
+[MIT](LICENSE). Bugs and ideas are welcome as GitHub issues.
