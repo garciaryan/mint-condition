@@ -56,7 +56,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   `app/settings/` (`SettingsForm`) · `app/api/settings/`
 - `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
   `lib/discogs-client.ts` shared client + `getLookupClient()` · `lib/discogs-cache.ts` response cache ·
-  `lib/relative-time.ts` · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
+  `lib/relative-time.ts` · `lib/theme.ts` + `app/ThemeSwitch.tsx` (dark mode) · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
 - `lib/collection/export.ts` (Discogs CSV, buy sheet rows) · `app/collection/[id]/print/` (buy sheet) ·
   `app/api/sessions/[id]/discogs.csv/`
 - `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,
@@ -90,7 +90,10 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
 - Phase 6b Discogs cache (2026-10-04): built on feat/discogs-cache; 253 tests passing; migration 4 (`discogs_cache`,
   `items.refresh`); checked on staging, merged to main. Spec: `docs/superpowers/specs/2026-10-04-discogs-cache-design.md`.
 - Phase 7 export and buy sheet (2026-10-04): built on feat/export-print; 267 tests passing; no migration; checked on
-  staging (Discogs draft upload accepted: `Draft`, `private_notes`), merged to main. Spec: `docs/superpowers/specs/2026-10-04-export-print-design.md`.
+  staging (Discogs draft upload accepted: `Draft`, `private_notes`), merged to main.
+- Dark mode (2026-10-04): 281 tests passing; checked on staging, merged to main. Colours are tokens on `:root` in
+  `app/globals.css` with a dark palette (device setting, or pinned via cookie `mc_theme` read in `app/layout.tsx`);
+  `tests/theme-contrast.test.ts` checks contrast in both themes. Never hard-code a colour outside the token blocks. Spec: `docs/superpowers/specs/2026-10-04-export-print-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns

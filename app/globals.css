@@ -13,11 +13,83 @@
   --error-bg: #fdf0ee;
   --error-line: #e9b8af;
   --notice-bg: #fbf7ea;
+  --field-bg: #ffffff;
+  --accent-hover: #185a4a;
+  --accent-soft: #e7f2ee;
+  --accent-tint: #f3f9f6;
+  --warn-line: #ecd9a8;
+  --neutral-soft: #f1efe9;
+  --toast-bg: #1d1b18;
+  --toast-ink: #ffffff;
+  --toast-link: #9fd9c5;
+  --scrim: rgba(29, 27, 24, 0.45);
+  --shadow: rgba(0, 0, 0, 0.15);
+  color-scheme: light;
   --radius: 10px;
   --control-h: 44px;
   --gutter: 24px;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--ink);
+}
+
+/* Dark palette: when the device is dark and light isn't pinned, or whenever dark is pinned (cookie mc_theme, set on
+   <html data-theme>). Keep the two blocks identical; tests/theme-contrast.test.ts checks them. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141311;
+    --card: #1d1b18;
+    --ink: #ece8e1;
+    --muted: #a59e93;
+    --line: #34312c;
+    --field-line: #807a6f;
+    --accent: #5bbfa4;
+    --accent-ink: #0d1a16;
+    --warn: #e3a548;
+    --danger: #f2836f;
+    --error-bg: #2b1815;
+    --error-line: #6e3329;
+    --notice-bg: #27231a;
+    --field-bg: #24221e;
+    --accent-hover: #74ccb4;
+    --accent-soft: #1d3a32;
+    --accent-tint: #1a2723;
+    --warn-line: #5a4a22;
+    --neutral-soft: #2a2824;
+    --toast-bg: #ece8e1;
+    --toast-ink: #1d1b18;
+    --toast-link: #1f6f5c;
+    --scrim: rgba(0, 0, 0, 0.6);
+    --shadow: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141311;
+  --card: #1d1b18;
+  --ink: #ece8e1;
+  --muted: #a59e93;
+  --line: #34312c;
+  --field-line: #807a6f;
+  --accent: #5bbfa4;
+  --accent-ink: #0d1a16;
+  --warn: #e3a548;
+  --danger: #f2836f;
+  --error-bg: #2b1815;
+  --error-line: #6e3329;
+  --notice-bg: #27231a;
+  --field-bg: #24221e;
+  --accent-hover: #74ccb4;
+  --accent-soft: #1d3a32;
+  --accent-tint: #1a2723;
+  --warn-line: #5a4a22;
+  --neutral-soft: #2a2824;
+  --toast-bg: #ece8e1;
+  --toast-ink: #1d1b18;
+  --toast-link: #1f6f5c;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 * {
@@ -81,6 +153,14 @@ body {
   min-height: 36px;
   padding: 4px 14px;
   font-size: 14px;
+}
+
+.theme-switch select {
+  width: auto;
+  min-height: 36px;
+  padding: 4px 8px;
+  font-size: 16px;
+  color: var(--muted);
 }
 
 .masthead h1 {
@@ -226,7 +306,7 @@ select {
   padding: 8px 10px;
   border: 1px solid var(--field-line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--field-bg);
   color: var(--ink);
   font-weight: 400;
   width: 100%;
@@ -296,7 +376,7 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover:not(:disabled) {
-  background: #185a4a;
+  background: var(--accent-hover);
 }
 
 button[type="submit"]:disabled {
@@ -701,7 +781,7 @@ a {
 
 .lot-title input:focus {
   border-color: var(--field-line);
-  background: #fff;
+  background: var(--field-bg);
 }
 
 .lot-head .meta {
@@ -759,7 +839,7 @@ textarea {
   padding: 8px 10px;
   border: 1px solid var(--field-line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--field-bg);
   color: var(--ink);
   font-weight: 400;
   resize: vertical;
@@ -881,7 +961,7 @@ kbd {
   border-bottom-width: 2px;
   border-radius: 4px;
   padding: 0 4px;
-  background: #fff;
+  background: var(--field-bg);
 }
 
 .paste {
@@ -942,7 +1022,7 @@ kbd {
 .tab[aria-pressed="true"] {
   background: var(--ink);
   border-color: var(--ink);
-  color: #fff;
+  color: var(--card);
 }
 
 /* Rows */
@@ -971,7 +1051,7 @@ kbd {
 }
 
 .row.new {
-  background: #f3f9f6;
+  background: var(--accent-tint);
 }
 
 .row .title {
@@ -1058,19 +1138,19 @@ kbd {
 
 .s-ok {
   color: var(--accent);
-  background: #e7f2ee;
+  background: var(--accent-soft);
 }
 
 .s-pick {
   color: var(--warn);
   background: var(--notice-bg);
-  border: 1px solid #ecd9a8;
+  border: 1px solid var(--warn-line);
 }
 
 .s-wait,
 .s-none {
   color: var(--muted);
-  background: #f1efe9;
+  background: var(--neutral-soft);
 }
 
 .s-err {
@@ -1120,22 +1200,22 @@ kbd {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  background: var(--ink);
-  color: #fff;
+  background: var(--toast-bg);
+  color: var(--toast-ink);
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 14px;
 }
 
 .undo button.link {
-  color: #9fd9c5;
+  color: var(--toast-link);
   font-weight: 600;
   min-height: 36px;
   padding: 0 4px;
 }
 
 .undo button.link:focus-visible {
-  outline-color: #fff;
+  outline-color: var(--toast-ink);
 }
 
 /* Pick panel and dialogs */
@@ -1143,7 +1223,7 @@ kbd {
   position: fixed;
   inset: 0;
   z-index: 20;
-  background: rgba(29, 27, 24, 0.45);
+  background: var(--scrim);
   display: flex;
   justify-content: flex-end;
 }
@@ -1160,7 +1240,7 @@ kbd {
   background: var(--card);
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  box-shadow: -4px 0 20px var(--shadow);
 }
 
 .panel:focus,
@@ -1337,7 +1417,8 @@ kbd {
   }
 
   .nav a,
-  .topbar button.secondary {
+  .topbar button.secondary,
+  .theme-switch select {
     min-height: var(--control-h);
   }
 
@@ -1569,7 +1650,7 @@ kbd {
   }
 
   .row.new {
-    background: #f3f9f6;
+    background: var(--accent-tint);
   }
 
   .row:last-child {
@@ -2135,6 +2216,20 @@ a.action-link:hover {
 }
 
 @media print {
+  /* Paper is white: print with the light palette even when the screen is dark. */
+  :root,
+  :root:not([data-theme="light"]),
+  :root[data-theme="dark"] {
+    --bg: #ffffff;
+    --card: #ffffff;
+    --ink: #1d1b18;
+    --muted: #6c675f;
+    --line: #e2ddd3;
+    --field-bg: #ffffff;
+    --accent: #1f6f5c;
+    color-scheme: light;
+  }
+
   @page {
     margin: 12mm;
   }
