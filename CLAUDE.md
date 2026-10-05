@@ -91,7 +91,7 @@ value range, sell price, and local-sale price. Later phases add collection (bulk
   `items.refresh`); checked on staging, merged to main. Spec: `docs/superpowers/specs/2026-10-04-discogs-cache-design.md`.
 - Phase 7 export and buy sheet (2026-10-04): built on feat/export-print; 267 tests passing; no migration; checked on
   staging (Discogs draft upload accepted: `Draft`, `private_notes`), merged to main.
-- Dark mode (2026-10-04): built on feat/dark-mode; 281 tests passing. Colours are tokens on `:root` in
+- Dark mode (2026-10-04): 281 tests passing; checked on staging, merged to main. Colours are tokens on `:root` in
   `app/globals.css` with a dark palette (device setting, or pinned via cookie `mc_theme` read in `app/layout.tsx`);
   `tests/theme-contrast.test.ts` checks contrast in both themes. Never hard-code a colour outside the token blocks. Spec: `docs/superpowers/specs/2026-10-04-export-print-design.md`.
 
