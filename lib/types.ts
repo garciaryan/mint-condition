@@ -29,6 +29,15 @@ export type Settings = {
     regionMultipliers: Record<string, number>;
   };
   discogs: { currency: string; cacheHours: number };
+  offer: {
+    ladderPercents: number[];
+    openingPercent: number;
+    marginPercent: number;
+    overheadPerRecord: number;
+    pickThreshold: number;
+    bulkEach: number;
+    unverifiedSteps: number;
+  };
 };
 
 export type Candidate = {

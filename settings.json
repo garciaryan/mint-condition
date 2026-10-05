@@ -22,5 +22,14 @@
   "discogs": {
     "currency": "USD",
     "cacheHours": 24
+  },
+  "offer": {
+    "ladderPercents": [30, 40, 50, 60],
+    "openingPercent": 40,
+    "marginPercent": 30,
+    "overheadPerRecord": 1.5,
+    "pickThreshold": 15,
+    "bulkEach": 0.5,
+    "unverifiedSteps": 1
   }
 }
