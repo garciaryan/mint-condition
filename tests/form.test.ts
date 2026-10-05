@@ -41,3 +41,10 @@ test("groupCandidates: filter matches any field, case-insensitive", () => {
   assert.deepEqual(groupCandidates(list, "1972").flatMap((g) => g.items.map((c) => c.id)), [3]);
   assert.deepEqual(groupCandidates(list, "zzz"), []);
 });
+
+test("new results take you to their heading, but only once the scanner is gone (it locks page scrolling)", async () => {
+  const { movesToResult } = await import("../lib/form.ts");
+  assert.equal(movesToResult({ pending: true, scannerOpen: false }), true);
+  assert.equal(movesToResult({ pending: true, scannerOpen: true }), false);
+  assert.equal(movesToResult({ pending: false, scannerOpen: false }), false);
+});
