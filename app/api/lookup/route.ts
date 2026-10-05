@@ -1,44 +1,19 @@
 // POST /api/lookup: search by catalog number, or price a chosen release. Server-side only (holds the token).
-import { authMode, SESSION_COOKIE, verifySession } from "../../../lib/auth.ts";
-import { DiscogsClient } from "../../../lib/discogs.ts";
+import { getDiscogsClient } from "../../../lib/discogs-client.ts";
 import { httpStatus, missingEnv, parseLookupRequest, runLookup, toErrorResponse } from "../../../lib/lookup.ts";
 import type { LookupResponse } from "../../../lib/lookup.ts";
+import { requireSession } from "../../../lib/route-auth.ts";
 import { loadSettings } from "../../../lib/settings.ts";
 
 export const dynamic = "force-dynamic";
-
-// One client per server process so its throttle covers every request. Kept on globalThis to survive dev reloads.
-const g = globalThis as typeof globalThis & { __discogsClient?: DiscogsClient };
-function client(): DiscogsClient {
-  g.__discogsClient ??= new DiscogsClient({
-    token: process.env.DISCOGS_TOKEN!.trim(),
-    userAgent: process.env.DISCOGS_USER_AGENT!.trim(),
-  });
-  return g.__discogsClient;
-}
 
 function reply(res: LookupResponse): Response {
   return Response.json(res, { status: httpStatus(res) });
 }
 
-function cookieValue(header: string | null, name: string): string | undefined {
-  for (const part of (header ?? "").split(";")) {
-    const p = part.trim();
-    if (p.startsWith(`${name}=`)) return p.slice(name.length + 1);
-  }
-  return undefined;
-}
-
 export async function POST(request: Request): Promise<Response> {
-  // Defence in depth: middleware already gates this route.
-  const mode = authMode(process.env);
-  if (mode.mode === "misconfigured") {
-    const res: LookupResponse = { status: "error", kind: "missing-env", message: `Login not configured: missing ${mode.missing.join(" and ")}` };
-    return Response.json(res, { status: 503 });
-  }
-  if (mode.mode === "on" && !(await verifySession(cookieValue(request.headers.get("cookie"), SESSION_COOKIE), mode.secret, Date.now()))) {
-    return reply({ status: "error", kind: "auth", message: "Signed out. Log in again." });
-  }
+  const denied = await requireSession(request);
+  if (denied) return denied;
 
   const missing = missingEnv(process.env);
   if (missing.length > 0) {
@@ -63,7 +38,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!parsed.ok) return reply({ status: "error", kind: "bad-request", message: parsed.message });
 
   try {
-    return reply(await runLookup(client(), parsed.value, settings));
+    return reply(await runLookup(getDiscogsClient(), parsed.value, settings));
   } catch (e) {
     return reply(toErrorResponse(e));
   }

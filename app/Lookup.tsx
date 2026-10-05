@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { fieldErrors, groupCandidates } from "../lib/form.ts";
+import { fieldErrors } from "../lib/form.ts";
 import type { FieldErrors } from "../lib/form.ts";
 import type { LookupResponse } from "../lib/lookup.ts";
-import { GRADES, GRADE_NAMES } from "../lib/types.ts";
+import { GRADE_NAMES } from "../lib/types.ts";
 import type { Candidate, Grade } from "../lib/types.ts";
+import GradeSelect from "./GradeSelect.tsx";
+import Picker, { Thumb } from "./Picker.tsx";
 
 type Priced = Extract<LookupResponse, { status: "priced" | "no-price" }>;
 type LookupError = Extract<LookupResponse, { status: "error" }>;
@@ -330,18 +332,6 @@ export default function Lookup() {
   );
 }
 
-function GradeSelect({ id, value, onChange }: { id: string; value: Grade; onChange: (g: Grade) => void }) {
-  return (
-    <select id={id} value={value} onChange={(e) => onChange(e.target.value as Grade)}>
-      {GRADES.map((g) => (
-        <option key={g} value={g}>
-          {GRADE_NAMES[g]}
-        </option>
-      ))}
-    </select>
-  );
-}
-
 function ErrorCard({ res, onRetry }: { res: LookupError; onRetry: () => void }) {
   const titles: Record<typeof res.kind, string> = {
     "bad-request": "Check the form",
@@ -367,61 +357,6 @@ function ErrorCard({ res, onRetry }: { res: LookupError; onRetry: () => void }) 
       )}
     </div>
   );
-}
-
-function Picker({ candidates, year, onPick }: { candidates: Candidate[]; year?: number; onPick: (c: Candidate) => void }) {
-  const [filter, setFilter] = useState("");
-  const groups = useMemo(() => groupCandidates(candidates, filter, year), [candidates, filter, year]);
-
-  return (
-    <div className="card">
-      <div className="picker-head">
-        <h2 tabIndex={-1} data-focus>
-          {candidates.length} possible pressings
-        </h2>
-        <input
-          type="search"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          placeholder="Filter by country, label, format…"
-          aria-label="Filter pressings"
-        />
-      </div>
-      <p className="muted">Pick the one that matches your copy (check the label, country and matrix if you can).</p>
-      {groups.length === 0 && <p className="muted">Nothing matches that filter.</p>}
-      {groups.map((g) => (
-        <div key={g.title}>
-          <h3 className="group-title">
-            {g.title} <span className="muted">({g.items.length})</span>
-          </h3>
-          <ul className="candidates">
-            {g.items.map((c) => (
-              <li key={c.id}>
-                <button type="button" className="candidate" onClick={() => onPick(c)}>
-                  <Thumb src={c.thumb} />
-                  <span className="candidate-main">
-                    <strong>{c.title}</strong>
-                    <span className="muted">
-                      {[c.label, c.catno].filter(Boolean).join(" · ")} — {c.format ?? "format unknown"}
-                    </span>
-                  </span>
-                  <span className="candidate-meta">
-                    <span>{c.country ?? "—"}</span>
-                    <span>{c.year ?? "year ?"}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Thumb({ src }: { src: string | null }) {
-  // Plain <img>: Discogs thumbs are small and next/image would need remote config for no benefit here.
-  return src ? <img className="thumb" src={src} alt="" loading="lazy" /> : <span className="thumb thumb-empty" />;
 }
 
 function ResultCard({

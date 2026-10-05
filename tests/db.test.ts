@@ -38,3 +38,18 @@ test("openDb creates the directory and enables WAL and foreign keys", () => {
   assert.equal((db.prepare("pragma foreign_keys").get() as { foreign_keys: number }).foreign_keys, 1);
   db.close();
 });
+
+test("migration 1 creates sessions, items, indexes and cascades deletes", () => {
+  const db = openDb(":memory:");
+  assert.equal(version(db), 1);
+  const names = (type: string) =>
+    (db.prepare("select name from sqlite_master where type = ?").all(type) as { name: string }[]).map((r) => r.name);
+  const tables = names("table");
+  assert.ok(tables.includes("sessions") && tables.includes("items"));
+  const indexes = names("index");
+  assert.ok(indexes.includes("items_session") && indexes.includes("items_status"));
+  db.exec("insert into sessions values (1,'L','NM','NM',1,1)");
+  db.exec("insert into items (session_id,query,record_grade,sleeve_grade,status,created_at) values (1,'x','NM','NM','pending',1)");
+  db.exec("delete from sessions where id = 1");
+  assert.equal((db.prepare("select count(*) as n from items").get() as { n: number }).n, 0);
+});

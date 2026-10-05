@@ -1,0 +1,73 @@
+// PATCH/DELETE /api/items/:id
+import { errorJson, isObject, MAX_BODY, parseId, parseYear, readJson, withSettings } from "../../../../lib/collection/http.ts";
+import { deleteItem, getItem, pickRelease, updateItemFields } from "../../../../lib/collection/store.ts";
+import { toItemView } from "../../../../lib/collection/view.ts";
+import { kickWorker } from "../../../../lib/collection/worker.ts";
+import { getDb } from "../../../../lib/db.ts";
+import { requireSession } from "../../../../lib/route-auth.ts";
+import { isGrade } from "../../../../lib/types.ts";
+import type { Grade } from "../../../../lib/types.ts";
+
+export const dynamic = "force-dynamic";
+type Ctx = { params: Promise<{ id: string }> };
+
+const notFound = () => errorJson("not-found", 404, "Record not found.");
+
+export async function PATCH(request: Request, { params }: Ctx): Promise<Response> {
+  const denied = await requireSession(request);
+  if (denied) return denied;
+  const id = parseId((await params).id);
+  if (id === null) return errorJson("bad-request", 400, "Invalid id.");
+  const body = await readJson(request, MAX_BODY);
+  if (!body.ok) return body.response;
+  const b = body.value;
+  if (!isObject(b)) return errorJson("bad-request", 400, "Body must be a JSON object.");
+
+  const fields: { record?: Grade; sleeve?: Grade; year?: number | null } = {};
+  for (const key of ["record", "sleeve"] as const) {
+    if (b[key] !== undefined) {
+      const v = b[key];
+      if (typeof v !== "string" || !isGrade(v)) return errorJson("bad-request", 400, "Invalid grade.");
+      fields[key] = v;
+    }
+  }
+  if (b.year !== undefined) {
+    const y = parseYear(b.year);
+    if (!y.ok) return errorJson("bad-request", 400, "Year must be empty or 1890 to 2100.");
+    fields.year = y.value;
+  }
+  let releaseId: number | undefined;
+  if (b.releaseId !== undefined) {
+    if (typeof b.releaseId !== "number" || !Number.isInteger(b.releaseId) || b.releaseId <= 0) {
+      return errorJson("bad-request", 400, "Invalid release id.");
+    }
+    if (fields.year !== undefined) return errorJson("bad-request", 400, "Change the year or pick a pressing, not both.");
+    releaseId = b.releaseId;
+  }
+
+  return withSettings((settings) => {
+    const db = getDb();
+    const cur = getItem(db, id);
+    if (!cur) return notFound();
+    let kick = false;
+    if (releaseId !== undefined) {
+      const picked = pickRelease(db, id, releaseId);
+      if (picked === "not-found") return notFound();
+      if (picked === "invalid") return errorJson("bad-request", 400, "That pressing is not one of this record's matches.");
+      kick = true;
+    }
+    if (fields.year !== undefined && fields.year !== cur.year) kick = true;
+    const updated = updateItemFields(db, id, fields);
+    if (!updated) return notFound();
+    if (kick) void kickWorker();
+    return Response.json(toItemView(updated, settings));
+  });
+}
+
+export async function DELETE(request: Request, { params }: Ctx): Promise<Response> {
+  const denied = await requireSession(request);
+  if (denied) return denied;
+  const id = parseId((await params).id);
+  if (id === null) return errorJson("bad-request", 400, "Invalid id.");
+  return deleteItem(getDb(), id) ? Response.json({ ok: true }) : notFound();
+}
