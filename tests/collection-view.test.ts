@@ -59,14 +59,38 @@ test("computeTotals over a mix", () => {
   assert.equal(t.toPick, 1);
   assert.equal(t.noPrice, 2);
   assert.equal(t.problems, 2);
-  assert.equal(t.pending, 3);
+  assert.equal(t.pending, 2);
+  assert.equal(t.refreshing, 1);
+  assert.equal(t.stale, 0);
+  assert.equal(t.priced + t.toPick + t.noPrice + t.problems + t.pending, t.total);
   assert.equal(t.low, Math.round(m.low * 2 * 100) / 100);
   assert.equal(t.suggested, Math.round(m.suggested * 2 * 100) / 100);
   assert.equal(t.high, Math.round(m.high * 2 * 100) / 100);
 });
 
+test("a row with a value lands only in priced, whatever its status", () => {
+  const items = [
+    item({ status: "error", error: "x", suggestions: sugg, stats }),
+    item({ status: "no-price", suggestions: sugg, stats }),
+    item({ status: "working", suggestions: sugg, stats }),
+  ];
+  const t = computeTotals(items, settings);
+  assert.equal(t.priced, 3);
+  assert.equal(t.problems + t.noPrice + t.pending + t.toPick, 0);
+  assert.equal(t.stale, 1);
+  assert.equal(t.refreshing, 1);
+  assert.equal(t.priced, t.total);
+  assert.ok(t.suggested > 0);
+});
+
+test("list rows carry candidateCount without the candidate array", () => {
+  const v = toItemView(item({ status: "to-pick", candidates: null, candidateCount: 7 }), settings);
+  assert.equal(v.candidateCount, 7);
+});
+
 test("queueState eta", () => {
   assert.deepEqual(queueState(10, false), { pending: 10, paused: false, etaSeconds: 33 });
+  assert.equal(pollDelayMs(5, true), 15000);
 });
 
 test("ui helpers", () => {

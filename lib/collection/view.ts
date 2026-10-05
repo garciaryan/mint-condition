@@ -42,7 +42,7 @@ export function toItemView(item: ItemRow, settings: Settings): ItemView {
     sleeve: item.sleeve,
     status: item.status === "working" ? "looking-up" : item.status,
     release: item.release,
-    candidateCount: item.candidates?.length ?? 0,
+    candidateCount: item.candidateCount ?? item.candidates?.length ?? 0,
     market: marketFor(item, settings),
     stats: item.stats,
     pricedAt: item.pricedAt,
@@ -60,22 +60,30 @@ export type Totals = {
   noPrice: number;
   problems: number;
   pending: number;
+  /** Rows with a market value that are being re-priced (pending/working). Counted in `priced`. */
+  refreshing: number;
+  /** Rows with a market value whose last refresh failed (error). Counted in `priced`. */
+  stale: number;
 };
 
 export function computeTotals(items: ItemRow[], settings: Settings): Totals {
-  const t: Totals = { low: 0, suggested: 0, high: 0, total: items.length, priced: 0, toPick: 0, noPrice: 0, problems: 0, pending: 0 };
+  const t: Totals = { low: 0, suggested: 0, high: 0, total: items.length, priced: 0, toPick: 0, noPrice: 0, problems: 0, pending: 0, refreshing: 0, stale: 0 };
   for (const item of items) {
     const m = marketFor(item, settings);
+    // Every row lands in exactly one coverage bucket; a row with a market value is "priced" whatever its status.
     if (m) {
       t.low += m.low;
       t.suggested += m.suggested;
       t.high += m.high;
       t.priced++;
+      if (item.status === "pending" || item.status === "working") t.refreshing++;
+      else if (item.status === "error") t.stale++;
+      continue;
     }
     switch (item.status) {
       case "to-pick": t.toPick++; break;
-      case "no-price": t.noPrice++; break;
-      case "priced": if (!m) t.noPrice++; break;
+      case "no-price":
+      case "priced": t.noPrice++; break;
       case "no-match":
       case "error": t.problems++; break;
       case "pending":

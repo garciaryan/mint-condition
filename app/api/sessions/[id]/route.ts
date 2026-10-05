@@ -30,6 +30,7 @@ export async function GET(request: Request, { params }: Ctx): Promise<Response> 
       items: items.map((i) => toItemView(i, settings)),
       totals,
       queue: queueState(totals.pending, isQueuePaused()),
+      currency: settings.discogs.currency,
     });
   });
 }

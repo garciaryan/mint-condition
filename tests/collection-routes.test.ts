@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { signSession } from "../lib/auth.ts";
 import { openDb } from "../lib/db.ts";
 import { __setSettingsPathForTests } from "../lib/collection/http.ts";
-import { __resetWorkerForTests, kickWorker } from "../lib/collection/worker.ts";
+import { __resetWorkerForTests, isQueuePaused, kickWorker } from "../lib/collection/worker.ts";
+import { DiscogsError } from "../lib/discogs.ts";
 import type { LookupClient } from "../lib/lookup.ts";
 import type { Candidate, MarketplaceStats, PriceSuggestions } from "../lib/types.ts";
 import { GET as listSessions, POST as createSession } from "../app/api/sessions/route.ts";
@@ -11,6 +12,7 @@ import { GET as getSession, PATCH as patchSession, DELETE as deleteSession } fro
 import { POST as addItems } from "../app/api/sessions/[id]/items/route.ts";
 import { POST as reprice } from "../app/api/sessions/[id]/reprice/route.ts";
 import { PATCH as patchItem, DELETE as deleteItem } from "../app/api/items/[id]/route.ts";
+import { POST as resumeSession } from "../app/api/sessions/[id]/resume/route.ts";
 import { POST as retryItem } from "../app/api/items/[id]/retry/route.ts";
 import { GET as getCandidates } from "../app/api/items/[id]/candidates/route.ts";
 
@@ -76,6 +78,7 @@ test("every handler returns 401 without a session cookie", async () => {
     listSessions(req("GET", undefined, false)),
     createSession(req("POST", {}, false)),
     getSession(req("GET", undefined, false), ctx("1")),
+    resumeSession(req("POST", {}, false), ctx("1")),
     patchSession(req("PATCH", {}, false), ctx("1")),
     deleteSession(req("DELETE", undefined, false), ctx("1")),
     addItems(req("POST", {}, false), ctx("1")),
@@ -277,4 +280,44 @@ test("invalid settings.json gives a 500 settings error, not a throw", async () =
   assert.equal(b.status, "error");
   assert.equal(b.kind, "settings");
   assert.equal((await listSessions(req("GET"))).status, 500);
+});
+
+test("POST items kicks the worker itself, without a prior kickWorker", async () => {
+  const { body: lot } = await newLot();
+  const r = await addItems(req("POST", { lines: [{ query: "A" }, { query: "B" }], record: "NM", sleeve: "NM" }), ctx(String(lot.id)));
+  assert.equal(r.status, 201);
+  const deadline = Date.now() + 2000;
+  let items: { status: string }[] = [];
+  while (Date.now() < deadline) {
+    items = (await j(await getSession(req("GET"), ctx(String(lot.id))))).items;
+    if (items.every((i) => i.status === "priced")) break;
+    await new Promise((res) => setTimeout(res, 10));
+  }
+  assert.deepEqual(items.map((i) => i.status), ["priced", "priced"]);
+});
+
+test("resume clears a paused queue", async () => {
+  const { body: lot } = await newLot();
+  searchFn = () => { throw new DiscogsError("nope", 401); };
+  await addItems(req("POST", { lines: [{ query: "A" }, { query: "B" }], record: "NM", sleeve: "NM" }), ctx(String(lot.id)));
+  await kickWorker();
+  const deadline = Date.now() + 2000;
+  while (!isQueuePaused() && Date.now() < deadline) await new Promise((res) => setTimeout(res, 10));
+  assert.equal(isQueuePaused(), true);
+  const paused = await j(await getSession(req("GET"), ctx(String(lot.id))));
+  assert.equal(paused.queue.paused, true);
+
+  searchFn = () => [cand(1)];
+  const r = await resumeSession(req("POST", {}), ctx(String(lot.id)));
+  assert.equal(r.status, 200);
+  assert.equal((await j(r)).queue.paused, false);
+  assert.equal(isQueuePaused(), false);
+  assert.equal((await resumeSession(req("POST", {}), ctx("999"))).status, 404);
+  await kickWorker();
+});
+
+test("session responses include the settings currency", async () => {
+  const { body: lot } = await newLot();
+  assert.equal(typeof (await j(await listSessions(req("GET")))).currency, "string");
+  assert.equal(typeof (await j(await getSession(req("GET"), ctx(String(lot.id))))).currency, "string");
 });

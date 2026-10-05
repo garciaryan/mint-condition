@@ -25,7 +25,7 @@ export async function GET(request: Request): Promise<Response> {
         defaultSleeve: s.defaultSleeve,
       };
     });
-    return Response.json({ sessions });
+    return Response.json({ sessions, currency: settings.discogs.currency });
   });
 }
 

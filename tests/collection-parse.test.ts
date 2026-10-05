@@ -48,3 +48,27 @@ test("500 line cap", () => {
   assert.equal(r.lines.length, 500);
   assert.deepEqual(r.errors, [{ line: 501, reason: "only the first 500 records are added" }]);
 });
+
+test("a year with no catalog number is an error", () => {
+  const r = parseBulkLines(", 1971");
+  assert.deepEqual(r.lines, []);
+  assert.deepEqual(r.errors, [{ line: 1, reason: "missing catalog number" }]);
+});
+
+test("exactly 500 lines has no cap error", () => {
+  const text = Array.from({ length: 500 }, (_, i) => `C ${i}`).join("\n");
+  const r = parseBulkLines(text);
+  assert.equal(r.lines.length, 500);
+  assert.deepEqual(r.errors, []);
+});
+
+test("U+00A0 collapses to a single space", () => {
+  const r = parseBulkLines("SD\u00A0\u00A0 7208");
+  assert.deepEqual(r.lines, [{ query: "SD 7208" }]);
+});
+
+test("a non-year tail after a comma is an error, not part of the catalog number", () => {
+  const r = parseBulkLines("Smith, John");
+  assert.deepEqual(r.lines, []);
+  assert.equal(r.errors[0].line, 1);
+});
