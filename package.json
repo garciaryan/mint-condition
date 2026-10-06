@@ -11,7 +11,8 @@
     "test": "node --experimental-strip-types --no-warnings --test \"tests/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "lookup": "node --env-file=.env.local --experimental-strip-types --no-warnings scripts/lookup.ts",
-    "hash-password": "node --experimental-strip-types --no-warnings scripts/hash-password.ts"
+    "hash-password": "node --experimental-strip-types --no-warnings scripts/hash-password.ts",
+    "setup:fly": "node --experimental-strip-types --no-warnings scripts/setup-fly.ts"
   },
   "dependencies": {
     "barcode-detector": "^3.2.2",
