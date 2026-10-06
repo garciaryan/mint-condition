@@ -19,9 +19,12 @@ export function parseSecretNames(json: string): string[] {
   }
 }
 
-/** The import format is one NAME=VALUE per line and may strip surrounding quotes, so both are refused up front. */
+/** The import format is one NAME=VALUE per line and may strip surrounding quotes, so both are refused up front. `#`
+ * starts a comment anywhere in a value (checked on a real app: "abc#def" arrives as "abc"), which would quietly cut a
+ * password short. `=`, `$`, backslashes, backticks and inner quotes arrive verbatim. */
 export function secretValueError(value: string): string | null {
   if (/[\r\n]/.test(value)) return "Must be one line.";
+  if (value.includes("#")) return "Can't contain #.";
   if (/^["']|["']$/.test(value)) return "Can't start or end with a quote.";
   return null;
 }

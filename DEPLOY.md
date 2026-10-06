@@ -34,7 +34,8 @@ It checks that `fly` is installed and logged in, reads the app name from `fly.to
 
 - your Discogs personal access token (the one from your seller account; typing is hidden),
 - a contact (email or URL) for the Discogs User-Agent, which becomes `MintCondition/0.1 (+<contact>)`,
-- a login password, twice (at least 12 characters; typing is hidden).
+- a login password, twice (at least 12 characters; typing is hidden). It can't contain `#`, which `fly secrets
+  import` treats as the start of a comment.
 
 It sends them to `fly secrets import` on stdin, so they never land in your shell history, and prints only the names
 it set. Re-run it any time to change the password or token: pressing Enter keeps what is already set. The Discogs

@@ -18,6 +18,10 @@ test("password and value checks", () => {
   assert.equal(passwordError("twelve chars ok", "twelve chars ok "), null, "a stray space on the repeat doesn't count");
   assert.equal(secretValueError("two\nlines"), "Must be one line.");
   assert.equal(secretValueError("it's fine"), null);
+  // Checked on a real Fly app: fly secrets import treats # as a comment, so "abc#def" arrives as "abc".
+  assert.equal(secretValueError("abc#def"), "Can't contain #.");
+  assert.equal(passwordError("a=b $c # d ok", "a=b $c # d ok"), "Can't contain #.");
+  assert.equal(secretValueError("a\\nb `x` ${HOME} te\"st"), null, "these arrive verbatim");
 });
 
 test("planSecrets builds import lines and drops the old hash", () => {
