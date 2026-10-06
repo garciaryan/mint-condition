@@ -60,7 +60,7 @@ Instead of `APP_PASSWORD` you can store a scrypt hash: `npm run hash-password` p
 
 Auth modes: in production a password (`APP_PASSWORD` or `APP_PASSWORD_HASH`) is required. Without one, setting both,
 or an `APP_PASSWORD` under 12 characters, the app answers 503 with the reason, and `/api/health` shows which
-settings are present (names only) and where the session secret came from (`env` or `file`). Locally, with no
+settings are present (names only; for the password, just whether one is set) and where the session secret came from (`env` or `file`). Locally, with no
 password set, login is off and the server logs a warning once.
 
 ## 4. Deploying
@@ -143,7 +143,10 @@ fly logs
 Sessions are signed with the session secret. Making a new one ends every session (30-day cookies included). If the
 app made the secret itself (the usual case), delete the file and restart:
 
+The app's machine stops when idle and `fly ssh` needs it running, so start it first:
+
 ```sh
+fly machine start
 fly ssh console -C "rm /data/session-secret"
 fly apps restart
 ```

@@ -15,6 +15,7 @@ test("password and value checks", () => {
   assert.equal(passwordError("eleven char", "eleven char"), "Password must be at least 12 characters.");
   assert.equal(passwordError('"quoted pass 12"', '"quoted pass 12"'), "Can't start or end with a quote.");
   assert.equal(passwordError("a=b $c d e f g", "a=b $c d e f g"), null);
+  assert.equal(passwordError("twelve chars ok", "twelve chars ok "), null, "a stray space on the repeat doesn't count");
   assert.equal(secretValueError("two\nlines"), "Must be one line.");
   assert.equal(secretValueError("it's fine"), null);
 });

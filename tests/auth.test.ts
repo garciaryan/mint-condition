@@ -85,7 +85,9 @@ test("clientIp prefers Fly-Client-IP, then the first X-Forwarded-For entry, then
 });
 test("configStatus reports presence and the secret's source, never values", () => {
   const s = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u", APP_PASSWORD: "twelve chars ok", SESSION_SECRET: "zzz", SESSION_SECRET_SOURCE: "file" });
-  assert.deepEqual(s, { ok: true, vars: { DISCOGS_TOKEN: true, DISCOGS_USER_AGENT: true, APP_PASSWORD: true, APP_PASSWORD_HASH: false, SESSION_SECRET: true }, sessionSecretSource: "file" });
+  assert.deepEqual(s, { ok: true, vars: { DISCOGS_TOKEN: true, DISCOGS_USER_AGENT: true, password: true, SESSION_SECRET: true }, sessionSecretSource: "file" });
+  // Health is public: it says a password is set, not whether it's plain or hashed.
+  assert.deepEqual(configStatus({ APP_PASSWORD_HASH: "h", SESSION_SECRET: "s" }).vars, configStatus({ APP_PASSWORD: "twelve chars ok", SESSION_SECRET: "s" }).vars);
   assert.doesNotMatch(JSON.stringify(s), /twelve|zzz/);
   const off = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u" });
   assert.equal(off.ok, true);

@@ -14,3 +14,9 @@ test("README Get started covers both ways with the setup script, and no longer n
   assert.doesNotMatch(readme, /openssl rand/);
   assert.match(readFileSync(".env.example", "utf8"), /^# APP_PASSWORD=/m);
 });
+
+test("DEPLOY.md's secret rotation starts a stopped machine first", () => {
+  const deploy = readFileSync("DEPLOY.md", "utf8");
+  const at = deploy.indexOf("## 6.");
+  assert.ok(deploy.indexOf("fly machine start", at) > at && deploy.indexOf("fly machine start", at) < deploy.indexOf('rm /data/session-secret', at));
+});

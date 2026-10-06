@@ -26,8 +26,10 @@ export function secretValueError(value: string): string | null {
   return null;
 }
 
+/** Both answers are compared trimmed, like the app trims APP_PASSWORD, so a stray space can't cause a mismatch. */
 export function passwordError(first: string, second: string): string | null {
-  if (first !== second) return "Passwords do not match.";
+  first = first.trim();
+  if (first !== second.trim()) return "Passwords do not match.";
   if (first.length < MIN_PASSWORD_CHARS) return `Password must be at least ${MIN_PASSWORD_CHARS} characters.`;
   return secretValueError(first);
 }

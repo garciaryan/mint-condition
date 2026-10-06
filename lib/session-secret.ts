@@ -21,9 +21,15 @@ export function ensureSessionSecret(env: Env, dataDir: string): "env" | "file" |
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
   }
-  const secret = readFileSync(file, "utf8").trim();
   // Never quietly make a new one: that would sign everyone out with no explanation.
-  if (!secret) throw new Error(`${file} is empty; delete it to make a new one (this signs everyone out).`);
+  const fix = "delete it to make a new one (this signs everyone out)";
+  let secret: string;
+  try {
+    secret = readFileSync(file, "utf8").trim();
+  } catch (e) {
+    throw new Error(`${file} can't be read (${(e as NodeJS.ErrnoException).code ?? "error"}); fix its permissions or ${fix}.`);
+  }
+  if (!secret) throw new Error(`${file} is empty; ${fix}.`);
   env.SESSION_SECRET = secret;
   env.SESSION_SECRET_SOURCE = "file";
   return "file";

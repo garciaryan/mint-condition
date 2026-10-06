@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, statSync, writeFileSync, mkdirSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { ensureSessionSecret } from "../lib/session-secret.ts";
@@ -41,4 +41,26 @@ test("an empty file stops startup with the path", () => {
   mkdirSync(dir, { recursive: true });
   writeFileSync(path.join(dir, "session-secret"), "  \n");
   assert.throws(() => ensureSessionSecret({ APP_PASSWORD: "twelve chars ok" }, dir), /session-secret.*delete it to make a new one/);
+});
+
+test("an existing file is used as is, even when another process wrote it first", () => {
+  const dir = freshDir();
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(path.join(dir, "session-secret"), "known-secret-value\n");
+  const env: Record<string, string | undefined> = { APP_PASSWORD: "twelve chars ok" };
+  assert.equal(ensureSessionSecret(env, dir), "file");
+  assert.equal(env.SESSION_SECRET, "known-secret-value");
+});
+
+test("an unreadable file stops startup with the same fix", () => {
+  const dir = freshDir();
+  mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, "session-secret");
+  writeFileSync(file, "x");
+  chmodSync(file, 0o000);
+  try {
+    assert.throws(() => ensureSessionSecret({ APP_PASSWORD: "twelve chars ok" }, dir), /session-secret.*delete it to make a new one/);
+  } finally {
+    chmodSync(file, 0o600);
+  }
 });
