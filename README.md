@@ -115,7 +115,7 @@ This gives you your own HTTPS address, so the camera scanner works on your phone
    npm run setup:fly
    ```
 
-   It asks for your Discogs token, a contact for the User-Agent and a login password (at least 12 characters), and
+   It asks for your Discogs token, a contact for the User-Agent and a login password (at least 12 characters, no `#`), and
    sets them on your app. Typing is hidden for the token and password, and nothing is saved on your computer.
 
 6. Deploy. The first deploy must use `--ha=false` so Fly makes exactly one machine:
