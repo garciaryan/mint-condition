@@ -415,6 +415,37 @@ body:has(.site-nav) .site-footer-links {
   min-width: 0;
 }
 
+/* Login: heading and card in the middle of the space above the footer (which is centered to match); the page
+   still scrolls when the phone keyboard leaves too little room. The fields inside the card stay left-aligned. */
+.login-page {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-page .masthead {
+  justify-content: center;
+  text-align: center;
+}
+
+.login-page .masthead h1 {
+  margin-bottom: 24px;
+}
+
+.login-page .login-card {
+  width: 100%;
+}
+
+body:has(.login-page) .site-footer {
+  text-align: center;
+}
+
+body:has(.login-page) .site-footer-links {
+  justify-content: center;
+}
+
 .login-card {
   max-width: 420px;
   display: flex;
@@ -426,13 +457,39 @@ body:has(.site-nav) .site-footer-links {
   margin: 0;
 }
 
-.password-row {
-  display: flex;
-  gap: 8px;
+/* Show-password eye inside the right end of the field; the text stops short of it. */
+.password-field {
+  position: relative;
 }
 
-.password-row button {
-  min-width: 72px;
+.password-field input {
+  padding-right: var(--control-h);
+}
+
+.password-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--ink);
+}
+
+.password-toggle:focus-visible {
+  outline-offset: -4px;
 }
 
 h2 {

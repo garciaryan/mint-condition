@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
+import NavIcon from "../NavIcon.tsx";
 
 export default function LoginForm({ next }: { next: string }) {
   const [password, setPassword] = useState("");
@@ -39,7 +40,7 @@ export default function LoginForm({ next }: { next: string }) {
       <h2>Log in</h2>
       <div className="field">
         <label htmlFor="password">Password</label>
-        <div className="password-row">
+        <div className="password-field">
           <input
             id="password"
             name="password"
@@ -52,8 +53,15 @@ export default function LoginForm({ next }: { next: string }) {
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "password-error" : undefined}
           />
-          <button type="button" className="secondary" aria-pressed={show} onClick={() => setShow(!show)}>
-            {show ? "Hide" : "Show"}
+          <button
+            type="button"
+            className="password-toggle"
+            aria-label="Show password"
+            aria-pressed={show}
+            title={show ? "Hide password" : "Show password"}
+            onClick={() => setShow(!show)}
+          >
+            <NavIcon name={show ? "eye-off" : "eye"} />
           </button>
         </div>
         {error && (
