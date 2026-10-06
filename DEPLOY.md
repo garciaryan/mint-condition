@@ -24,26 +24,44 @@ fly volumes create mint_data --size 1 --region sjc
 
 ## 3. Secrets
 
-Generate the password hash (needs an interactive terminal; prompts twice, minimum 12 characters) and a session secret:
+From the repo root, run:
 
 ```sh
-npm run hash-password
-openssl rand -base64 32
+npm run setup:fly
 ```
 
-Then set all four secrets. The hash contains `$`, so single-quote it. The user agent contains spaces and parentheses, so quote it too.
+It checks that `fly` is installed and logged in, reads the app name from `fly.toml`, and asks for:
+
+- your Discogs personal access token (the one from your seller account; typing is hidden),
+- a contact (email or URL) for the Discogs User-Agent, which becomes `MintCondition/0.1 (+<contact>)`,
+- a login password, twice (at least 12 characters; typing is hidden).
+
+It sends them to `fly secrets import` on stdin, so they never land in your shell history, and prints only the names
+it set. Re-run it any time to change the password or token: pressing Enter keeps what is already set. The Discogs
+token stays server-side.
+
+The session secret (which signs login cookies) is made automatically: on first boot the app writes 32 random bytes to
+`/data/session-secret` and reuses it after that.
+
+### By hand
+
+If you'd rather set them yourself (quote values with spaces or `$`):
 
 ```sh
 fly secrets set \
   DISCOGS_TOKEN=your_discogs_token \
-  DISCOGS_USER_AGENT="MintCondition/0.1 (you@example.com)" \
-  APP_PASSWORD_HASH='paste-the-hash-here' \
-  SESSION_SECRET=paste-the-openssl-output
+  DISCOGS_USER_AGENT="MintCondition/0.1 (+you@example.com)" \
+  APP_PASSWORD='at least twelve characters'
 ```
 
-The Discogs token is the personal access token from your seller account. It stays server-side.
+Instead of `APP_PASSWORD` you can store a scrypt hash: `npm run hash-password` prints one for `APP_PASSWORD_HASH`
+(single-quote it; it contains `$`). Set one or the other, not both. You can also set `SESSION_SECRET` yourself
+(`openssl rand -base64 32`); when it is set, the generated file is not used.
 
-Auth modes: in production, `APP_PASSWORD_HASH` and `SESSION_SECRET` must both be set. If only one is set (or neither, in production), the app answers 503 and `/api/health` names the missing variables. Local dev with neither set has login off and logs a warning once.
+Auth modes: in production a password (`APP_PASSWORD` or `APP_PASSWORD_HASH`) is required. Without one, setting both,
+or an `APP_PASSWORD` under 12 characters, the app answers 503 with the reason, and `/api/health` shows which
+settings are present (names only; for the password, just whether one is set) and where the session secret came from (`env` or `file`). Locally, with no
+password set, login is off and the server logs a warning once.
 
 ## 4. Deploying
 
@@ -120,15 +138,25 @@ Troubleshooting: the container starts as root, `docker-entrypoint.sh` chowns `/d
 fly logs
 ```
 
-## 6. Logging out everywhere
+## 6. Logging out everywhere, and changing the password
 
-Sessions are signed with `SESSION_SECRET`. Rotating it invalidates every session (30-day cookies included):
+Sessions are signed with the session secret. Making a new one ends every session (30-day cookies included). If the
+app made the secret itself (the usual case), delete the file and restart:
+
+The app's machine stops when idle and `fly ssh` needs it running, so start it first:
 
 ```sh
-fly secrets set SESSION_SECRET=$(openssl rand -base64 32)
+fly machine start
+fly ssh console -C "rm /data/session-secret"
+fly apps restart
 ```
 
-This restarts the app. To change the password, run `npm run hash-password` and set a new `APP_PASSWORD_HASH` the same way (rotate `SESSION_SECRET` too to end existing sessions).
+If you set `SESSION_SECRET` yourself, set a new value instead (`fly secrets set SESSION_SECRET=...`, which restarts
+the app).
+
+To change the password, run `npm run setup:fly` again and press Enter for everything but the password. It replaces an
+old `APP_PASSWORD_HASH` if you had one. Existing sessions stay signed in; make a new session secret as above to end
+them too.
 
 ## 7. Backups
 
@@ -211,7 +239,7 @@ npm run build && npm start
 tailscale serve 3000        # prints an https://<machine>.<tailnet>.ts.net address
 ```
 
-Set `APP_PASSWORD_HASH` and `SESSION_SECRET` in `.env.local` first if the tunnel can be reached by anyone but you
+Set `APP_PASSWORD` in `.env.local` first if the tunnel can be reached by anyone but you
 (a public tunnel such as `cloudflared` can be). This route is untested: if saving anything fails with
 "Cross-origin request blocked", the tunnel is changing the `Host` header, which the login gate checks against
 `Origin`.

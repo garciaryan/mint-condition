@@ -10,7 +10,7 @@ const g = globalThis as typeof globalThis & { __authOffWarned?: boolean };
 export async function middleware(req: NextRequest) {
   if (!g.__authOffWarned && authMode(process.env).mode === "off") {
     g.__authOffWarned = true;
-    console.warn("Login is disabled: APP_PASSWORD_HASH and SESSION_SECRET are unset.");
+    console.warn("Login is disabled: APP_PASSWORD is unset.");
   }
   const result = await gate(
     {

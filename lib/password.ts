@@ -1,4 +1,5 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import type { LoginPassword } from "./auth.ts";
 
 const N = 16384;
 const R = 8;
@@ -27,4 +28,12 @@ export function verifyPassword(password: string, stored: string): boolean {
   } catch {
     return false;
   }
+}
+
+const sha256 = (s: string): Buffer => createHash("sha256").update(s, "utf8").digest();
+
+/** Checks a login attempt against APP_PASSWORD (equal-length digests, so timing says nothing about the guess) or
+ * APP_PASSWORD_HASH (scrypt). */
+export function checkPassword(input: string, password: LoginPassword): boolean {
+  return password.kind === "plain" ? timingSafeEqual(sha256(input), sha256(password.value)) : verifyPassword(input, password.value);
 }

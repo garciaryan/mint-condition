@@ -42,22 +42,39 @@ export async function verifySession(value: string | undefined, secret: string, n
   }
 }
 
+export type LoginPassword = { kind: "plain"; value: string } | { kind: "hash"; value: string };
+
 export type AuthMode =
   | { mode: "off" }
-  | { mode: "on"; secret: string; passwordHash: string }
-  | { mode: "misconfigured"; missing: string[] };
+  | { mode: "on"; secret: string; password: LoginPassword }
+  | { mode: "misconfigured"; missing: string[]; message: string };
 
 const set = (v: string | undefined): string | undefined => (v && v.trim() ? v.trim() : undefined);
 
+export const MIN_PASSWORD_CHARS = 12;
+
+const misconfigured = (missing: string[], message = `Login not configured: missing ${missing.join(" and ")}`): AuthMode => ({
+  mode: "misconfigured",
+  missing,
+  message,
+});
+
+// The password comes from APP_PASSWORD (plain) or APP_PASSWORD_HASH (scrypt), never both. SESSION_SECRET comes from
+// the environment or, when unset, the file lib/session-secret.ts makes at boot. Without a password, login is off
+// outside production.
 export function authMode(env: Env): AuthMode {
-  const passwordHash = set(env.APP_PASSWORD_HASH);
+  const plain = set(env.APP_PASSWORD);
+  const hash = set(env.APP_PASSWORD_HASH);
   const secret = set(env.SESSION_SECRET);
-  if (passwordHash && secret) return { mode: "on", secret, passwordHash };
-  if (!passwordHash && !secret && env.NODE_ENV !== "production") return { mode: "off" };
-  const missing: string[] = [];
-  if (!passwordHash) missing.push("APP_PASSWORD_HASH");
-  if (!secret) missing.push("SESSION_SECRET");
-  return { mode: "misconfigured", missing };
+  if (plain && hash) return misconfigured([], "Set only one of APP_PASSWORD and APP_PASSWORD_HASH.");
+  if (plain && plain.length < MIN_PASSWORD_CHARS) {
+    return misconfigured([], `APP_PASSWORD must be at least ${MIN_PASSWORD_CHARS} characters.`);
+  }
+  const password: LoginPassword | undefined = plain ? { kind: "plain", value: plain } : hash ? { kind: "hash", value: hash } : undefined;
+  if (password && secret) return { mode: "on", secret, password };
+  if (password) return misconfigured(["SESSION_SECRET"]);
+  if (!secret && env.NODE_ENV !== "production") return { mode: "off" };
+  return misconfigured(["APP_PASSWORD"]);
 }
 
 export function isPublicPath(path: string): boolean {
@@ -114,14 +131,20 @@ export function clientIp(headers: Headers): string {
   return xff || "local";
 }
 
-export function configStatus(env: Env): { ok: boolean; vars: Record<string, boolean> } {
+export function configStatus(env: Env): {
+  ok: boolean;
+  vars: Record<string, boolean>;
+  sessionSecretSource: "env" | "file" | null;
+} {
   const vars: Record<string, boolean> = {
     DISCOGS_TOKEN: !!set(env.DISCOGS_TOKEN),
     DISCOGS_USER_AGENT: !!set(env.DISCOGS_USER_AGENT),
-    APP_PASSWORD_HASH: !!set(env.APP_PASSWORD_HASH),
+    // Public endpoint: whether a password is set, not which kind (plain or hashed).
+    password: !!(set(env.APP_PASSWORD) || set(env.APP_PASSWORD_HASH)),
     SESSION_SECRET: !!set(env.SESSION_SECRET),
   };
   const mode = authMode(env).mode;
   const ok = vars.DISCOGS_TOKEN && vars.DISCOGS_USER_AGENT && mode !== "misconfigured";
-  return { ok, vars };
+  const sessionSecretSource = !vars.SESSION_SECRET ? null : env.SESSION_SECRET_SOURCE === "file" ? "file" : "env";
+  return { ok, vars, sessionSecretSource };
 }

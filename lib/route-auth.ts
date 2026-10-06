@@ -14,7 +14,7 @@ export async function requireSession(request: Request): Promise<Response | null>
   const mode = authMode(process.env);
   if (mode.mode === "misconfigured") {
     return Response.json(
-      { status: "error", kind: "missing-env", message: `Login not configured: missing ${mode.missing.join(" and ")}` },
+      { status: "error", kind: "missing-env", message: mode.message },
       { status: 503 },
     );
   }

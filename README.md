@@ -27,7 +27,7 @@ If it saves you money at a record fair, you can buy me a coffee:
 | | On your computer | Your own Fly.io app |
 |---|---|---|
 | Good for | Pricing a pile at home | Pricing on your phone at a shop or fair |
-| Setup | `npm install`, then `npm run dev` | About 15 minutes with [DEPLOY.md](DEPLOY.md) |
+| Setup | `npm install`, then `npm run dev` | About 15 minutes ([Get started](#on-flyio)) |
 | Login | Off (only you can reach it) | One password, 30-day sessions |
 | Camera barcode scanner | On the same computer only | Yes, on your phone |
 | Cost | Free | A few dollars a month on Fly (the machine sleeps when idle; check Fly's current pricing) |
@@ -35,47 +35,112 @@ If it saves you money at a record fair, you can buy me a coffee:
 Opening a computer copy from your phone over Wi-Fi (`http://192.168.x.x:3000`) works for typing catalog numbers,
 but phone browsers only allow the camera on HTTPS, so the scanner needs the Fly version.
 
-## Requirements
+## Get started
 
-- Node.js 22.13 or newer
-- A Discogs account set up to sell, and a personal access token from
+### What you need
+
+- **Node.js 22.13 or newer** ([nodejs.org](https://nodejs.org)). Check with `node --version`.
+- **A Discogs account set up to sell, and a personal access token.** Generate the token at
   [discogs.com/settings/developers](https://www.discogs.com/settings/developers) (**Generate new token**).
   Discogs only returns price suggestions to accounts whose seller settings are complete, including a payment
   method. You don't have to list anything. Without that, lookups find the pressing but show "No price data".
+- **For the Fly.io version only:** a [Fly.io](https://fly.io) account with a card on file.
 
-## Run it on your computer
+### On your computer
 
-```sh
-npm install
-cp .env.example .env.local
-```
+1. Get the code and install it:
 
-Fill in `.env.local`:
+   ```sh
+   git clone https://github.com/garciaryan/mint-condition.git
+   cd mint-condition
+   npm install
+   ```
 
-| Variable | What it is |
-|---|---|
-| `DISCOGS_TOKEN` | Your personal access token. It stays on the server and is never sent to the browser. |
-| `DISCOGS_USER_AGENT` | A descriptive User-Agent with your own contact, which Discogs requires, e.g. `MintCondition/0.1 (+you@example.com)`. |
+2. Create your settings file:
 
-Then start the app:
+   ```sh
+   cp .env.example .env.local
+   ```
 
-```sh
-npm run dev
-```
+3. Open `.env.local` and fill in:
 
-and open http://localhost:3000. Data is kept in `data/mint.db` (SQLite). Locally there's no login unless you set
-`APP_PASSWORD_HASH` and `SESSION_SECRET` in `.env.local` too (see [DEPLOY.md](DEPLOY.md)).
+   | Variable | What it is |
+   |---|---|
+   | `DISCOGS_TOKEN` | Your personal access token. It stays on the server and is never sent to the browser. |
+   | `DISCOGS_USER_AGENT` | A descriptive User-Agent with your own contact, which Discogs requires, e.g. `MintCondition/0.1 (+you@example.com)`. |
 
-For a faster local server, run `npm run build` once and then `npm start`.
+4. Start the app:
 
-## Run it on Fly.io
+   ```sh
+   npm run dev
+   ```
 
-[DEPLOY.md](DEPLOY.md) walks through it: install `flyctl`, create the app and a 1 GB volume, set four secrets
-(Discogs token, user agent, password hash, session secret) and deploy. Pick your own app name; `mint-condition` is
-taken. It also covers changing the password, logs, backups and smoke checks.
+5. Open http://localhost:3000 and price a record.
 
-Run exactly **one** machine (`--ha=false` on the first deploy). The database, login limiter and Discogs throttle
-all live on that one machine.
+Data is kept in `data/mint.db` (SQLite). There's no login on your computer unless you want one: set
+`APP_PASSWORD` (at least 12 characters) in `.env.local` and restart. For a faster local server, run `npm run build`
+once and then `npm start`.
+
+### On Fly.io
+
+This gives you your own HTTPS address, so the camera scanner works on your phone. It takes about 15 minutes.
+
+1. Install flyctl ([instructions](https://fly.io/docs/flyctl/install/); on a Mac, `brew install flyctl`) and log
+   in:
+
+   ```sh
+   fly auth login
+   ```
+
+2. Do steps 1 and 2 of "On your computer" (clone, `npm install`) if you haven't already.
+
+3. Create your Fly app from the repo's `fly.toml`:
+
+   ```sh
+   fly launch --copy-config --no-deploy
+   ```
+
+   Pick your own app name when asked (`mint-condition` is taken) and note the region. Answer **no** if asked to add a
+   Postgres, Redis or Tigris database.
+
+4. Create the 1 GB volume that holds the database, in the same region:
+
+   ```sh
+   fly volumes create mint_data --size 1 --region <your-region>
+   ```
+
+5. Set your secrets:
+
+   ```sh
+   npm run setup:fly
+   ```
+
+   It asks for your Discogs token, a contact for the User-Agent and a login password (at least 12 characters), and
+   sets them on your app. Typing is hidden for the token and password, and nothing is saved on your computer.
+
+6. Deploy. The first deploy must use `--ha=false` so Fly makes exactly one machine:
+
+   ```sh
+   fly deploy --ha=false
+   ```
+
+7. Open `https://<your-app>.fly.dev` (also on your phone), log in with your password, and price a record.
+
+Run exactly **one** machine. The database, login limiter and Discogs throttle all live on that one machine.
+
+#### If something goes wrong
+
+- Open `https://<your-app>.fly.dev/api/health`. It lists which settings are present (names only, never values), so
+  a missing token or password shows up there. A page that says "Login not configured" names what to fix.
+- `fly logs` shows the server's output.
+- Run `npm run setup:fly` again to fix a setting; Enter keeps the ones that are right.
+
+#### Changing the password
+
+Run `npm run setup:fly` again and press Enter for everything except the password. [DEPLOY.md](DEPLOY.md) covers
+signing out every device, logs, backups and smoke checks.
+
+#### Deploying a fork automatically
 
 If you fork the repo, the GitHub Actions deploy jobs only run on the original repo; to deploy your fork on every
 push, change the `if:` line in `.github/workflows/fly-deploy.yml` to your repo and add a `FLY_API_TOKEN` secret.
@@ -230,7 +295,8 @@ When several pressings match, it lists them with their release ids so you can re
 ```sh
 npm test               # unit tests (Node's built-in test runner, no extra dependencies)
 npm run typecheck      # TypeScript, no emit
-npm run hash-password  # make an APP_PASSWORD_HASH for the login (interactive)
+npm run setup:fly      # set your Fly app's secrets (interactive)
+npm run hash-password  # optional: make an APP_PASSWORD_HASH instead of APP_PASSWORD (interactive)
 ```
 
 ```
@@ -272,7 +338,7 @@ lib/
   settings-store.ts    saved settings (one SQLite row) over the settings.json defaults
   settings-form.ts     settings page form: percent conversion and field checks (client-safe)
   types.ts             grades and shared types
-scripts/               command-line lookup, password hashing
+scripts/               command-line lookup, setup:fly, password hashing
 tests/                 unit tests
 settings.json          pricing tunable defaults
 Dockerfile, fly.toml   Fly.io deployment

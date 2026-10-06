@@ -40,8 +40,11 @@ test("misconfigured: API gets JSON 503 missing-env, pages get text 503", async (
   const api = await gate(req({ path: "/api/lookup", method: "POST", origin: "https://app.fly.dev" }), env, NOW);
   assert.deepEqual(api, { kind: "json", status: 503, body: { status: "error", kind: "missing-env", message: msg } });
   assert.deepEqual(await gate(req({ path: "/" }), env, NOW), { kind: "text", status: 503, body: msg });
-  const both = await gate(req({ path: "/" }), { NODE_ENV: "production" }, NOW);
-  assert.equal(both.kind === "text" && both.body, "Login not configured: missing APP_PASSWORD_HASH and SESSION_SECRET");
+  const none = await gate(req({ path: "/" }), { NODE_ENV: "production" }, NOW);
+  assert.equal(none.kind === "text" && none.body, "Login not configured: missing APP_PASSWORD");
+  const both = await gate(req({ path: "/api/lookup", method: "POST", origin: "https://app.fly.dev" }),
+    { APP_PASSWORD: "x", APP_PASSWORD_HASH: "h", SESSION_SECRET: "s" }, NOW);
+  assert.deepEqual(both, { kind: "json", status: 503, body: { status: "error", kind: "missing-env", message: "Set only one of APP_PASSWORD and APP_PASSWORD_HASH." } });
 });
 
 test("production env with no login secrets: 503 for lookup, pass for health", async () => {

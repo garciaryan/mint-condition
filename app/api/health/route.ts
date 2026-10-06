@@ -1,4 +1,5 @@
-// GET /api/health: public liveness check. Reports DB status and which env vars are set (names only).
+// GET /api/health: public liveness check. Reports DB status, which env vars are set (names only) and where the
+// session secret came from (env, file or none).
 import { configStatus } from "../../../lib/auth.ts";
 import { getDb } from "../../../lib/db.ts";
 
@@ -14,5 +15,5 @@ export async function GET(): Promise<Response> {
   }
   const config = configStatus(process.env);
   const ok = db === "ok" && config.ok;
-  return Response.json({ ok, db, config: config.vars }, { status: ok ? 200 : 503 });
+  return Response.json({ ok, db, config: config.vars, sessionSecretSource: config.sessionSecretSource }, { status: ok ? 200 : 503 });
 }
