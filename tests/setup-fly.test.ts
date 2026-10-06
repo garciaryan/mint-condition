@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaultUserAgent, parseAppName, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
+import { defaultUserAgent, flyCommands, parseAppName, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
 
 test("parseAppName and parseSecretNames", () => {
   assert.equal(parseAppName('# x\napp = "mint-condition"\nprimary_region = "sjc"'), "mint-condition");
@@ -28,4 +28,15 @@ test("planSecrets builds import lines and drops the old hash", () => {
   });
   assert.deepEqual(planSecrets([], { token: "tok" }).set, ["DISCOGS_TOKEN"]);
   assert.equal(defaultUserAgent("me@x.com"), "MintCondition/0.1 (+me@x.com)");
+});
+
+test("flyCommands: replacing a hash stages both changes and applies them in one restart", () => {
+  const swap = planSecrets(["APP_PASSWORD_HASH"], { password: "twelve chars ok" });
+  assert.deepEqual(flyCommands("my-app", swap), [
+    ["secrets", "import", "-a", "my-app", "--stage"],
+    ["secrets", "unset", "APP_PASSWORD_HASH", "-a", "my-app", "--stage"],
+    ["secrets", "deploy", "-a", "my-app"],
+  ]);
+  assert.deepEqual(flyCommands("my-app", planSecrets([], { token: "t" })), [["secrets", "import", "-a", "my-app"]]);
+  assert.deepEqual(flyCommands("my-app", planSecrets([], {})), []);
 });

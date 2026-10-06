@@ -3,7 +3,7 @@
 // Re-run it to change the password or token; Enter keeps whatever is already set.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { defaultUserAgent, parseAppName, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
+import { defaultUserAgent, flyCommands, parseAppName, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
 import type { Answers } from "../lib/setup-fly.ts";
 import { ask, closePrompt } from "./prompt.ts";
 
@@ -79,10 +79,19 @@ if (!plan.set.length) {
   process.exit(0);
 }
 
-if (run(bin, ["secrets", "import", "-a", app], plan.importText).status !== 0) fail("fly secrets import failed; nothing else was changed.");
-console.log(`Set: ${plan.set.join(", ")}`);
-if (plan.unset.length) {
-  if (run(bin, ["secrets", "unset", ...plan.unset, "-a", app]).status !== 0) fail(`Could not remove ${plan.unset.join(", ")}; remove it with fly secrets unset.`);
-  console.log(`Removed: ${plan.unset.join(", ")}`);
+for (const args of flyCommands(app, plan)) {
+  const input = args[1] === "import" ? plan.importText : undefined;
+  if (run(bin, args, input).status !== 0) {
+    fail(
+      args[1] === "import"
+        ? "fly secrets import failed. Nothing was applied; the app keeps its current secrets."
+        : args[1] === "unset"
+          ? // APP_PASSWORD is staged; the next deploy would apply it next to the old hash (a 503). Finish the swap.
+            `Could not remove the old password hash. Before the next deploy, run:\n  fly secrets unset ${plan.unset.join(" ")} -a ${app} --stage\n  fly secrets deploy -a ${app}`
+          : `fly secrets deploy failed. Your changes are staged: run fly secrets deploy -a ${app} to apply them.`,
+    );
+  }
 }
+console.log(`Set: ${plan.set.join(", ")}`);
+if (plan.unset.length) console.log(`Removed: ${plan.unset.join(", ")}`);
 console.log("Next: fly deploy --ha=false (first deploy only; setting secrets restarts a running app).");

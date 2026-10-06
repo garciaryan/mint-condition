@@ -51,3 +51,16 @@ export function planSecrets(current: string[], answers: Answers): { importText: 
     unset: answers.password !== undefined && current.includes("APP_PASSWORD_HASH") ? ["APP_PASSWORD_HASH"] : [],
   };
 }
+
+/** The fly commands to run, in order (the import gets importText on stdin). Replacing an old hash stages both
+ * changes and applies them with one restart, so the app never runs with both passwords set, and a failure before
+ * `secrets deploy` leaves the running app on its old, working secrets. */
+export function flyCommands(app: string, plan: { set: string[]; unset: string[] }): string[][] {
+  if (!plan.set.length) return [];
+  if (!plan.unset.length) return [["secrets", "import", "-a", app]];
+  return [
+    ["secrets", "import", "-a", app, "--stage"],
+    ["secrets", "unset", ...plan.unset, "-a", app, "--stage"],
+    ["secrets", "deploy", "-a", app],
+  ];
+}
