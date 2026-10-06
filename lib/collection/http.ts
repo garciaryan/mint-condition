@@ -78,5 +78,5 @@ export function parseName(v: unknown): string | null {
 }
 
 export function defaultLotName(now = new Date()): string {
-  return `Lot ${now.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  return `Collection ${now.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }

@@ -2,7 +2,7 @@
 import type { OfferView } from "../offer.ts";
 
 export function defaultLotName(now: Date): string {
-  return `Lot ${now.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  return `Collection ${now.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
 /** Poll fast while lookups are queued and moving, slowly otherwise (idle or paused). */

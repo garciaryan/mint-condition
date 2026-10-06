@@ -100,7 +100,7 @@ test("every handler returns 401 without a session cookie", async () => {
 test("create with default name, list, get", async () => {
   const { r, body } = await newLot();
   assert.equal(r.status, 201);
-  assert.match(body.name, /^Lot [A-Z][a-z]{2} \d{1,2}$/);
+  assert.match(body.name, /^Collection [A-Z][a-z]{2} \d{1,2}$/);
   assert.equal(body.defaultRecord, "VG+");
   const list = await j(await listSessions(req("GET")));
   assert.equal(list.sessions.length, 1);
@@ -365,8 +365,8 @@ test("PATCH session rejects bad offer inputs", async () => {
     [{ pickThreshold: 100001 }, /Pick threshold/],
     [{ bulkEach: 1001 }, /Bulk per record/],
     [{ bulkEach: "1" }, /Bulk per record/],
-    [{ lotOverhead: null }, /Lot overhead/],
-    ['{"lotOverhead": 1e999}', /Lot overhead/],
+    [{ lotOverhead: null }, /Collection overhead/],
+    ['{"lotOverhead": 1e999}', /Collection overhead/],
     [{ unverified: "yes" }, /Condition unverified/],
   ];
   for (const [body, msg] of bad) {

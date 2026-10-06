@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   return withSettings((settings) => {
     const db = getDb();
     const session = getSession(db, id);
-    if (!session) return errorJson("not-found", 404, "Lot not found.");
+    if (!session) return errorJson("not-found", 404, "Collection not found.");
     return new Response(toDiscogsCsv(session.name, hideExpired(listItems(db, id), Date.now()), settings), {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",

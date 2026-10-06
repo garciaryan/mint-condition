@@ -208,7 +208,7 @@ export default function OfferPanel({
             />
             <AmountField
               id="offer-overhead"
-              label="Lot overhead $"
+              label="Collection overhead $"
               value={session.lotOverhead}
               nullable={false}
               onSave={(v) => save({ lotOverhead: v })}
@@ -217,7 +217,7 @@ export default function OfferPanel({
           <div className="offer-sides">
             <Ladder caption={`Cherry-picks (${records(offer.picks)})`} side={offer.pickOnly} opening={offer.openingPercent} currency={currency} />
             <Ladder
-              caption={`Whole lot (${records(offer.picks + offer.bulkCount)})`}
+              caption={`Whole collection (${records(offer.picks + offer.bulkCount)})`}
               side={offer.wholeLot}
               opening={offer.openingPercent}
               currency={currency}

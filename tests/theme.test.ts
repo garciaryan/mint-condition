@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseThemeCookie, THEME_COOKIE, themeCookie } from "../lib/theme.ts";
+import { nextTheme, parseThemeCookie, THEME_COOKIE, themeCookie } from "../lib/theme.ts";
+
+test("the theme button cycles system, light, dark", () => {
+  assert.equal(nextTheme("system"), "light");
+  assert.equal(nextTheme("light"), "dark");
+  assert.equal(nextTheme("dark"), "system");
+});
 
 test("parseThemeCookie accepts light and dark only", () => {
   assert.equal(parseThemeCookie("light"), "light");

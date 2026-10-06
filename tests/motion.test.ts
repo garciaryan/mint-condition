@@ -22,10 +22,15 @@ test("motion timing comes from the shared tokens", () => {
 });
 
 test("menus and dialogs animate in", () => {
-  for (const sel of [".dropdown-panel", ".site-menu-panel.open", ".dialog", ".scrim"]) {
+  for (const sel of [".dropdown-panel", ".dialog", ".scrim"]) {
     const rules = [...css.matchAll(new RegExp(`${sel.replace(/\./g, "\\.")}\\s*\\{[^}]*\\}`, "g"))].map((m) => m[0]);
     assert.ok(rules.some((r) => /animation:/.test(r)), `${sel} has an opening animation`);
   }
+});
+
+test("the sidebar and the page beside it slide together when it collapses or expands", () => {
+  assert.match(css, /\.site-nav \{[^}]*transition: width var\(--dur\) var\(--ease\);/);
+  assert.match(css, /body:has\(\.site-nav\) \{[^}]*transition: padding-left var\(--dur\) var\(--ease\);/);
 });
 
 test("reduced motion turns off transitions, animations and the press shrink", () => {

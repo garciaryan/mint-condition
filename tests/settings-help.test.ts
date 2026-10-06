@@ -19,6 +19,6 @@ test("sleeve grades share one help note on the section heading", () => {
 
 test("help matches what the setting does", () => {
   assert.match(settingHelp("sell.undercutPercent") ?? "", /Sell price = market value minus this %/);
-  assert.match(settingHelp("offer.pickThreshold") ?? "", /any lot that doesn't set its own/);
+  assert.match(settingHelp("offer.pickThreshold") ?? "", /any collection that doesn't set its own/);
   assert.match(settingHelp("discogs.cacheHours") ?? "", /At most 6/);
 });

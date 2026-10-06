@@ -9,6 +9,11 @@ export function parseThemeCookie(value: string | undefined): "light" | "dark" | 
   return value === "light" || value === "dark" ? value : null;
 }
 
+/** The theme button's next choice: system, light, dark, then back to system. */
+export function nextTheme(choice: ThemeChoice): ThemeChoice {
+  return choice === "system" ? "light" : choice === "light" ? "dark" : "system";
+}
+
 /** document.cookie string that pins a theme for a year, or clears the pin for "system". */
 export function themeCookie(choice: ThemeChoice): string {
   return choice === "system"

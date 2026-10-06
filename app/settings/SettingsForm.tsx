@@ -207,7 +207,7 @@ export default function SettingsForm() {
         return;
       }
       apply((await r.json()) as State);
-      setStatus(method === "PUT" ? "Saved. Prices and lots use these now." : "Reset to defaults.");
+      setStatus(method === "PUT" ? "Saved. Prices and collections use these now." : "Reset to defaults.");
     } catch {
       setFormError(OFFLINE);
     } finally {

@@ -100,7 +100,7 @@ test("queueState eta", () => {
 });
 
 test("ui helpers", () => {
-  assert.equal(defaultLotName(new Date(2026, 9, 4)), "Lot Oct 4");
+  assert.equal(defaultLotName(new Date(2026, 9, 4)), "Collection Oct 4");
   assert.equal(pollDelayMs(1), 2000);
   assert.equal(pollDelayMs(0), 15000);
 });

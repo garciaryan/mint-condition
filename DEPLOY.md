@@ -196,8 +196,8 @@ DATA_DIR=data/prod-copy npm run dev
 ```
 
 The app runs pending migrations when it opens the database, so starting it is the migration test. Then use it:
-open a lot, change a grade, open Settings. This uses your real Discogs token from `.env.local`, and opening a lot
-whose prices are more than 6 hours old re-prices that lot. Delete `data/prod-copy` when you're done; it is a copy
+open a collection, change a grade, open Settings. This uses your real Discogs token from `.env.local`, and opening a collection
+whose prices are more than 6 hours old re-prices that collection. Delete `data/prod-copy` when you're done; it is a copy
 of your real data.
 
 ### Phone checks: open your computer's copy over HTTPS

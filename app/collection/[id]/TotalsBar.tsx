@@ -23,7 +23,7 @@ export default function TotalsBar({
   const working = queue.pending > 0 && !queue.paused;
 
   return (
-    <section className={`card totals${open ? " open" : ""}`} aria-label="Lot totals">
+    <section className={`card totals${open ? " open" : ""}`} aria-label="Collection totals">
       {/* Phones only: Suggested and "62/70", tap to expand. Hidden by CSS on wider screens. */}
       <button type="button" className="totals-toggle" aria-expanded={open} aria-controls="totals-detail" onClick={() => setOpen((o) => !o)}>
         <span className="t big">

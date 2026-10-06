@@ -13,7 +13,7 @@ import type { SessionPatch } from "../../../../lib/collection/types.ts";
 export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
-const notFound = () => errorJson("not-found", 404, "Lot not found.");
+const notFound = () => errorJson("not-found", 404, "Collection not found.");
 const badId = () => errorJson("bad-request", 400, "Invalid id.");
 
 export async function GET(request: Request, { params }: Ctx): Promise<Response> {
@@ -74,7 +74,7 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
   const amounts = [
     ["pickThreshold", 100000, true, "Pick threshold must be empty or 0 to 100000."],
     ["bulkEach", 1000, true, "Bulk per record must be empty or 0 to 1000."],
-    ["lotOverhead", 100000, false, "Lot overhead must be 0 to 100000."],
+    ["lotOverhead", 100000, false, "Collection overhead must be 0 to 100000."],
   ] as const;
   for (const [key, max, nullable, message] of amounts) {
     if (b[key] === undefined) continue;

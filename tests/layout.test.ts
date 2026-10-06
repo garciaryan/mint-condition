@@ -14,6 +14,6 @@ test("the settings currency line sits a field-gap below the inputs (not overridd
   assert.match(css, /\.settings-section > p\.settings-currency \{\s*margin: 16px 0 0;\s*\}/);
 });
 
-test("phone menu links are as wide as their text, so the active underline only spans the words", () => {
-  assert.match(css, /\.site-menu-panel \.nav \{\s*flex-direction: column;\s*align-items: flex-start;\s*\}/);
+test("collapsed rail items keep their names for screen readers (the label is hidden visually, not removed)", () => {
+  assert.match(css, /\.site-nav\.collapsed \.nav-label \{[^}]*clip: rect\(0 0 0 0\);/);
 });
