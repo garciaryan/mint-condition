@@ -1,7 +1,7 @@
 // POST /api/login: check the password, set the session cookie. Limiter keeps per-IP failures.
 import { authMode, clientIp, createLoginLimiter, SESSION_COOKIE, SESSION_MAX_AGE_S, signSession } from "../../../lib/auth.ts";
 import type { LoginLimiter } from "../../../lib/auth.ts";
-import { verifyPassword } from "../../../lib/password.ts";
+import { checkPassword } from "../../../lib/password.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ const err = (status: number, kind: string, message: string, extra: Record<string
 export async function POST(request: Request): Promise<Response> {
   const auth = authMode(process.env);
   if (auth.mode === "off") return err(400, "bad-request", "Login is disabled locally.");
-  if (auth.mode === "misconfigured") return err(503, "missing-env", `Login not configured: missing ${auth.missing.join(" and ")}`);
+  if (auth.mode === "misconfigured") return err(503, "missing-env", auth.message);
 
   const declared = request.headers.get("content-length");
   if (declared !== null && Number(declared) > MAX_BODY_BYTES) return err(400, "bad-request", "Request too large.");
@@ -28,7 +28,7 @@ export async function POST(request: Request): Promise<Response> {
   if (typeof password !== "string" || password === "") return err(400, "bad-request", "Enter the password.");
   if (password.length > MAX_PASSWORD_CHARS) return err(400, "bad-request", "Password is too long.");
 
-  // No await between check and fail/reset (verifyPassword is synchronous), so concurrent requests cannot interleave.
+  // No await between check and fail/reset (checkPassword is synchronous), so concurrent requests cannot interleave.
   const ip = clientIp(request.headers);
   const lim = limiter();
   const checked = lim.check(ip, Date.now());
@@ -37,7 +37,7 @@ export async function POST(request: Request): Promise<Response> {
     return err(429, "rate-limited", `Too many attempts. Try again in ${retryAfterMinutes} ${retryAfterMinutes === 1 ? "minute" : "minutes"}.`, { retryAfterMinutes });
   }
 
-  if (!verifyPassword(password, auth.passwordHash)) {
+  if (!checkPassword(password, auth.password)) {
     lim.fail(ip, Date.now());
     await new Promise((r) => setTimeout(r, FAIL_DELAY_MS));
     return err(401, "auth", "Wrong password.");

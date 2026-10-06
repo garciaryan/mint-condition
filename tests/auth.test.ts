@@ -4,7 +4,7 @@ import {
   SESSION_MAX_AGE_S, signSession, verifySession, authMode, isPublicPath, safeNext,
   createLoginLimiter, clientIp, configStatus,
 } from "../lib/auth.ts";
-import { hashPassword, verifyPassword } from "../lib/password.ts";
+import { checkPassword, hashPassword, verifyPassword } from "../lib/password.ts";
 
 test("verifyPassword accepts the right password, rejects wrong and malformed", () => {
   const h = hashPassword("crate digger");
@@ -25,13 +25,35 @@ test("malformed cookies return false without throwing", async () => {
   for (const bad of [undefined, "", "abc", "1.2.3", "x.y", "999999999999999.AAAA", ".", "1."])
     assert.equal(await verifySession(bad, "s3cret", 0), false);
 });
-test("authMode", () => {
+test("authMode: password sources, both-set, length, missing", () => {
   assert.deepEqual(authMode({}), { mode: "off" });
-  assert.deepEqual(authMode({ APP_PASSWORD_HASH: "h", SESSION_SECRET: "s" }), { mode: "on", passwordHash: "h", secret: "s" });
-  assert.deepEqual(authMode({ SESSION_SECRET: "s" }), { mode: "misconfigured", missing: ["APP_PASSWORD_HASH"] });
-  assert.deepEqual(authMode({ NODE_ENV: "production" }), { mode: "misconfigured", missing: ["APP_PASSWORD_HASH", "SESSION_SECRET"] });
-  assert.deepEqual(authMode({ NODE_ENV: "production", APP_PASSWORD_HASH: " ", SESSION_SECRET: "s" }).mode, "misconfigured");
+  assert.deepEqual(authMode({ APP_PASSWORD: "  twelve chars ok  ", SESSION_SECRET: "s" }),
+    { mode: "on", secret: "s", password: { kind: "plain", value: "twelve chars ok" } });
+  assert.deepEqual(authMode({ APP_PASSWORD_HASH: "h", SESSION_SECRET: "s" }),
+    { mode: "on", secret: "s", password: { kind: "hash", value: "h" } });
+  const both = authMode({ APP_PASSWORD: "twelve chars ok", APP_PASSWORD_HASH: "h", SESSION_SECRET: "s" });
+  assert.equal(both.mode === "misconfigured" && both.message, "Set only one of APP_PASSWORD and APP_PASSWORD_HASH.");
+  const short = authMode({ APP_PASSWORD: " eleven char ", SESSION_SECRET: "s" }); // 11 after trim
+  assert.equal(short.mode === "misconfigured" && short.message, "APP_PASSWORD must be at least 12 characters.");
+  assert.deepEqual(authMode({ NODE_ENV: "production" }),
+    { mode: "misconfigured", missing: ["APP_PASSWORD"], message: "Login not configured: missing APP_PASSWORD" });
+  assert.deepEqual(authMode({ SESSION_SECRET: "s" }),
+    { mode: "misconfigured", missing: ["APP_PASSWORD"], message: "Login not configured: missing APP_PASSWORD" });
+  assert.deepEqual(authMode({ APP_PASSWORD: "twelve chars ok" }),
+    { mode: "misconfigured", missing: ["SESSION_SECRET"], message: "Login not configured: missing SESSION_SECRET" });
+  assert.equal(authMode({ NODE_ENV: "production", APP_PASSWORD_HASH: " ", SESSION_SECRET: "s" }).mode, "misconfigured");
 });
+
+test("checkPassword: plain compares exactly, hash uses scrypt", () => {
+  assert.equal(checkPassword("twelve chars ok", { kind: "plain", value: "twelve chars ok" }), true);
+  assert.equal(checkPassword("twelve chars oK", { kind: "plain", value: "twelve chars ok" }), false);
+  assert.equal(checkPassword("short", { kind: "plain", value: "twelve chars ok" }), false);
+  const h = hashPassword("right password 1");
+  assert.equal(checkPassword("right password 1", { kind: "hash", value: h }), true);
+  assert.equal(checkPassword("wrong password 1", { kind: "hash", value: h }), false);
+  assert.equal(checkPassword("x", { kind: "hash", value: "not-a-hash" }), false);
+});
+
 test("isPublicPath matches exact public paths only", () => {
   for (const p of ["/login", "/api/login", "/api/health", "/_next/static/x.js", "/favicon.ico"]) assert.equal(isPublicPath(p), true, p);
   for (const p of ["/", "/loginx", "/api/login/x", "/api/healthz", "/_nextx", "/api/lookup"]) assert.equal(isPublicPath(p), false, p);
@@ -61,9 +83,13 @@ test("clientIp prefers Fly-Client-IP, then the first X-Forwarded-For entry, then
   assert.equal(clientIp(new Headers({ "x-forwarded-for": "2.2.2.2, 3.3.3.3" })), "2.2.2.2");
   assert.equal(clientIp(new Headers()), "local");
 });
-test("configStatus reports presence only, and requires login vars unless login is off", () => {
-  const s = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u" });
-  assert.deepEqual(s, { ok: true, vars: { DISCOGS_TOKEN: true, DISCOGS_USER_AGENT: true, APP_PASSWORD_HASH: false, SESSION_SECRET: false } });
+test("configStatus reports presence and the secret's source, never values", () => {
+  const s = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u", APP_PASSWORD: "twelve chars ok", SESSION_SECRET: "zzz", SESSION_SECRET_SOURCE: "file" });
+  assert.deepEqual(s, { ok: true, vars: { DISCOGS_TOKEN: true, DISCOGS_USER_AGENT: true, APP_PASSWORD: true, APP_PASSWORD_HASH: false, SESSION_SECRET: true }, sessionSecretSource: "file" });
+  assert.doesNotMatch(JSON.stringify(s), /twelve|zzz/);
+  const off = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u" });
+  assert.equal(off.ok, true);
+  assert.equal(off.sessionSecretSource, null);
+  assert.equal(configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u", SESSION_SECRET: "s", APP_PASSWORD_HASH: "h" }).sessionSecretSource, "env");
   assert.equal(configStatus({ NODE_ENV: "production", DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u" }).ok, false);
-  assert.ok(!JSON.stringify(configStatus({ DISCOGS_TOKEN: "secret-value" })).includes("secret-value"));
 });

@@ -9,9 +9,10 @@ before(() => {
   process.env.APP_PASSWORD_HASH = hashPassword("right password 1");
   process.env.SESSION_SECRET = "test-secret";
   delete (process.env as Record<string, string | undefined>).NODE_ENV;
+  delete (process.env as Record<string, string | undefined>).APP_PASSWORD;
 });
 after(() => {
-  for (const k of ["APP_PASSWORD_HASH", "SESSION_SECRET", "NODE_ENV"]) {
+  for (const k of ["APP_PASSWORD_HASH", "APP_PASSWORD", "SESSION_SECRET", "NODE_ENV"]) {
     if (saved[k] === undefined) delete process.env[k];
     else process.env[k] = saved[k];
   }
@@ -69,7 +70,7 @@ test("a correct login clears the IP's failure count", async () => {
   assert.equal((await post({ password: "bad" }, ip)).status, 401);
 });
 
-test("production without APP_PASSWORD_HASH gives 503", async () => {
+test("production without a password gives 503 naming APP_PASSWORD", async () => {
   const env = process.env as Record<string, string | undefined>;
   const prev = { h: env.APP_PASSWORD_HASH, n: env.NODE_ENV };
   delete env.APP_PASSWORD_HASH;
@@ -77,11 +78,29 @@ test("production without APP_PASSWORD_HASH gives 503", async () => {
   try {
     const r = await post({ password: "x" }, "10.0.0.6");
     assert.equal(r.status, 503);
-    assert.equal((await r.json()).kind, "missing-env");
+    const body = await r.json();
+    assert.equal(body.kind, "missing-env");
+    assert.equal(body.message, "Login not configured: missing APP_PASSWORD");
   } finally {
     env.APP_PASSWORD_HASH = prev.h;
     if (prev.n === undefined) delete env.NODE_ENV;
     else env.NODE_ENV = prev.n;
+  }
+});
+
+test("APP_PASSWORD (plain) logs in; wrong is 401", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const prev = env.APP_PASSWORD_HASH;
+  delete env.APP_PASSWORD_HASH;
+  env.APP_PASSWORD = "plain password 12";
+  try {
+    assert.equal((await post({ password: "plain password 13" }, "10.0.0.20")).status, 401);
+    const ok = await post({ password: "plain password 12" }, "10.0.0.21");
+    assert.equal(ok.status, 200);
+    assert.match(ok.headers.get("set-cookie") ?? "", /^mc_session=/);
+  } finally {
+    delete env.APP_PASSWORD;
+    env.APP_PASSWORD_HASH = prev;
   }
 });
 

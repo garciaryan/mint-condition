@@ -39,8 +39,7 @@ export async function gate(req: GateRequest, env: Record<string, string | undefi
 
   const auth = authMode(env);
   if (auth.mode === "misconfigured") {
-    const message = `Login not configured: missing ${auth.missing.join(" and ")}`;
-    return req.path.startsWith("/api/") ? json(503, "missing-env", message) : { kind: "text", status: 503, body: message };
+    return req.path.startsWith("/api/") ? json(503, "missing-env", auth.message) : { kind: "text", status: 503, body: auth.message };
   }
   if (auth.mode === "off") return { kind: "pass" };
 
