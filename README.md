@@ -9,7 +9,7 @@ pressing on Discogs and gives you:
 - **Sell price**: what to list it for on Discogs to undercut comparable copies, and what you'd net after the
   Discogs fee.
 
-For buying collections, **collection mode** prices a whole lot of records at once and works out what to offer the
+For buying collections, **collection mode** prices a whole collection of records at once and works out what to offer the
 seller: an opening offer, a ladder to negotiate up, and the most you can pay and still make your margin.
 
 > Discogs figures are asking prices and price suggestions, not confirmed sales. Treat them as a guide.
@@ -97,10 +97,10 @@ The result card shows the three prices, how many copies are for sale on Discogs,
 
 ## Collection mode
 
-Price a whole lot at **/collection** (**Lots** in the header). Lots are saved on the server, so you can start one on
+Price a whole collection at **/collection** (**Collections** in the sidebar). Collections are saved on the server, so you can start one on
 a phone and finish it on a laptop.
 
-1. **Create a lot.** Name it and set the default record and sleeve grades; new records start with those.
+1. **Create a collection.** Name it and set the default record and sleeve grades; new records start with those.
 2. **Add records**, any of three ways:
    - **Quick add**: type a catalog number or barcode and press Enter. A USB scanner works the same way.
    - **Scan**: the phone camera reads barcodes and keeps scanning. Barcodes are mostly on records from the 1980s
@@ -111,32 +111,32 @@ a phone and finish it on a laptop.
    It keeps going with the phone locked or the page closed (while lookups are queued the server keeps itself
    awake); if the server was asleep, it resumes as soon as the app is opened. Rows show their state (Queued, Looking up, To pick, Priced, No match, No price data, or Error with a Retry button).
 4. **To pick.** A record that matches several pressings waits in the "To pick" queue. Open it, choose the
-   pressing, and it's priced. The rest of the lot isn't held up.
-5. **Totals.** The bar shows low / suggested / high market value for the lot plus coverage, for example
+   pressing, and it's priced. The rest of the collection isn't held up.
+5. **Totals.** The bar shows low / suggested / high market value for the collection plus coverage, for example
    "62 of 70 priced · 4 to pick …", so you can see how much of the total is still missing.
 6. **Grades and re-pricing.** Changing a record's grades re-prices it instantly from the stored Discogs
-   suggestions, with no new request. **Re-price all** fetches fresh figures from Discogs for the whole lot.
-7. **Make an offer.** Open **Offer** to see what to pay for the cherry-picks or the whole lot (see below).
+   suggestions, with no new request. **Re-price all** fetches fresh figures from Discogs for the whole collection.
+7. **Make an offer.** Open **Offer** to see what to pay for the cherry-picks or the whole collection (see below).
 
 Totals use the same market value as the single lookup. Like everything here they are asking prices and
 suggestions, not sales.
 
 ### Offers
 
-Open **Offer** on a lot to see what to offer the seller. It shows two deals side by side:
+Open **Offer** on a collection to see what to offer the seller. It shows two deals side by side:
 
-- **Cherry-picks**: only the valuable records. A record is a pick when its suggested value is at or above the lot's
+- **Cherry-picks**: only the valuable records. A record is a pick when its suggested value is at or above the collection's
   **pick threshold** (default $15). Tap the star on a row to add or remove it by hand.
-- **Whole lot**: the picks plus everything else at a flat **bulk** price per record (default $0.50). Records that
+- **Whole collection**: the picks plus everything else at a flat **bulk** price per record (default $0.50). Records that
   aren't priced yet (to pick, no match, no price) count as bulk, and the panel says how many.
 
 Each deal has a **ladder** (30 / 40 / 50 / 60% of the picks' suggested value, opening at 40%) and a **walk-away**:
 the most you can pay and still keep your margin:
 
 - **Cherry-picks walk-away** = what the picks would net on Discogs after the fee × (1 − margin) − overhead per pick
-  − the lot's overhead (gas, travel), never below $0.
-- **Whole-lot walk-away** = the same amount plus the bulk at cost, never below $0. If the lot's overhead is more
-  than the picks cover, the whole-lot walk-away comes down by the difference.
+  − the collection's overhead (gas, travel), never below $0.
+- **Whole-collection walk-away** = the same amount plus the bulk at cost, never below $0. If the collection's overhead is more
+  than the picks cover, the whole-collection walk-away comes down by the difference.
 
 "You keep" on each rung is how far that offer is below the walk-away, so it's room to negotiate on top of your
 margin, not your profit. Rungs above the walk-away are marked "over max". Offers are whole dollars, rounded down.
@@ -144,12 +144,12 @@ margin, not your profit. Rungs above the walk-away are marked "over max". Offers
 For a remote buy from photos, switch on **Condition unverified**: every record is priced one grade lower (record
 and sleeve) for the offer only.
 
-The pick threshold, bulk price and lot overhead are set per lot. The ladder, margin (30%), overhead per record
+The pick threshold, bulk price and collection overhead are set per collection. The ladder, margin (30%), overhead per record
 ($1.50) and unverified steps are on the [Settings](#settings) page.
 
 ### Export and print
 
-- **Export for Discogs** downloads the lot as a Discogs inventory-upload CSV. Upload it on Discogs (Sell Music →
+- **Export for Discogs** downloads the collection as a Discogs inventory-upload CSV. Upload it on Discogs (Sell Music →
   Inventory Upload). Each priced record becomes a **draft** listing at the app's sell price with its record and
   sleeve grades, so nothing goes live until you review it there. Records with no pressing or no price are left out;
   the line under the link says how many will export and how many can't be listed.
@@ -164,15 +164,15 @@ The pick threshold, bulk price and lot overhead are set per lot. The ladder, mar
 - **Sell price**: market value minus an undercut percentage, never below a floor, shown with what you'd net
   after the Discogs seller fee. It's flagged when it comes out above the cheapest current listing, since that copy
   may be in worse shape.
-- **Offers** (lots only): the ladder is a percentage of the cherry-picks' suggested value, plus the flat bulk price
+- **Offers** (collections only): the ladder is a percentage of the cherry-picks' suggested value, plus the flat bulk price
   for everything else. The walk-away starts from what the picks would net at the sell price after the Discogs fee.
   It then takes off your margin and overhead, and adds the bulk at cost. Details are under
   [Offers](#offers).
 
 Discogs answers are reused for up to 6 hours (set on the [Settings](#settings) page), so re-grading a record or
 opening it again is instant. When prices come from that cache the card says how old they are, with **Refresh
-prices** to fetch them fresh; a lot's **Re-price all** and **Retry** always fetch fresh, and a lot shows how old its
-oldest prices are. Lot prices older than 6 hours are hidden and fetched again when you open the lot (see
+prices** to fetch them fresh; a collection's **Re-price all** and **Retry** always fetch fresh, and a collection shows how old its
+oldest prices are. Collection prices older than 6 hours are hidden and fetched again when you open the collection (see
 [Discogs terms](#discogs-terms)).
 
 Every number above can be changed on the [Settings](#settings) page.
@@ -189,7 +189,7 @@ ladder, opening offer, margin, overhead, pick threshold, bulk price and unverifi
 Discogs answers are cached (0 to 6; 0 turns the cache off). Each field's ⓘ says what it changes.
 Multipliers are shown as percentages (a VG sleeve keeps 85% of market value).
 
-- A save applies straight away to new lookups and to every lot, including lots you already made offers on.
+- A save applies straight away to new lookups and to every collection, including collections you already made offers on.
 - Each changed field shows its default; **Reset to defaults** goes back to [`settings.json`](settings.json).
 - Saved values live in the database and win over `settings.json`. A setting added to the file later still gets
   its default.
@@ -201,7 +201,7 @@ Each copy uses its owner's Discogs token, so whoever runs a copy agrees to the
 [Discogs API Terms of Use](https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use). The app
 is built to follow them:
 
-- No Discogs data is shown more than 6 hours old: the cache is capped at 6 hours, and older lot prices are hidden
+- No Discogs data is shown more than 6 hours old: the cache is capped at 6 hours, and older collection prices are hidden
   until they are fetched again.
 - Discogs data carries a **Data provided by Discogs** link to the release, and every page has the required
   not-affiliated notice in the footer.
@@ -237,15 +237,15 @@ npm run hash-password  # make an APP_PASSWORD_HASH for the login (interactive)
 app/                   Next.js App Router UI
   page.tsx             page shell
   Lookup.tsx           form, pressing picker, result card
-  Picker.tsx, GradeSelect.tsx  shared by the lookup page and lots
-  SiteHeader.tsx, NavLinks.tsx header and nav
+  Picker.tsx, GradeSelect.tsx  shared by the lookup page and collections
+  SiteHeader.tsx, SiteNav.tsx  sidebar nav (bottom tab bar on phones)
   SiteFooter.tsx       footer: links and the Discogs notice
-  collection/          /collection lots list; [id]/ is one lot (entry bar, camera scanner, paste, to-pick
+  collection/          /collection collections list; [id]/ is one collection (entry bar, camera scanner, paste, to-pick
                        panel, totals, offer panel, rows)
   login/               login page
   settings/            /settings page (SettingsForm)
-  api/lookup/route.ts  POST /api/lookup: Discogs lookups for the single-record page (lots use the worker)
-  api/sessions/        lots: list/create, one lot, add items (bulk), re-price all
+  api/lookup/route.ts  POST /api/lookup: Discogs lookups for the single-record page (collections use the worker)
+  api/sessions/        collections: list/create, one collection, add items (bulk), re-price all
   api/items/[id]/      edit, retry, candidates (to-pick)
   api/settings/        GET/PUT/DELETE saved settings
   api/login, logout    session cookie in and out
@@ -262,7 +262,7 @@ lib/
   relative-time.ts     "3 hours ago" formatting
   discogs-terms.ts     what the Discogs API terms require: 6-hour limit, notice and credit text
   route-auth.ts        per-route session check
-  collection/          lots: types, store (SQLite), parse (paste), view (pure totals/prices), ui, worker
+  collection/          collections: types, store (SQLite), parse (paste), view (pure totals/prices), ui, worker
   lookup.ts            request validation, search-or-price flow, error mapping
   form.ts              client-side form checks and picker grouping
   auth.ts, password.ts session cookies, login limiter, password hashing

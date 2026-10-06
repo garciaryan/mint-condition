@@ -81,7 +81,7 @@ export function csvFilename(lotName: string, lotId: number): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 60)
     .replace(/-+$/, "");
-  return `${slug || `lot-${lotId}`}-discogs.csv`;
+  return `${slug || `collection-${lotId}`}-discogs.csv`;
 }
 
 export type BuySheetRow = {

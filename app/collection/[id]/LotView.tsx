@@ -157,9 +157,9 @@ export default function LotView({ id }: { id: number }) {
   if (notFound) {
     return (
       <div className="card" role="alert">
-        <h2 tabIndex={-1}>Lot not found</h2>
-        <p>That lot does not exist, or it was deleted.</p>
-        <Link href="/collection">Back to Lots</Link>
+        <h2 tabIndex={-1}>Collection not found</h2>
+        <p>That collection does not exist, or it was deleted.</p>
+        <Link href="/collection">Back to Collections</Link>
       </div>
     );
   }
@@ -172,7 +172,7 @@ export default function LotView({ id }: { id: number }) {
     ) : (
       <div className="card muted loading" role="status">
         <span className="spinner" aria-hidden="true" />
-        <span>Loading lot…</span>
+        <span>Loading collection…</span>
       </div>
     );
   }

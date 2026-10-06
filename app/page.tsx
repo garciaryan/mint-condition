@@ -1,7 +1,7 @@
 import Lookup from "./Lookup.tsx";
 import SiteHeader from "./SiteHeader.tsx";
 
-// SiteHeader reads env at request time to decide whether to show Log out; never prerender at build.
+// SiteHeader reads cookies and the database at request time; never prerender at build.
 export const dynamic = "force-dynamic";
 
 export default function Home() {

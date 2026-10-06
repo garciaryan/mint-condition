@@ -180,6 +180,12 @@ body {
   font-size: 15px;
 }
 
+/* Docs looks like a sidebar item, sized to its words. */
+.site-footer-links .nav-item {
+  width: auto;
+  text-decoration: none;
+}
+
 .site-footer-links .coffee {
   padding: 0 16px;
   border-radius: 999px;
@@ -193,69 +199,198 @@ body {
   background: var(--fill-hover);
 }
 
-/* Site header: brand, nav, optional log out, one row on desktop. */
-/* Header menu: inline on wider screens (the wrappers don't box anything), a Menu button and panel on phones. */
-.site-menu,
-.site-menu-panel {
-  display: contents;
+/* Site nav: a fixed sidebar beside the page, expanded by default or an icon rail once collapsed (cookie mc_nav); a
+   bottom tab bar on phones (see the Phone block). Labels stay readable to screen readers when the rail hides them. */
+body:has(.site-nav) {
+  --nav-w: 208px;
+  padding-left: var(--nav-w);
+  transition: padding-left var(--dur) var(--ease);
 }
 
-.topbar .menu-toggle {
-  display: none;
+body:has(.site-nav.collapsed) {
+  --nav-w: 60px;
 }
 
-.topbar {
+.site-nav {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 15;
   display: flex;
-  align-items: center;
-  gap: 8px 18px;
-  padding: 8px var(--gutter);
+  flex-direction: column;
+  gap: 4px;
+  width: var(--nav-w);
+  padding: 12px 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--card);
-  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  transition: width var(--dur) var(--ease);
 }
 
 .brand {
-  font-weight: 700;
-  margin-right: auto;
-}
-
-.nav {
   display: flex;
-  gap: 8px;
-}
-
-.nav a {
-  display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: 0 6px;
+  gap: 10px;
+  min-height: var(--control-h);
+  margin-bottom: 12px;
+  padding: 0 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.brand-mark {
+  flex: none;
+  color: var(--accent);
+}
+
+.nav,
+.nav-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-tools {
+  margin-top: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 0 11px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
   color: var(--muted);
+  font-size: 15px;
+  text-align: left;
   text-decoration: none;
-  font-size: 14px;
-  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.nav a:hover {
-  color: var(--ink);
+.nav-icon {
+  flex: none;
 }
 
-.nav a.active {
+.nav-item.active {
+  background: var(--accent-soft);
   color: var(--ink);
   font-weight: 600;
-  border-bottom-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
-.topbar button.secondary {
+.tab-label {
+  display: none;
+}
+
+.site-nav.collapsed .nav-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The coffee pill and Docs (an item like the others) at the foot of the sidebar; beside it the footer drops its
+   copies (phones and pages without the sidebar keep them). The collapsed rail keeps just a round ☕. */
+body:has(.site-nav) .site-footer-links {
+  display: none;
+}
+
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 4px 11px 12px;
+}
+
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 36px;
-  padding: 4px 14px;
   font-size: 14px;
+  white-space: nowrap;
 }
 
-.theme-switch select {
-  width: auto;
-  min-height: 36px;
-  padding: 4px 8px;
-  font-size: 16px;
+.nav-links .coffee {
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--fill-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nav-links .coffee:hover {
+  background: var(--fill-hover);
+}
+
+.site-nav.collapsed .nav-links {
+  justify-content: center;
+  padding: 4px 0 12px;
+}
+
+.site-nav.collapsed .nav-links .coffee {
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+}
+
+/* Recent collections under Collections: indented to line up with the link labels; long names end in an ellipsis. */
+.nav-sub {
+  margin: 2px 0 6px;
+  padding: 0 0 0 37px;
+  list-style: none;
+}
+
+.nav-sub a {
+  display: block;
+  overflow: hidden;
+  padding: 0 8px;
+  border-radius: 6px;
   color: var(--muted);
+  font-size: 14px;
+  line-height: 32px;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-sub a.active {
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.nav-sub .nav-more {
+  font-size: 13px;
+}
+
+.site-nav.collapsed .nav-sub {
+  display: none;
+}
+
+@media (hover: hover) {
+  .nav-item:hover,
+  .nav-sub a:hover {
+    background: var(--neutral-soft);
+    color: var(--ink);
+  }
+
+  .nav-item.active:hover,
+  .nav-sub a.active:hover {
+    background: var(--accent-soft);
+  }
 }
 
 .masthead h1 {
@@ -406,7 +541,8 @@ textarea {
 
 /* A slight press-in on tap or click. */
 button:active:not(:disabled),
-.site-footer-links .coffee:active {
+.site-footer-links .coffee:active,
+.nav-links .coffee:active {
   transform: scale(0.98);
 }
 
@@ -1670,68 +1806,94 @@ kbd {
     padding: 16px;
   }
 
-  .topbar {
-    position: relative;
-    padding-top: 6px;
-    padding-bottom: 6px;
+  /* Bottom tab bar: one equal-width tab per link and tool (3 links, so .nav takes 3 shares); the footer keeps Docs
+     and the coffee link. */
+  body:has(.site-nav) {
+    --tabbar-h: 60px;
+    padding-left: 0;
+    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
   }
 
-  .topbar .menu-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--control-h);
-    height: var(--control-h);
-    margin-right: -10px;
-    padding: 0;
-    border: 0;
-    border-radius: 6px;
-    background: none;
-    color: var(--ink);
-    font-size: 26px;
-    line-height: 1;
-    cursor: pointer;
+  .site-nav {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    flex-direction: row;
+    gap: 0;
+    width: auto;
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+    padding: 0 0 env(safe-area-inset-bottom, 0px);
+    overflow: visible;
+    border-right: 0;
+    border-top: 1px solid var(--line);
   }
 
-  .topbar .menu-toggle:hover,
-  .topbar .menu-toggle[aria-expanded="true"] {
-    background: var(--neutral-soft);
-  }
-
-  .site-menu-panel {
+  .site-nav .brand,
+  .site-nav .nav-collapse {
     display: none;
   }
 
-  .site-menu-panel.open {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 30;
+  .site-nav .nav {
+    flex: 3 1 0;
+    flex-direction: row;
+    gap: 0;
+  }
+
+  .site-nav .nav-tools {
+    display: contents;
+  }
+
+  .site-nav .nav-group {
+    display: contents;
+  }
+
+  .site-nav .nav-sub {
+    display: none;
+  }
+
+  .site-nav .nav-links,
+  .site-nav .nav-docs {
+    display: none;
+  }
+
+  body:has(.site-nav) .site-footer-links {
     display: flex;
+  }
+
+  .site-nav .nav-item {
+    flex: 1 1 0;
     flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    padding: 12px var(--gutter) 16px;
-    background: var(--card);
-    border-bottom: 1px solid var(--line);
-    box-shadow: 0 8px 24px var(--shadow);
-    animation: drop-in var(--dur) var(--ease);
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 0 2px;
+    border-radius: 0;
+    font-size: 12px;
   }
 
-  .site-menu-panel .nav {
-    flex-direction: column;
-    align-items: flex-start;
+  .site-nav .nav-item.active {
+    background: none;
+    box-shadow: inset 0 3px 0 var(--accent);
   }
 
-  .site-menu-panel .theme-switch select {
-    width: 100%;
+  .site-nav .nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
-  .nav a,
-  .topbar button.secondary,
-  .theme-switch select {
-    min-height: var(--control-h);
+  .tab-label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .undo-wrap {
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px);
   }
 
   .lot-row {
@@ -2630,13 +2792,14 @@ button.link:disabled {
     margin: 12mm;
   }
 
-  .topbar,
+  .site-nav,
   .print-controls,
   .site-footer-links {
     display: none !important;
   }
 
   body {
+    padding: 0 !important;
     background: #fff !important;
     color: #000;
     font-size: 10.5pt;

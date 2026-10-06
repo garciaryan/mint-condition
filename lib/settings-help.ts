@@ -15,10 +15,10 @@ const HELP: Partial<Record<FieldKey, string>> = {
   "offer.overheadPerRecord":
     "Your cost per cherry-pick (cleaning, sleeves, listing time), taken off the walk-away for each pick.",
   "offer.pickThreshold":
-    "Records with a suggested value at or above this count as cherry-picks. Used by any lot that doesn't set its own.",
-  "offer.bulkEach": "What you'd pay per non-pick record in a whole-lot offer. Used by any lot that doesn't set its own.",
+    "Records with a suggested value at or above this count as cherry-picks. Used by any collection that doesn't set its own.",
+  "offer.bulkEach": "What you'd pay per non-pick record in a whole-collection offer. Used by any collection that doesn't set its own.",
   "offer.unverifiedSteps":
-    "When a lot is marked \"Condition unverified\", offers price every record this many grades lower, record and sleeve.",
+    "When a collection is marked \"Condition unverified\", offers price every record this many grades lower, record and sleeve.",
   "discogs.cacheHours":
     "How long Discogs answers are reused before asking again. At most 6 (Discogs terms); 0 turns the cache off.",
 };

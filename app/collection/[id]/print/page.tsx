@@ -16,7 +16,7 @@ import { getSettings } from "../../../../lib/settings-store.ts";
 import SiteHeader from "../../../SiteHeader.tsx";
 import PrintButton from "./PrintButton.tsx";
 
-// SiteHeader reads env at request time; the sheet reads the database. Never prerender.
+// SiteHeader reads cookies and the database at request time, and so does the sheet. Never prerender.
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
@@ -112,7 +112,7 @@ export default async function BuySheetPage({ params }: Props) {
       <SiteHeader />
       <main className="page sheet">
         <div className="print-controls">
-          <Link href={`/collection/${lot.id}`}>← Back to lot</Link>
+          <Link href={`/collection/${lot.id}`}>← Back to collection</Link>
           <PrintButton />
         </div>
 
@@ -133,7 +133,7 @@ export default async function BuySheetPage({ params }: Props) {
         <section className="sheet-offers" aria-label="Offers">
           <Ladder caption={`Cherry-picks (${records(offer.picks)})`} side={offer.pickOnly} opening={offer.openingPercent} currency={currency} />
           <Ladder
-            caption={`Whole lot (${records(offer.picks + offer.bulkCount)})`}
+            caption={`Whole collection (${records(offer.picks + offer.bulkCount)})`}
             side={offer.wholeLot}
             opening={offer.openingPercent}
             currency={currency}

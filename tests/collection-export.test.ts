@@ -80,7 +80,7 @@ test("exportCounts", () => {
 test("csvFilename slugs the lot name and falls back to the id", () => {
   assert.equal(csvFilename("Estate Sale — Oct 4!", 3), "estate-sale-oct-4-discogs.csv");
   assert.equal(csvFilename("Café ☕", 3), "caf-discogs.csv");
-  assert.equal(csvFilename("!!!", 3), "lot-3-discogs.csv");
+  assert.equal(csvFilename("!!!", 3), "collection-3-discogs.csv");
   assert.equal(csvFilename("a".repeat(100), 3), `${"a".repeat(60)}-discogs.csv`);
 });
 

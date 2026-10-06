@@ -13,7 +13,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const id = parseId((await params).id);
   if (id === null) return errorJson("bad-request", 400, "Invalid id.");
   const db = getDb();
-  if (!getSession(db, id)) return errorJson("not-found", 404, "Lot not found.");
+  if (!getSession(db, id)) return errorJson("not-found", 404, "Collection not found.");
   const queued = repriceSession(db, id);
   if (queued > 0) void kickWorker();
   return Response.json({ queued });

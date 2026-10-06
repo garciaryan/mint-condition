@@ -97,10 +97,10 @@ export default function LotsList() {
   return (
     <>
       <form className="card new-lot" onSubmit={create} noValidate>
-        <h2>New lot</h2>
+        <h2>New collection</h2>
         <div className="new-lot-fields">
           <div className="field">
-            <label htmlFor="lot-name">Lot name</label>
+            <label htmlFor="lot-name">Collection name</label>
             <input
               id="lot-name"
               value={name}
@@ -132,11 +132,11 @@ export default function LotsList() {
 
       <section aria-labelledby="lots-heading">
         <h2 id="lots-heading" className="sr-only">
-          Your lots
+          Your collections
         </h2>
         {loadError ? (
           <div className="card error" role="alert">
-            <h2>Could not load lots</h2>
+            <h2>Could not load collections</h2>
             <p>{loadError}</p>
             <button type="button" className="secondary" onClick={() => setAttempt((n) => n + 1)}>
               Try again
@@ -145,11 +145,11 @@ export default function LotsList() {
         ) : lots === null ? (
           <div className="card muted loading" role="status">
             <span className="spinner" aria-hidden="true" />
-            <span>Loading lots…</span>
+            <span>Loading collections…</span>
           </div>
         ) : lots.length === 0 ? (
           <div className="card notice">
-            <p>No lots yet. Create one to start pricing a collection.</p>
+            <p>No collections yet. Create one to start pricing records together.</p>
           </div>
         ) : (
           <ul className="lots">

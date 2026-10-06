@@ -23,6 +23,8 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   Local-sale pricing was removed (2026-10-05): pricing records for sale off Discogs with Discogs data is close to the
   terms' "circumvent Our marketplace" example. Don't bring it back. The fee is `sell.discogsFeePercent`; rows saved
   with the old `local.discogsFeePercent` are read through `moveLegacyFee` in `lib/settings-store.ts`.
+- Naming: the UI says *collection(s)* (renamed from "lot" 2026-10-05); code, CSS, settings keys (`lotOverhead`) and
+  the DB (`sessions`) still say lot/session. Use "collection" in anything user-visible.
 - Collection mode: lot prices are computed at read time (`lib/collection/view.ts`) from stored per-grade Discogs
   suggestions and stats, so grade changes cost no API call. One in-process lookup worker (`lib/collection/worker.ts`,
   started by `instrumentation.ts`) drains pending items through the shared client in `lib/discogs-client.ts`, so one
@@ -79,13 +81,17 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   `app/settings/` (`SettingsForm`, `HelpTip` ⓘ toggle) · `app/api/settings/`
 - `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
   `lib/discogs-client.ts` shared client + `getLookupClient()` · `lib/discogs-cache.ts` response cache ·
-  `lib/relative-time.ts` · `lib/discogs-terms.ts` + `app/SiteFooter.tsx` · `lib/theme.ts` + `app/ThemeSwitch.tsx` (dark mode) · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
+  `lib/relative-time.ts` · `lib/discogs-terms.ts` + `app/SiteFooter.tsx` · `lib/theme.ts` (dark mode) · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
 - `lib/collection/export.ts` (Discogs CSV, buy sheet rows) · `app/collection/[id]/print/` (buy sheet) ·
   `app/api/sessions/[id]/discogs.csv/`
 - `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,
   `PickPanel`, `TotalsBar`, `OfferPanel`, `ItemRow`) · `app/api/sessions/` and `app/api/items/` · shared `app/Picker.tsx`,
-  `app/GradeSelect.tsx`, `app/SiteHeader.tsx`, `app/NavLinks.tsx`, `app/SiteMenu.tsx` (header links behind a Menu
-  button at 480px and below), `app/useDisclosure.ts` + `lib/disclosure.ts` (dropdowns: header menu, lot Actions)
+  `app/GradeSelect.tsx`, `app/SiteHeader.tsx` (server: reads `mc_theme`/`mc_nav`) + `app/SiteNav.tsx` (fixed left
+  sidebar, expanded by default, collapses to an icon rail remembered by `mc_nav` via `lib/nav.ts`; a bottom tab bar
+  at 480px and below; Docs and the coffee pill sit at its foot, the footer shows them only on phones and pages
+  without the sidebar), Log out is on `/settings` (Account card, only when login is on), `app/NavLinks.tsx` (expanded desktop sidebar lists the 3 most recent collections under Collections, then
+  "+N more"; `navLots`), `app/NavIcon.tsx` (inline SVG icons), `app/ThemeSwitch.tsx` (button
+  cycling System/Light/Dark), `app/useDisclosure.ts` + `lib/disclosure.ts` (dropdowns: lot Actions, help tips)
 
 ## Status
 - Phase 1 (Discogs client) and phase 2 (pricing module): done. Verified against the live API (2026-10-04):
@@ -119,8 +125,8 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   `app/globals.css` with a dark palette (device setting, or pinned via cookie `mc_theme` read in `app/layout.tsx`);
   `tests/theme-contrast.test.ts` checks contrast in both themes. Never hard-code a colour outside the token blocks. Palette (2026-10-05): parchment/deep-space blue
   pages, deep-space-blue/parchment text, strong cyan `--fill` buttons with deep-space-blue labels in both themes,
-  darker cyan `--accent` for links in light (cyan fails 4.5:1 on parchment). Footer has GitHub and Buy Me a Coffee
-  as plain links (no BMC widget script); `body` is a flex column so the footer sits at the bottom. Motion uses the
+  darker cyan `--accent` for links in light (cyan fails 4.5:1 on parchment). Docs and Buy Me a Coffee
+  are plain links (no BMC widget script), in the sidebar on wider screens and the footer on phones; `body` is a flex column so the footer sits at the bottom. Motion uses the
   `--dur-fast`/`--dur`/`--ease` tokens (`--t-interactive` for hover/focus); menus, dialogs and the pick drawer
   animate in only, and `prefers-reduced-motion` turns all of it off (`tests/motion.test.ts`). Spec: `docs/superpowers/specs/2026-10-04-export-print-design.md`.
 

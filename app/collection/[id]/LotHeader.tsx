@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { useRouter } from "next/navigation";
 import type { SessionRow } from "../../../lib/collection/types.ts";
 import { exportHint } from "../../../lib/collection/export.ts";
 import { relativeTime } from "../../../lib/relative-time.ts";
@@ -31,6 +32,7 @@ export default function LotHeader({
   const [confirming, setConfirming] = useState(false);
   const cancelled = useRef(false);
   const menu = useDisclosure();
+  const router = useRouter();
 
   // Follow the server name unless the user is mid-edit.
   useEffect(() => {
@@ -54,7 +56,10 @@ export default function LotHeader({
     }
     setNameError(null);
     const res = await api(`/api/sessions/${session.id}`, "PATCH", { name: next });
-    if (res.ok) onChanged();
+    if (res.ok) {
+      onChanged();
+      router.refresh(); // the sidebar lists collections by name
+    }
     else {
       setName(session.name);
       setNameError(res.message);
@@ -83,7 +88,7 @@ export default function LotHeader({
     <header className="lot-head">
       <h1 className="lot-title">
         <label htmlFor="lot-name-edit" className="sr-only">
-          Lot name
+          Collection name
         </label>
         <input
           id="lot-name-edit"
@@ -102,7 +107,7 @@ export default function LotHeader({
         </span>
       </h1>
       <p className="meta muted small">
-        Lot · {created} · defaults {session.defaultRecord} / {session.defaultSleeve}
+        Collection · {created} · defaults {session.defaultRecord} / {session.defaultSleeve}
       </p>
       <div className="lot-actions">
         <div ref={menu.root} className="dropdown">
@@ -160,7 +165,7 @@ export default function LotHeader({
                     setConfirming(true);
                   }}
                 >
-                  Delete lot
+                  Delete collection
                 </button>
               </li>
             </ul>
@@ -217,7 +222,7 @@ function ConfirmDelete({
   return (
     <div className="scrim center" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
       <div ref={ref} className="dialog" role="dialog" aria-modal="true" aria-labelledby="del-heading" aria-describedby="del-desc" tabIndex={-1}>
-        <h2 id="del-heading">Delete this lot?</h2>
+        <h2 id="del-heading">Delete this collection?</h2>
         <p id="del-desc">
           “{session.name}” and all of its records will be removed. This cannot be undone.
         </p>
@@ -232,7 +237,7 @@ function ConfirmDelete({
             Cancel
           </button>
           <button type="button" className="danger-solid" onClick={confirm} disabled={busy}>
-            {busy ? "Deleting…" : "Delete lot"}
+            {busy ? "Deleting…" : "Delete collection"}
           </button>
         </div>
       </div>

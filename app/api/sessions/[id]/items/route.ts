@@ -43,7 +43,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   return withSettings((settings) => {
     const db = getDb();
     const session = getSession(db, id);
-    if (!session) return errorJson("not-found", 404, "Lot not found.");
+    if (!session) return errorJson("not-found", 404, "Collection not found.");
     const inputs = offerInputs(session, settings);
     const added = addItems(db, id, lines, { record, sleeve }, Date.now());
     void kickWorker();

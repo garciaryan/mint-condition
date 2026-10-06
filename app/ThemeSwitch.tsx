@@ -1,35 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { themeCookie } from "../lib/theme.ts";
+import { nextTheme, themeCookie } from "../lib/theme.ts";
 import type { ThemeChoice } from "../lib/theme.ts";
+import NavIcon from "./NavIcon.tsx";
 
-const OPTIONS: { value: ThemeChoice; label: string }[] = [
-  { value: "system", label: "◐ System" },
-  { value: "light", label: "☀ Light" },
-  { value: "dark", label: "☾ Dark" },
-];
+const NAMES: Record<ThemeChoice, string> = { system: "System", light: "Light", dark: "Dark" };
 
-export default function ThemeSwitch({ initial }: { initial: ThemeChoice }) {
+// One button that cycles System → Light → Dark; the icon and label show the current choice.
+export default function ThemeSwitch({ initial, collapsed }: { initial: ThemeChoice; collapsed: boolean }) {
   const [choice, setChoice] = useState<ThemeChoice>(initial);
 
-  function change(next: ThemeChoice) {
+  function change() {
+    const next = nextTheme(choice);
     setChoice(next);
     if (next === "system") delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = next;
     document.cookie = themeCookie(next);
   }
 
+  const label = `Theme: ${NAMES[choice]}`;
   return (
-    <label className="theme-switch">
-      <span className="sr-only">Theme</span>
-      <select value={choice} onChange={(e) => change(e.target.value as ThemeChoice)}>
-        {OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <button type="button" className="nav-item" onClick={change} title={collapsed ? label : undefined}>
+      <NavIcon name={choice} />
+      <span className="nav-label">{label}</span>
+      <span className="tab-label" aria-hidden="true">
+        Theme
+      </span>
+    </button>
   );
 }
