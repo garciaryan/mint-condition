@@ -5,10 +5,13 @@ Input: catalog number (or barcode), pressing year, record grade, sleeve grade. O
 sell price (with the net after the Discogs fee). Collection (bulk buying) tools build on it.
 
 ## Decisions already made
-- Hosted on Fly.io (one machine, SQLite on a volume at `/data`), single-password login (`APP_PASSWORD_HASH` +
-  `SESSION_SECRET`), no OAuth. Discogs access uses a **personal access token** from the user's seller account
-  (needed for `/marketplace/price_suggestions`), stored as a Fly secret (`.env.local` for local dev). With neither
-  APP_* var set outside production, login is off; only one set = misconfigured (503). Never run more than one machine.
+- Hosted on Fly.io (one machine, SQLite on a volume at `/data`), single-password login, no OAuth. The password is
+  `APP_PASSWORD` (plain, min 12) or `APP_PASSWORD_HASH` (scrypt), never both. `SESSION_SECRET` comes from the env or,
+  when unset, `DATA_DIR/session-secret`, made once at boot by `lib/session-secret.ts` (`instrumentation.ts`); env
+  wins. `npm run setup:fly` sets the Fly secrets via `fly secrets import` on stdin (2026-10-05). Discogs access uses a
+  **personal access token** from the user's seller account (needed for `/marketplace/price_suggestions`), stored as a
+  Fly secret (`.env.local` for local dev). With no password outside production, login is off; in production, or with
+  a bad combination, misconfigured (503 with the reason). Never run more than one machine.
 - Every push to `main` deploys: `.github/workflows/fly-deploy.yml` runs test, typecheck and build, then
   `flyctl deploy --remote-only` (`FLY_API_TOKEN` repo secret, deploy-scoped, expires 2027-10-04). Keep `main` green.
 - No staging app (retired 2026-10-05; older status lines below mention it). Test migrations against a local copy of
@@ -62,7 +65,8 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
 - `npm run typecheck`
 - `npm run lookup -- "<catno|barcode>" <year> <recordGrade> <sleeveGrade> [--id <releaseId>]` (CLI check)
 - `npm run dev` -> http://localhost:3000
-- `npm run hash-password` (interactive; prints `APP_PASSWORD_HASH`) · deploy and ops: see `DEPLOY.md`
+- `npm run setup:fly` (interactive; sets the Fly secrets) · `npm run hash-password` (optional; prints
+  `APP_PASSWORD_HASH`) · deploy and ops: see `DEPLOY.md`
 
 ## Layout
 - `lib/types.ts` grades and shared types · `lib/settings.ts` settings loader/validator
@@ -72,7 +76,8 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
 - `scripts/lookup.ts` CLI · `app/` Next.js UI (`api/lookup/route.ts`, `Lookup.tsx`, `globals.css`)
 - `lib/auth.ts` (session signing, authMode, limiter, health config) · `lib/password.ts` (hashing) · `lib/gate.ts` +
   `middleware.ts` (login gate) · `lib/db.ts` + `lib/migrations.ts` (SQLite, versioned migrations)
-- `app/login/`, `app/api/login|logout|health` · `scripts/hash-password.ts` · `Dockerfile`, `docker-entrypoint.sh`,
+- `app/login/`, `app/api/login|logout|health` · `scripts/hash-password.ts`, `scripts/setup-fly.ts` +
+  `scripts/prompt.ts` + `lib/setup-fly.ts` (pure), `lib/session-secret.ts` · `Dockerfile`, `docker-entrypoint.sh`,
   `fly.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`
 
 - `lib/settings-store.ts` (saved settings over defaults) · `lib/settings-form.ts` (form conversion, client-safe) ·
