@@ -212,11 +212,11 @@ export default function OfferPanel({
               </button>
               {options.open && (
                 <div id="offer-options" className="dropdown-panel offer-options">
-                  <label className="field inline switch">
+                  <label className="offer-option">
                     <input type="checkbox" checked={unverified} onChange={(e) => void changeUnverified(e.target.checked)} />
                     Condition unverified
                   </label>
-                  <label className="field inline switch">
+                  <label className="offer-option">
                     <input type="checkbox" checked={skipSlow} onChange={(e) => void changeSkipSlow(e.target.checked)} />
                     Leave slow sellers out of cherry-picks
                   </label>

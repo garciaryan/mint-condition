@@ -197,3 +197,21 @@ test("offerOptionsLabel says how many offer options are on", () => {
   assert.equal(offerOptionsLabel(false, true), "Options · 1 on");
   assert.equal(offerOptionsLabel(true, true), "Options · 2 on");
 });
+
+test("offer inputs: Options on the left and the inputs to the right on desktop; an even two-column grid on phones", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.offer-inputs \{[^}]*display: flex;[^}]*align-items: flex-end;/, "button lines up with the input boxes");
+  assert.match(css, /\.offer-inputs > \.dropdown \{[^}]*margin-right: auto;/, "Options left, inputs pushed right");
+  assert.match(css, /\.offer-inputs > \.dropdown > button \{[^}]*min-height: var\(--control-h\);/);
+  assert.match(phone, /\.offer-inputs \{[^}]*display: grid;[^}]*grid-template-columns: 1fr 1fr;/);
+  assert.match(phone, /\.offer-inputs > \.dropdown > button \{[^}]*width: 100%;/);
+});
+
+test("offer option rows have their own class, so the input widths don't squeeze them", () => {
+  const panel = readFileSync("components/collection/OfferPanel.tsx", "utf8");
+  assert.match(panel, /className="offer-option"/);
+  assert.doesNotMatch(panel.slice(panel.indexOf('id="offer-options"')), /^[^]*?className="field inline switch"[^]*?<\/div>\s*\)\}/);
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\.offer-option \{[^}]*min-height: var\(--control-h\);/);
+});

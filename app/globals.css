@@ -2667,33 +2667,48 @@ kbd {
   gap: 2px;
 }
 
-.offer-options .field {
-  min-height: var(--control-h);
-  padding: 0 8px;
+.offer-options {
+  min-width: 280px;
 }
 
+.offer-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--control-h);
+  padding: 4px 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.offer-option input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+/* Options on the left, the amount inputs pushed right; the button lines up with the input boxes, not their labels. */
 .offer-inputs {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 12px 16px;
   margin-bottom: 16px;
 }
 
+.offer-inputs > .dropdown {
+  margin-right: auto;
+}
+
+.offer-inputs > .dropdown > button {
+  min-height: var(--control-h);
+  padding: 0 16px;
+}
+
 .offer-inputs .field {
   width: 150px;
-}
-
-.offer-inputs .switch {
-  width: auto;
-  min-height: var(--control-h);
-  font-size: 15px;
-}
-
-.offer-inputs .switch input {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--accent);
 }
 
 .offer-sides {
@@ -2817,11 +2832,19 @@ kbd {
     grid-template-columns: 1fr;
   }
 
-  .offer-inputs .field {
-    width: calc(50% - 8px);
+  /* An even two-column grid: Options and the three amounts, each cell the same width. */
+  .offer-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
   }
 
-  .offer-inputs .switch {
+  .offer-inputs .field {
+    width: auto;
+    min-width: 0;
+  }
+
+  .offer-inputs > .dropdown > button {
     width: 100%;
   }
 
