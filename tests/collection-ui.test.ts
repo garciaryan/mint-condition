@@ -243,3 +243,10 @@ test("the Options button is as wide as the offer inputs on desktop", () => {
   assert.ok(field, "offer input width");
   assert.match(css, new RegExp(`^\\.offer-inputs > \\.dropdown > button \\{[^}]*width: ${field};`, "m"));
 });
+
+test("runout matches are marked with tokens; runout toggles are 44px on phones", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.runout-hit \{[^}]*background: var\(--accent-soft\);[^}]*color: var\(--ink\);/);
+  assert.match(phone, /\.runout-toggle \{[^}]*min-height: var\(--control-h\);/);
+});

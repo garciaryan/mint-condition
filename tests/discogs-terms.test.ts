@@ -72,3 +72,14 @@ test("the demand badge (want/have from Discogs) only appears where the Discogs c
   assert.ok(users.length > 0, "something renders the badge");
   for (const f of users) assert.match(src(f), /DATA_CREDIT|<DiscogsCredit\b/, f);
 });
+
+test("runout identifiers (Discogs data) are fetched and shown only in the Picker, which carries the credit", () => {
+  const walk = (dir: string): string[] =>
+    !existsSync(dir) ? [] : readdirSync(dir).flatMap((n) => {
+      const p = path.join(dir, n);
+      return statSync(p).isDirectory() ? walk(p) : /\.tsx?$/.test(n) ? [p] : [];
+    });
+  const fetchers = walk("components").filter((f) => src(f).includes("/api/releases/"));
+  assert.deepEqual(fetchers, [path.join("components", "lookup", "Picker.tsx")]);
+  assert.match(src("components/lookup/Picker.tsx"), /<DiscogsCredit\b/);
+});

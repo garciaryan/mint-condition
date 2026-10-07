@@ -865,6 +865,69 @@ a {
   background: var(--bg);
 }
 
+/* A pressing row: the pick button, then its Runouts toggle (never nested). */
+.candidate-row {
+  display: flex;
+  align-items: center;
+}
+
+.candidate-row .candidate {
+  flex: 1;
+  min-width: 0;
+}
+
+.runout-toggle {
+  flex-shrink: 0;
+  min-height: 36px;
+  margin-right: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--field-line);
+  border-radius: 6px;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.runout-toggle[aria-expanded="true"] {
+  background: var(--accent-soft);
+}
+
+.runout-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+
+.runout-controls input {
+  width: 300px;
+  max-width: 100%;
+}
+
+.runout-status:empty {
+  display: none;
+}
+
+/* Identifiers under a pressing, indented past the cover thumbnail. */
+.runout-list {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 10px;
+  padding: 0 8px 0 70px;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+
+.runout-hit {
+  padding: 0 1px;
+  border-radius: 2px;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
 .candidate-main {
   display: flex;
   flex-direction: column;
@@ -2832,6 +2895,14 @@ kbd {
 @media (max-width: 480px) {
   .offer-sides {
     grid-template-columns: 1fr;
+  }
+
+  .runout-toggle {
+    min-height: var(--control-h);
+  }
+
+  .runout-list {
+    padding-left: 8px;
   }
 
   /* An even two-column grid: Options and the three amounts, each cell the same width. */
