@@ -1,5 +1,5 @@
-import SiteHeader from "../../SiteHeader.tsx";
-import LotView from "./LotView.tsx";
+import SiteHeader from "@/components/layout/SiteHeader.tsx";
+import LotView from "@/components/collection/LotView.tsx";
 
 export const metadata = { title: "Collection - Mint Condition" };
 // SiteHeader reads cookies and the database at request time; never prerender at build.

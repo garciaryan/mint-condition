@@ -145,7 +145,7 @@ test("phone rows show a labelled, padded Market value box; wider screens keep th
   assert.match(phone, /\.row-market \{[^}]*display: block;[^}]*flex: 1;[^}]*margin: 6px 0;[^}]*padding: /);
   assert.match(phone, /\.row-price \.row-value \{\s*display: none;\s*\}/, "the compact cell is hidden on phones");
   assert.match(css, /\.row-market-title \{[^}]*text-transform: uppercase;[^}]*color: var\(--muted\);/);
-  const row = readFileSync("app/collection/[id]/ItemRow.tsx", "utf8");
+  const row = readFileSync("components/collection/ItemRow.tsx", "utf8");
   assert.match(row, /className="price-block row-market"/);
   assert.match(row, /<small>Low<\/small>[\s\S]*<small>Suggested<\/small>[\s\S]*<small>High<\/small>/);
   assert.match(row, /Market value/);

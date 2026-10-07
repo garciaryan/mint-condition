@@ -1,7 +1,7 @@
-import { authMode } from "../../lib/auth.ts";
-import LogoutButton from "../LogoutButton.tsx";
-import SiteHeader from "../SiteHeader.tsx";
-import SettingsForm from "./SettingsForm.tsx";
+import { authMode } from "@/lib/auth.ts";
+import LogoutButton from "@/components/layout/LogoutButton.tsx";
+import SiteHeader from "@/components/layout/SiteHeader.tsx";
+import SettingsForm from "@/components/settings/SettingsForm.tsx";
 
 export const metadata = { title: "Settings - Mint Condition" };
 // SiteHeader and Log out read cookies and env at request time; never prerender at build.
