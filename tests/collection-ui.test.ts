@@ -78,7 +78,7 @@ const settings = parseSettings(JSON.parse(readFileSync("settings.json", "utf8"))
 const row = (o: Partial<ItemRow>): ItemRow => ({
   id: 1, sessionId: 1, query: "Q", year: null, record: "VG+", sleeve: "NM", status: "pending", releaseId: null,
   release: null, candidates: null, suggestions: null, stats: null, pricedAt: null, error: null, createdAt: 0,
-  pick: null, refresh: false, ...o,
+  pick: null, refresh: false, notes: "", ...o,
 });
 const stats = { lowestPrice: 12, currency: "USD", numForSale: 3 };
 const lot = [

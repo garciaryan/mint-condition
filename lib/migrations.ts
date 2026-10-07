@@ -45,6 +45,7 @@ ALTER TABLE items    ADD COLUMN pick           INTEGER;   -- null = automatic, 1
   fetched_at INTEGER NOT NULL       -- ms epoch, when Discogs answered
 );
 ALTER TABLE items ADD COLUMN refresh INTEGER NOT NULL DEFAULT 0;  -- 1 = the next lookup for this row skips the cache`,
+  `ALTER TABLE items ADD COLUMN notes TEXT NOT NULL DEFAULT '';  -- public listing comment; '' = none`,
 ];
 
 export function migrate(db: DatabaseSync, steps: string[]): number {

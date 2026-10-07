@@ -40,6 +40,7 @@ const toItem = (r: Row, lite = false): ItemRow => ({
   createdAt: r.created_at as number,
   pick: r.pick == null ? null : r.pick === 1,
   refresh: r.refresh === 1,
+  notes: r.notes as string,
 });
 
 // ---- sessions ----
@@ -103,7 +104,7 @@ export function getItem(db: DatabaseSync, id: number): ItemRow | null {
 
 // List reads skip the (large) candidate JSON and carry only its length.
 const LIST_COLUMNS = `id, session_id, query, year, record_grade, sleeve_grade, status, release_id, release_json,
-  suggestions_json, stats_json, priced_at, error, created_at, pick,
+  suggestions_json, stats_json, priced_at, error, created_at, pick, notes,
   CASE WHEN candidates_json IS NULL THEN 0 ELSE json_array_length(candidates_json) END AS candidate_count`;
 
 export function listItems(db: DatabaseSync, sessionId: number): ItemRow[] {
@@ -140,7 +141,7 @@ export function addItems(
 export function updateItemFields(
   db: DatabaseSync,
   id: number,
-  patch: { record?: Grade; sleeve?: Grade; year?: number | null },
+  patch: { record?: Grade; sleeve?: Grade; year?: number | null; notes?: string },
 ): ItemRow | null {
   const cur = getItem(db, id);
   if (!cur) return null;
@@ -149,6 +150,7 @@ export function updateItemFields(
     patch.sleeve ?? cur.sleeve,
     id,
   );
+  if (patch.notes !== undefined) db.prepare("UPDATE items SET notes = ? WHERE id = ?").run(patch.notes, id);
   if (patch.year !== undefined && patch.year !== cur.year) {
     db.prepare(
       `UPDATE items SET year = ?, status = 'pending', release_id = NULL, release_json = NULL, candidates_json = NULL,

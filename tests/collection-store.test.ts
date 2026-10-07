@@ -322,3 +322,33 @@ test("reprice and retry set refresh; applyLookup clears it", () => {
   applyLookup(db, b.id, { status: "error", error: "boom" });
   assert.equal((retryItem(db, b.id) as { refresh: boolean }).refresh, true);
 });
+
+test("notes save alone and survive lookup, year change and pick", () => {
+  const { db, s } = setup();
+  const [a, b] = addItems(db, s.id, [{ query: "A" }, { query: "B" }], G, 1);
+  const w = claimNextPending(db)!;
+  assert.equal(w.id, a.id);
+  const n = updateItemFields(db, a.id, { notes: "Seam split" })!;
+  assert.equal(n.status, "working");
+  assert.equal(n.notes, "Seam split");
+  applyLookup(db, a.id, { status: "priced", releaseId: 5, release: cand(5), suggestions: { NM: 1 }, pricedAt: 9 });
+  const priced = getItem(db, a.id)!;
+  assert.equal(priced.notes, "Seam split");
+
+  const again = updateItemFields(db, a.id, { notes: "OBI" })!;
+  assert.equal(again.status, "priced");
+  assert.equal(again.releaseId, 5);
+  assert.deepEqual(again.suggestions, { NM: 1 });
+  assert.equal(again.refresh, false);
+  assert.equal(listItems(db, s.id).find((r) => r.id === a.id)!.notes, "OBI");
+  assert.equal(updateItemFields(db, a.id, { year: 1971 })!.notes, "OBI");
+
+  claimNextPending(db); // a (re-queued by the year change)
+  claimNextPending(db); // b
+  updateItemFields(db, b.id, { notes: "Promo" });
+  applyLookup(db, b.id, { status: "to-pick", candidates: [cand(7)] });
+  const picked = pickRelease(db, b.id, 7);
+  assert.equal((picked as Exclude<typeof picked, string>).notes, "Promo");
+  assert.equal(getItem(db, b.id)!.notes, "Promo");
+  assert.equal(addItems(db, s.id, [{ query: "C" }], G, 2)[0].notes, "");
+});

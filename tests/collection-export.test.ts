@@ -14,7 +14,7 @@ let nextId = 1;
 const item = (o: Partial<ItemRow>): ItemRow => ({
   id: nextId++, sessionId: 1, query: "Q", year: null, record: "VG+", sleeve: "VG+", status: "pending",
   releaseId: null, release: null, candidates: null, suggestions: null, stats: null, pricedAt: null,
-  error: null, createdAt: 0, pick: null, refresh: false, ...o,
+  error: null, createdAt: 0, pick: null, refresh: false, notes: "", ...o,
 });
 const HEADER = "release_id,price,media_condition,sleeve_condition,status,external_id,private_notes";
 const sugg = { NM: 40, "VG+": 30, VG: 20, "G+": 10 };
