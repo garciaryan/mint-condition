@@ -1,5 +1,5 @@
 import { NOT_AFFILIATED } from "@/lib/discogs-terms.ts";
-import NavIcon from "@/app/NavIcon.tsx";
+import NavIcon from "@/components/layout/NavIcon.tsx";
 import { LINKS } from "@/lib/consts.ts";
 
 // Credits, and the notice the Discogs API terms require on every page. Plain links: no third-party scripts.

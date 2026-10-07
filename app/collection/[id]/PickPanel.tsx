@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Candidate } from "@/lib/types.ts";
 import type { ItemView } from "@/lib/collection/view.ts";
-import Picker from "@/app/Picker.tsx";
+import Picker from "@/components/lookup/Picker.tsx";
 import { api } from "@/lib/collection/client.ts";
 import { useDialog } from "@/hooks/useDialog.ts";
 

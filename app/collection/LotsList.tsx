@@ -7,8 +7,8 @@ import type { FormEvent } from "react";
 import { defaultLotName } from "@/lib/collection/ui.ts";
 import { relativeTime } from "@/lib/relative-time.ts";
 import type { Grade } from "@/lib/types.ts";
-import DiscogsCredit from "@/app/DiscogsCredit.tsx";
-import GradeSelect from "@/app/GradeSelect.tsx";
+import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";
+import GradeSelect from "@/components/ui/GradeSelect.tsx";
 import { money } from "@/lib/collection/client.ts";
 import { ROUTES } from "@/lib/consts.ts";
 

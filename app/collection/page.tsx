@@ -1,4 +1,4 @@
-import SiteHeader from "@/app/SiteHeader.tsx";
+import SiteHeader from "@/components/layout/SiteHeader.tsx";
 import LotsList from "@/app/collection/LotsList.tsx";
 
 export const metadata = { title: "Collections - Mint Condition" };

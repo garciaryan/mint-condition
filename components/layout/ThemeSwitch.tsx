@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { nextTheme, themeCookie } from "@/lib/theme.ts";
 import type { ThemeChoice } from "@/lib/theme.ts";
-import NavIcon from "@/app/NavIcon.tsx";
+import NavIcon from "@/components/layout/NavIcon.tsx";
 
 const NAMES: Record<ThemeChoice, string> = { system: "System", light: "Light", dark: "Dark" };
 

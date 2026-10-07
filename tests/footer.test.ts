@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const footer = readFileSync("app/SiteFooter.tsx", "utf8");
+const footer = readFileSync("components/layout/SiteFooter.tsx", "utf8");
 const css = readFileSync("app/globals.css", "utf8");
 
 test("footer links to the docs (repo README) and Buy Me a Coffee in a new tab, without third-party scripts", () => {
@@ -19,7 +19,7 @@ test("footer sits at the bottom of short pages", () => {
 });
 
 test("the sidebar collapse toggle says what it will do and whether the sidebar is open", () => {
-  const nav = readFileSync("app/SiteNav.tsx", "utf8");
+  const nav = readFileSync("components/layout/SiteNav.tsx", "utf8");
   assert.match(nav, /aria-expanded=\{!collapsed\}/);
   assert.match(nav, /"Expand sidebar" : "Collapse sidebar"/);
 });

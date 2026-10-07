@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NavLot } from "@/lib/nav.ts";
-import NavIcon from "@/app/NavIcon.tsx";
-import type { IconName } from "@/app/NavIcon.tsx";
+import NavIcon from "@/components/layout/NavIcon.tsx";
+import type { IconName } from "@/components/layout/NavIcon.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 // `label` in the sidebar, `tab` under the icon in the phone tab bar.

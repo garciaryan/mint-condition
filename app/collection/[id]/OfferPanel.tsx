@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { SessionRow } from "@/lib/collection/types.ts";
 import { cash, offerNotes, offerSummary } from "@/lib/collection/ui.ts";
 import type { OfferSide, OfferView } from "@/lib/offer.ts";
-import DiscogsCredit from "@/app/DiscogsCredit.tsx";
+import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";
 import { api } from "@/lib/collection/client.ts";
 
 const OPEN_KEY = "offerPanelOpen";

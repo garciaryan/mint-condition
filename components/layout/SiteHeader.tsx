@@ -3,7 +3,7 @@ import { listSessions } from "@/lib/collection/store.ts";
 import { getDb } from "@/lib/db.ts";
 import { NAV_COOKIE, navLots, parseNavCookie } from "@/lib/nav.ts";
 import { parseThemeCookie, THEME_COOKIE } from "@/lib/theme.ts";
-import SiteNav from "@/app/SiteNav.tsx";
+import SiteNav from "@/components/layout/SiteNav.tsx";
 
 // Reads cookies and the collections (the sidebar submenu) at request time; pages using this must export
 // `dynamic = "force-dynamic"` so it is never prerendered at build.

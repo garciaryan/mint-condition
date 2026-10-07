@@ -1,6 +1,6 @@
 import { authMode } from "@/lib/auth.ts";
-import LogoutButton from "@/app/LogoutButton.tsx";
-import SiteHeader from "@/app/SiteHeader.tsx";
+import LogoutButton from "@/components/layout/LogoutButton.tsx";
+import SiteHeader from "@/components/layout/SiteHeader.tsx";
 import SettingsForm from "@/app/settings/SettingsForm.tsx";
 
 export const metadata = { title: "Settings - Mint Condition" };

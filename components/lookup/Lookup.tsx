@@ -10,13 +10,13 @@ import type { FieldErrors } from "@/lib/form.ts";
 import type { LookupResponse } from "@/lib/lookup.ts";
 import { GRADE_NAMES } from "@/lib/types.ts";
 import type { Candidate, Grade } from "@/lib/types.ts";
-import GradeSelect from "@/app/GradeSelect.tsx";
-import Picker, { Thumb } from "@/app/Picker.tsx";
-import ScanButton from "@/app/ScanButton.tsx";
+import GradeSelect from "@/components/ui/GradeSelect.tsx";
+import Picker, { Thumb } from "@/components/lookup/Picker.tsx";
+import ScanButton from "@/components/scan/ScanButton.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 // Loaded only when the scan icon is pressed, so the camera code and detector stay out of the page bundle.
-const LookupScanner = dynamic(() => import("@/app/LookupScanner.tsx"), { ssr: false });
+const LookupScanner = dynamic(() => import("@/components/lookup/LookupScanner.tsx"), { ssr: false });
 
 type Priced = Extract<LookupResponse, { status: "priced" | "no-price" }>;
 type LookupError = Extract<LookupResponse, { status: "error" }>;

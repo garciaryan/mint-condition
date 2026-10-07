@@ -19,15 +19,15 @@ test("releaseUrl links to the release page on discogs.com", () => {
 
 test("every page shows the footer notice", () => {
   assert.match(src("app/layout.tsx"), /<SiteFooter \/>/);
-  assert.match(src("app/SiteFooter.tsx"), /NOT_AFFILIATED/);
+  assert.match(src("components/layout/SiteFooter.tsx"), /NOT_AFFILIATED/);
 });
 
 test("Discogs data is credited next to it, with a followed link", () => {
-  for (const f of ["app/Lookup.tsx", "app/collection/[id]/ItemRow.tsx", "app/collection/[id]/print/page.tsx"]) {
+  for (const f of ["components/lookup/Lookup.tsx", "app/collection/[id]/ItemRow.tsx", "app/collection/[id]/print/page.tsx"]) {
     assert.match(src(f), /DATA_CREDIT/, f);
   }
-  for (const f of ["app/Lookup.tsx", "app/collection/[id]/ItemRow.tsx"]) assert.match(src(f), /releaseUrl\(/, f);
-  for (const f of ["app/Lookup.tsx", "app/collection/[id]/ItemRow.tsx", "app/SiteFooter.tsx"]) {
+  for (const f of ["components/lookup/Lookup.tsx", "app/collection/[id]/ItemRow.tsx"]) assert.match(src(f), /releaseUrl\(/, f);
+  for (const f of ["components/lookup/Lookup.tsx", "app/collection/[id]/ItemRow.tsx", "components/layout/SiteFooter.tsx"]) {
     assert.doesNotMatch(src(f), /nofollow/, f);
   }
 });
@@ -46,17 +46,17 @@ test("Discogs data older than 6 hours counts as expired", async () => {
 
 test("every place that shows Discogs data or numbers worked out from it carries the credit", () => {
   for (const f of [
-    "app/Picker.tsx", "app/collection/[id]/TotalsBar.tsx", "app/collection/[id]/OfferPanel.tsx",
+    "components/lookup/Picker.tsx", "app/collection/[id]/TotalsBar.tsx", "app/collection/[id]/OfferPanel.tsx",
     "app/collection/LotsList.tsx", "app/collection/[id]/Scanner.tsx",
   ]) {
     assert.match(src(f), /<DiscogsCredit\b/, f);
   }
-  assert.match(src("app/DiscogsCredit.tsx"), /DATA_CREDIT/);
-  assert.doesNotMatch(src("app/DiscogsCredit.tsx"), /nofollow/);
-  assert.match(src("app/Picker.tsx"), /searchUrl\(/);
+  assert.match(src("components/ui/DiscogsCredit.tsx"), /DATA_CREDIT/);
+  assert.doesNotMatch(src("components/ui/DiscogsCredit.tsx"), /nofollow/);
+  assert.match(src("components/lookup/Picker.tsx"), /searchUrl\(/);
   assert.match(src("app/collection/[id]/print/page.tsx"), /discogs\.com\/release\//);
 });
 
 test("the result card hides prices once they pass the 6-hour limit", () => {
-  assert.match(src("app/Lookup.tsx"), /dataExpired\(/);
+  assert.match(src("components/lookup/Lookup.tsx"), /dataExpired\(/);
 });

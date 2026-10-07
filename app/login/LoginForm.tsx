@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import NavIcon from "@/app/NavIcon.tsx";
+import NavIcon from "@/components/layout/NavIcon.tsx";
 
 export default function LoginForm({ next }: { next: string }) {
   const [password, setPassword] = useState("");

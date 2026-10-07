@@ -4,9 +4,9 @@ import { useState } from "react";
 import { navCookie } from "@/lib/nav.ts";
 import type { NavLot } from "@/lib/nav.ts";
 import type { ThemeChoice } from "@/lib/theme.ts";
-import NavIcon from "@/app/NavIcon.tsx";
-import NavLinks from "@/app/NavLinks.tsx";
-import ThemeSwitch from "@/app/ThemeSwitch.tsx";
+import NavIcon from "@/components/layout/NavIcon.tsx";
+import NavLinks from "@/components/layout/NavLinks.tsx";
+import ThemeSwitch from "@/components/layout/ThemeSwitch.tsx";
 import { LINKS } from "@/lib/consts.ts";
 
 // Sidebar on wider screens (expanded, or an icon rail once collapsed); a bottom tab bar on phones (CSS decides).

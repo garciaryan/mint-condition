@@ -13,7 +13,7 @@ import { DATA_CREDIT } from "@/lib/discogs-terms.ts";
 import { relativeTime } from "@/lib/relative-time.ts";
 import { kickWorker } from "@/lib/collection/worker.ts";
 import { getSettings } from "@/lib/settings-store.ts";
-import SiteHeader from "@/app/SiteHeader.tsx";
+import SiteHeader from "@/components/layout/SiteHeader.tsx";
 import PrintButton from "@/app/collection/[id]/print/PrintButton.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { coverageText, etaText } from "@/lib/collection/ui.ts";
 import type { QueueState, Totals } from "@/lib/collection/view.ts";
-import DiscogsCredit from "@/app/DiscogsCredit.tsx";
+import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";
 import { money } from "@/lib/collection/client.ts";
 
 export default function TotalsBar({

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { LOOKUP_HOLD_MS } from "@/lib/camera.ts";
-import ScanFrame from "@/app/ScanFrame.tsx";
+import ScanFrame from "@/components/scan/ScanFrame.tsx";
 import { useFadeOut } from "@/hooks/useFadeOut.ts";
 import { useDialog } from "@/hooks/useDialog.ts";
 import { useBarcodeCamera } from "@/hooks/useBarcodeCamera.ts";
