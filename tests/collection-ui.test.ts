@@ -179,3 +179,14 @@ test("wantHaveText gives lot rows a visible want/have line whenever Discogs sent
   assert.equal(wantHaveText({}), null);
   assert.match(readFileSync("components/collection/ItemRow.tsx", "utf8"), /wantHaveText\(item\)/);
 });
+
+test("the buy sheet explains a missing star when slow sellers are left out of picks", () => {
+  const sheet = readFileSync("app/collection/[id]/print/page.tsx", "utf8");
+  assert.match(sheet, /\{lot\.skipSlow && <p>★ leaves out slow sellers, so a record above the pick threshold can be without a star\.<\/p>\}/);
+});
+
+test("the demand badge gives its counts once (screen-reader text, no title tooltip)", () => {
+  const badge = readFileSync("components/ui/DemandBadge.tsx", "utf8");
+  assert.doesNotMatch(badge, /title=/);
+  assert.match(badge, /className="sr-only"/);
+});

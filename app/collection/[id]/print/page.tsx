@@ -214,6 +214,7 @@ export default async function BuySheetPage({ params }: Props) {
         <footer className="sheet-foot muted small">
           <p>{DATA_CREDIT}: asking prices and suggestions, not confirmed sales.</p>
           {lot.unverified && <p>★ uses the lowered offer grades, so a record can show more than the pick threshold without a star.</p>}
+          {lot.skipSlow && <p>★ leaves out slow sellers, so a record above the pick threshold can be without a star.</p>}
           {oldest !== null && Date.now() - oldest > 3_600_000 && <p>Oldest prices: {relativeTime(oldest)}</p>}
         </footer>
       </main>
