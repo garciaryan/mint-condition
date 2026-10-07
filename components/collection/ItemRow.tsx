@@ -9,7 +9,7 @@ import DemandBadge from "@/components/ui/DemandBadge.tsx";
 import GradeSelect from "@/components/ui/GradeSelect.tsx";
 import { Thumb } from "@/components/lookup/Picker.tsx";
 import { addTag, cleanNote, hasTag, NOTE_MAX, NOTE_TAGS, noteKeyAction } from "@/lib/collection/notes.ts";
-import { STATUS_INFO, displayStatus } from "@/lib/collection/ui.ts";
+import { STATUS_INFO, displayStatus, wantHaveText } from "@/lib/collection/ui.ts";
 import { money } from "@/lib/collection/client.ts";
 
 export const ICONS = {
@@ -209,9 +209,10 @@ export default function ItemRow({
         <div className="title">{title}</div>
         <div className="row-meta">
           <div className="sub">{subline(item)}</div>
-          {item.demand && (item.demand === "fast" || item.demand === "slow") && (
-            <div className="sub">
+          {wantHaveText(item) && (
+            <div className="sub row-demand">
               <DemandBadge demand={item.demand} have={item.have} want={item.want} forSale={item.stats?.numForSale ?? 0} />
+              <span>{wantHaveText(item)}</span>
             </div>
           )}
           {item.release && (

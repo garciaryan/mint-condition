@@ -1554,6 +1554,14 @@ kbd {
   border: 1px solid var(--warn-line);
 }
 
+/* Lot rows: the badge and the want/have counts on one wrapping line. */
+.row-demand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
 .price-head {
   display: flex;
   align-items: baseline;

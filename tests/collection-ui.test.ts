@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { coverageText, displayStatus, etaText, offerNotes, offerSummary, pasteSummary } from "../lib/collection/ui.ts";
+import { coverageText, displayStatus, etaText, offerNotes, offerSummary, pasteSummary, wantHaveText } from "../lib/collection/ui.ts";
 import { computeOffer, offerInputs } from "../lib/offer.ts";
 import { parseSettings } from "../lib/settings.ts";
 import type { ItemRow } from "../lib/collection/types.ts";
@@ -160,4 +160,22 @@ test("demand badges use the status pill tokens: fast like Priced, slow like To p
 test("coverageText counts slow sellers", () => {
   assert.equal(coverageText({ priced: 5, total: 6, toPick: 1, noPrice: 0, problems: 0, slow: 2 }), "5 of 6 priced · 1 to pick · 2 slow");
   assert.equal(coverageText({ priced: 5, total: 5, toPick: 0, noPrice: 0, problems: 0, slow: 0 }), "5 of 5 priced");
+});
+
+test("offer notes say when slow sellers are left out of picks", () => {
+  const slow = row({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 }, stats: { lowestPrice: 1, currency: null, numForSale: 50, have: 100, want: 10 } });
+  const on = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0, skipSlow: true }, settings);
+  assert.deepEqual(offerNotes(computeOffer([slow], on, settings), "USD"), [
+    "Slow sellers left out of picks",
+    "Picks: none at or above $15 once slow sellers are left out",
+  ]);
+  const off = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);
+  assert.deepEqual(offerNotes(computeOffer([slow], off, settings), "USD"), []);
+});
+
+test("wantHaveText gives lot rows a visible want/have line whenever Discogs sent the counts", () => {
+  assert.equal(wantHaveText({ want: 3357, have: 878 }), "3,357 want · 878 have");
+  assert.equal(wantHaveText({ want: 0, have: 5 }), "0 want · 5 have");
+  assert.equal(wantHaveText({}), null);
+  assert.match(readFileSync("components/collection/ItemRow.tsx", "utf8"), /wantHaveText\(item\)/);
 });

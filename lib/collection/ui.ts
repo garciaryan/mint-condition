@@ -113,6 +113,16 @@ export function offerNotes(offer: OfferView, currency: string): string[] {
     const s = offer.inputs.unverifiedSteps;
     notes.push(`Grades lowered ${s} ${s === 1 ? "step" : "steps"} for this offer (condition unverified)`);
   }
-  if (offer.picks === 0) notes.push(`Picks: none at or above ${cash(offer.inputs.pickThreshold, currency)}`);
+  if (offer.inputs.skipSlow) notes.push("Slow sellers left out of picks");
+  if (offer.picks === 0) {
+    const tail = offer.inputs.skipSlow ? " once slow sellers are left out" : "";
+    notes.push(`Picks: none at or above ${cash(offer.inputs.pickThreshold, currency)}${tail}`);
+  }
   return notes;
+}
+
+/** "3,357 want · 878 have" for a lot row, or null when Discogs sent no counts (rows priced before Phase 10). */
+export function wantHaveText(c: { want?: number; have?: number }): string | null {
+  if (c.want === undefined || c.have === undefined) return null;
+  return `${c.want.toLocaleString("en-US")} want · ${c.have.toLocaleString("en-US")} have`;
 }
