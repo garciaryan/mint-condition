@@ -28,7 +28,7 @@ test("the login page centers its heading and card, and only its footer is center
 });
 
 test("the show-password toggle is an eye icon inside the field, named and pressable", () => {
-  const form = readFileSync("app/login/LoginForm.tsx", "utf8");
+  const form = readFileSync("components/login/LoginForm.tsx", "utf8");
   assert.match(form, /className="password-toggle"[\s\S]*aria-label="Show password"[\s\S]*aria-pressed=\{show\}/);
   assert.match(form, /<NavIcon name=\{show \? "eye-off" : "eye"\} \/>/);
   assert.match(css, /\.password-field input \{[^}]*padding-right: var\(--control-h\);/);

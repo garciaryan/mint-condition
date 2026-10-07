@@ -7,7 +7,7 @@ import { FIELD_KEYS, formatDefault, formView, fromForm, parseLadder, toForm } fr
 import type { FieldKey, SettingsForm as Form } from "@/lib/settings-form.ts";
 import { GRADES } from "@/lib/types.ts";
 import type { Settings } from "@/lib/types.ts";
-import HelpTip from "@/app/settings/HelpTip.tsx";
+import HelpTip from "@/components/settings/HelpTip.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 type State = {

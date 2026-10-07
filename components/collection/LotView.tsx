@@ -8,12 +8,12 @@ import type { ItemView } from "@/lib/collection/view.ts";
 import type { Grade } from "@/lib/types.ts";
 import { api } from "@/lib/collection/client.ts";
 import type { LotData } from "@/lib/collection/client.ts";
-import EntryBar from "@/app/collection/[id]/EntryBar.tsx";
-import ItemRow from "@/app/collection/[id]/ItemRow.tsx";
-import LotHeader from "@/app/collection/[id]/LotHeader.tsx";
-import OfferPanel from "@/app/collection/[id]/OfferPanel.tsx";
-import PickPanel from "@/app/collection/[id]/PickPanel.tsx";
-import TotalsBar from "@/app/collection/[id]/TotalsBar.tsx";
+import EntryBar from "@/components/collection/EntryBar.tsx";
+import ItemRow from "@/components/collection/ItemRow.tsx";
+import LotHeader from "@/components/collection/LotHeader.tsx";
+import OfferPanel from "@/components/collection/OfferPanel.tsx";
+import PickPanel from "@/components/collection/PickPanel.tsx";
+import TotalsBar from "@/components/collection/TotalsBar.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 type Filter = "all" | "to-pick" | "problems";

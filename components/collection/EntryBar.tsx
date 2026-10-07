@@ -10,11 +10,11 @@ import GradeSelect from "@/components/ui/GradeSelect.tsx";
 import ScanButton from "@/components/scan/ScanButton.tsx";
 import { createSerialQueue } from "@/lib/collection/ui.ts";
 import { api } from "@/lib/collection/client.ts";
-import type { ScanAddResult } from "@/app/collection/[id]/Scanner.tsx";
-import PasteList from "@/app/collection/[id]/PasteList.tsx";
+import type { ScanAddResult } from "@/components/collection/Scanner.tsx";
+import PasteList from "@/components/collection/PasteList.tsx";
 
 // Loaded only when Scan is opened, so the camera code and detector stay out of the page bundle.
-const Scanner = dynamic(() => import("@/app/collection/[id]/Scanner.tsx"), { ssr: false });
+const Scanner = dynamic(() => import("@/components/collection/Scanner.tsx"), { ssr: false });
 
 type FailedLine = { key: number; line: NewLine; grades: { record: Grade; sleeve: Grade } };
 let failedKey = 0;

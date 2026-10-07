@@ -5,7 +5,7 @@ import type { Grade } from "@/lib/types.ts";
 import { STATUS_INFO, displayStatus } from "@/lib/collection/ui.ts";
 import type { ItemView } from "@/lib/collection/view.ts";
 import { money } from "@/lib/collection/client.ts";
-import { Icon } from "@/app/collection/[id]/ItemRow.tsx";
+import { Icon } from "@/components/collection/ItemRow.tsx";
 import { LOT_CUE_MS } from "@/lib/camera.ts";
 import ScanFrame from "@/components/scan/ScanFrame.tsx";
 import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";

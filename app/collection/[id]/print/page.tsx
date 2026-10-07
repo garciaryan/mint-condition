@@ -14,7 +14,7 @@ import { relativeTime } from "@/lib/relative-time.ts";
 import { kickWorker } from "@/lib/collection/worker.ts";
 import { getSettings } from "@/lib/settings-store.ts";
 import SiteHeader from "@/components/layout/SiteHeader.tsx";
-import PrintButton from "@/app/collection/[id]/print/PrintButton.tsx";
+import PrintButton from "@/components/collection/PrintButton.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 // SiteHeader reads cookies and the database at request time, and so does the sheet. Never prerender.

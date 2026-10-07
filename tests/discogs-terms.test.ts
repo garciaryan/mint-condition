@@ -23,11 +23,11 @@ test("every page shows the footer notice", () => {
 });
 
 test("Discogs data is credited next to it, with a followed link", () => {
-  for (const f of ["components/lookup/Lookup.tsx", "app/collection/[id]/ItemRow.tsx", "app/collection/[id]/print/page.tsx"]) {
+  for (const f of ["components/lookup/Lookup.tsx", "components/collection/ItemRow.tsx", "app/collection/[id]/print/page.tsx"]) {
     assert.match(src(f), /DATA_CREDIT/, f);
   }
-  for (const f of ["components/lookup/Lookup.tsx", "app/collection/[id]/ItemRow.tsx"]) assert.match(src(f), /releaseUrl\(/, f);
-  for (const f of ["components/lookup/Lookup.tsx", "app/collection/[id]/ItemRow.tsx", "components/layout/SiteFooter.tsx"]) {
+  for (const f of ["components/lookup/Lookup.tsx", "components/collection/ItemRow.tsx"]) assert.match(src(f), /releaseUrl\(/, f);
+  for (const f of ["components/lookup/Lookup.tsx", "components/collection/ItemRow.tsx", "components/layout/SiteFooter.tsx"]) {
     assert.doesNotMatch(src(f), /nofollow/, f);
   }
 });
@@ -46,8 +46,8 @@ test("Discogs data older than 6 hours counts as expired", async () => {
 
 test("every place that shows Discogs data or numbers worked out from it carries the credit", () => {
   for (const f of [
-    "components/lookup/Picker.tsx", "app/collection/[id]/TotalsBar.tsx", "app/collection/[id]/OfferPanel.tsx",
-    "app/collection/LotsList.tsx", "app/collection/[id]/Scanner.tsx",
+    "components/lookup/Picker.tsx", "components/collection/TotalsBar.tsx", "components/collection/OfferPanel.tsx",
+    "components/collection/LotsList.tsx", "components/collection/Scanner.tsx",
   ]) {
     assert.match(src(f), /<DiscogsCredit\b/, f);
   }
