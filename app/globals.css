@@ -1532,6 +1532,47 @@ kbd {
   background: var(--accent-soft);
 }
 
+/* Demand badge (components/ui/DemandBadge): fast reads like the Priced pill, slow like To pick. */
+.demand {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.demand.fast {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.demand.slow {
+  color: var(--warn);
+  background: var(--notice-bg);
+  border: 1px solid var(--warn-line);
+}
+
+/* Lot rows: the badge and the want/have counts on one wrapping line. */
+.row-demand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.price-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.price-head h3 {
+  margin-bottom: 8px;
+}
+
 .s-pick {
   color: var(--warn);
   background: var(--notice-bg);
@@ -2619,28 +2660,57 @@ kbd {
   padding: 0 16px 16px;
 }
 
+/* Offer options dropdown (Condition unverified, Leave slow sellers out of cherry-picks): one row per checkbox. */
+.offer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.offer-options {
+  min-width: 280px;
+}
+
+.offer-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--control-h);
+  padding: 4px 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.offer-option input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+/* Options on the left, the amount inputs pushed right; the button lines up with the input boxes, not their labels. */
 .offer-inputs {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 12px 16px;
   margin-bottom: 16px;
 }
 
+.offer-inputs > .dropdown {
+  margin-right: auto;
+}
+
+/* As wide as the amount inputs beside it (.offer-inputs .field); phones make both fill their column. */
+.offer-inputs > .dropdown > button {
+  width: 150px;
+  min-height: var(--control-h);
+  padding: 0 12px;
+}
+
 .offer-inputs .field {
   width: 150px;
-}
-
-.offer-inputs .switch {
-  width: auto;
-  min-height: var(--control-h);
-  font-size: 15px;
-}
-
-.offer-inputs .switch input {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--accent);
 }
 
 .offer-sides {
@@ -2764,12 +2834,28 @@ kbd {
     grid-template-columns: 1fr;
   }
 
-  .offer-inputs .field {
-    width: calc(50% - 8px);
+  /* An even two-column grid: Options and the three amounts, each cell the same width. */
+  .offer-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+    align-items: end;
   }
 
-  .offer-inputs .switch {
+  .offer-inputs .field {
+    width: auto;
+    min-width: 0;
+  }
+
+  .offer-inputs > .dropdown > button {
     width: 100%;
+  }
+
+  /* The open panel spans both columns (two columns + the 16px gap), the width of the inputs grid, so labels fit. */
+  .offer-options {
+    min-width: 0;
+    width: calc(200% + 16px);
+    max-width: calc(100vw - 2 * var(--gutter));
   }
 
   .star {

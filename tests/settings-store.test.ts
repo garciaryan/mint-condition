@@ -110,3 +110,12 @@ test("a saved row that is not an object is reported invalid", () => {
 test("saving discogs: null is rejected with a settings message", () => {
   assert.throws(() => saveSettings(db, { discogs: null }), /^Error: settings: discogs\.cacheHours/);
 });
+
+test("a row saved before demand thresholds existed loads with the default thresholds", () => {
+  const { demand: _unused, ...old } = defaults;
+  db.prepare("INSERT INTO settings (id, json, updated_at) VALUES (1, ?, 1)").run(JSON.stringify({ ...old, offer: { ...old.offer, marginPercent: 35 } }));
+  const s = getSettings(db);
+  assert.equal(s.invalid, null);
+  assert.equal(s.settings.offer.marginPercent, 35);
+  assert.deepEqual(s.settings.demand, defaults.demand);
+});

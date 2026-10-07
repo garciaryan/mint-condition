@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { coverageText, displayStatus, etaText, offerNotes, offerSummary, pasteSummary } from "../lib/collection/ui.ts";
+import { coverageText, displayStatus, etaText, offerNotes, offerOptionsLabel, offerSummary, pasteSummary, showsCherryPicks, wantHaveText } from "../lib/collection/ui.ts";
 import { computeOffer, offerInputs } from "../lib/offer.ts";
 import { parseSettings } from "../lib/settings.ts";
 import type { ItemRow } from "../lib/collection/types.ts";
@@ -149,4 +149,97 @@ test("phone rows show a labelled, padded Market value box; wider screens keep th
   assert.match(row, /className="price-block row-market"/);
   assert.match(row, /<small>Low<\/small>[\s\S]*<small>Suggested<\/small>[\s\S]*<small>High<\/small>/);
   assert.match(row, /Market value/);
+});
+
+test("demand badges use the status pill tokens: fast like Priced, slow like To pick", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\.demand\.fast \{[^}]*color: var\(--accent\);[^}]*background: var\(--accent-soft\);/);
+  assert.match(css, /\.demand\.slow \{[^}]*color: var\(--warn\);[^}]*background: var\(--notice-bg\);[^}]*border: 1px solid var\(--warn-line\);/);
+});
+
+test("coverageText counts slow sellers", () => {
+  assert.equal(coverageText({ priced: 5, total: 6, toPick: 1, noPrice: 0, problems: 0, slow: 2 }), "5 of 6 priced · 1 to pick · 2 slow");
+  assert.equal(coverageText({ priced: 5, total: 5, toPick: 0, noPrice: 0, problems: 0, slow: 0 }), "5 of 5 priced");
+});
+
+test("offer notes say when slow sellers are left out of picks", () => {
+  const slow = row({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 }, stats: { lowestPrice: 1, currency: null, numForSale: 50, have: 100, want: 10 } });
+  const on = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0, skipSlow: true }, settings);
+  assert.deepEqual(offerNotes(computeOffer([slow], on, settings), "USD"), [
+    "Slow sellers left out of cherry-picks",
+    "Picks: none at or above $15 once slow sellers are left out",
+  ]);
+  const off = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);
+  assert.deepEqual(offerNotes(computeOffer([slow], off, settings), "USD"), []);
+});
+
+test("wantHaveText gives lot rows a visible want/have line whenever Discogs sent the counts", () => {
+  assert.equal(wantHaveText({ want: 3357, have: 878 }), "3,357 want · 878 have");
+  assert.equal(wantHaveText({ want: 0, have: 5 }), "0 want · 5 have");
+  assert.equal(wantHaveText({}), null);
+  assert.match(readFileSync("components/collection/ItemRow.tsx", "utf8"), /wantHaveText\(item\)/);
+});
+
+test("the buy sheet explains a missing star when slow sellers are left out of picks", () => {
+  const sheet = readFileSync("app/collection/[id]/print/page.tsx", "utf8");
+  assert.match(sheet, /\{lot\.skipSlow && <p>★ leaves out slow sellers, so a record above the pick threshold can be without a star\.<\/p>\}/);
+});
+
+test("the demand badge gives its counts once (screen-reader text, no title tooltip)", () => {
+  const badge = readFileSync("components/ui/DemandBadge.tsx", "utf8");
+  assert.doesNotMatch(badge, /title=/);
+  assert.match(badge, /className="sr-only"/);
+});
+
+test("offerOptionsLabel says how many offer options are on", () => {
+  assert.equal(offerOptionsLabel(false, false), "Options");
+  assert.equal(offerOptionsLabel(true, false), "Options · 1 on");
+  assert.equal(offerOptionsLabel(false, true), "Options · 1 on");
+  assert.equal(offerOptionsLabel(true, true), "Options · 2 on");
+});
+
+test("offer inputs: Options on the left and the inputs to the right on desktop; an even two-column grid on phones", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.offer-inputs \{[^}]*display: flex;[^}]*align-items: flex-end;/, "button lines up with the input boxes");
+  assert.match(css, /\.offer-inputs > \.dropdown \{[^}]*margin-right: auto;/, "Options left, inputs pushed right");
+  assert.match(css, /\.offer-inputs > \.dropdown > button \{[^}]*min-height: var\(--control-h\);/);
+  assert.match(phone, /\.offer-inputs \{[^}]*display: grid;[^}]*grid-template-columns: 1fr 1fr;/);
+  assert.match(phone, /\.offer-inputs > \.dropdown > button \{[^}]*width: 100%;/);
+});
+
+test("offer option rows have their own class, so the input widths don't squeeze them", () => {
+  const panel = readFileSync("components/collection/OfferPanel.tsx", "utf8");
+  assert.match(panel, /className="offer-option"/);
+  assert.doesNotMatch(panel.slice(panel.indexOf('id="offer-options"')), /^[^]*?className="field inline switch"[^]*?<\/div>\s*\)\}/);
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\.offer-option \{[^}]*min-height: var\(--control-h\);/);
+});
+
+test("on phones the open Options panel spans both input columns, so its labels have room", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(phone, /\.offer-inputs \{[^}]*column-gap: 16px;/);
+  assert.match(phone, /\.offer-options \{[^}]*min-width: 0;[^}]*width: calc\(200% \+ 16px\);[^}]*max-width: calc\(100vw - 2 \* var\(--gutter\)\);/);
+});
+
+test("the cherry-pick ladder shows only when some records are picks and some aren't", () => {
+  const pick = row({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 } });
+  const cheap = row({ status: "priced", suggestions: { NM: 4, "VG+": 3, VG: 2 } });
+  const inputs = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);
+  assert.equal(showsCherryPicks(computeOffer([pick, cheap], inputs, settings)), true);
+  assert.equal(showsCherryPicks(computeOffer([pick, pick], inputs, settings)), false, "all picks");
+  assert.equal(showsCherryPicks(computeOffer([cheap, cheap], inputs, settings)), false, "no picks");
+  assert.equal(showsCherryPicks(computeOffer([], inputs, settings)), false, "empty");
+  for (const f of ["components/collection/OfferPanel.tsx", "app/collection/[id]/print/page.tsx"]) {
+    assert.match(readFileSync(f, "utf8"), /showsCherryPicks\(offer\) && \(?\s*<Ladder caption=\{`Cherry-picks/, f);
+  }
+});
+
+test("the Options button is as wide as the offer inputs on desktop", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  // Top-level (desktop) rules start at column 0; the phone overrides are indented inside their @media block.
+  const field = css.match(/^\.offer-inputs \.field \{[^}]*width: (\d+px);/m)?.[1];
+  assert.ok(field, "offer input width");
+  assert.match(css, new RegExp(`^\\.offer-inputs > \\.dropdown > button \\{[^}]*width: ${field};`, "m"));
 });

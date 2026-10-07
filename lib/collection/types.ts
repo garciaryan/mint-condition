@@ -14,6 +14,8 @@ export type SessionRow = {
   pickThreshold: number | null;
   bulkEach: number | null;
   lotOverhead: number;
+  /** Automatic cherry-picks leave out records whose demand is slow (pins still win). */
+  skipSlow: boolean;
 };
 
 export type SessionPatch = {
@@ -24,6 +26,7 @@ export type SessionPatch = {
   pickThreshold?: number | null;
   bulkEach?: number | null;
   lotOverhead?: number;
+  skipSlow?: boolean;
 };
 
 export type ItemRow = {

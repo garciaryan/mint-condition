@@ -53,7 +53,7 @@ export function msPerItem(): number {
 // pricedAt is when Discogs answered (the older of the two), so prices served from the cache show their real age.
 async function priceRelease(client: CachedLookupClient, item: ItemRow, id: number, extra: Partial<LookupPatch>): Promise<LookupPatch> {
   const opts = { fresh: item.refresh };
-  const [sugg, st] = await Promise.all([client.priceSuggestions(id, opts), client.marketplaceStats(id, opts)]);
+  const [sugg, st] = await Promise.all([client.priceSuggestions(id, opts), client.releaseStats(id, opts)]);
   const suggestions = sugg.value;
   const status = suggestions && suggestions[item.record] !== undefined ? "priced" : "no-price";
   return { status, ...extra, suggestions: suggestions ?? null, stats: st.value, pricedAt: Math.min(sugg.fetchedAt, st.fetchedAt) };

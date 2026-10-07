@@ -1,0 +1,14 @@
+{
+  "id": 5193282,
+  "num_for_sale": 6,
+  "lowest_price": 475,
+  "master_id": 32208,
+  "community": { "have": 878, "want": 3357, "rating": { "count": 170, "average": 4.68 } },
+  "identifiers": [
+    { "type": "Matrix / Runout", "value": "BN 1577-A", "description": "Label side A" },
+    { "type": "Matrix / Runout", "value": "BN 1577-B", "description": "Label side B" },
+    { "type": "Matrix / Runout", "value": "RVG BN-LP-1577-A... 9 M", "description": "Runout side A" },
+    { "type": "Matrix / Runout", "value": "RVG BN-LP-1577-B... 9 M", "description": "Runout side B" },
+    { "type": "Rights Society", "value": "BMI" }
+  ]
+}

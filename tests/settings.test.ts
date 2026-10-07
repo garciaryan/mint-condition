@@ -81,3 +81,16 @@ test("discogs.cacheHours is a whole number from 0 to 6 (Discogs terms: data at m
   for (const bad of [-1, 7, 24, 1.5, "6", null]) assert.throws(() => parseSettings(withHours(bad)), /discogs\.cacheHours/);
   for (const ok of [0, 6]) assert.doesNotThrow(() => parseSettings(withHours(ok)));
 });
+
+test("settings.json has the demand defaults", () => {
+  assert.deepEqual(settings.demand, { fastWantHave: 1, fastMaxForSale: 10, slowWantHave: 0.3, slowForSale: 200 });
+});
+
+test("demand thresholds are validated", () => {
+  const withDemand = (d: Partial<Settings["demand"]>) => parseSettings({ ...settings, demand: { ...settings.demand, ...d } });
+  assert.throws(() => withDemand({ fastWantHave: -1 }), /demand\.fastWantHave/);
+  assert.throws(() => withDemand({ slowForSale: 150.5 }), /demand\.slowForSale/);
+  assert.throws(() => withDemand({ fastWantHave: 0.3 }), /demand\.fastWantHave must be greater than demand\.slowWantHave/);
+  assert.throws(() => withDemand({ fastMaxForSale: 200 }), /demand\.fastMaxForSale must be less than demand\.slowForSale/);
+  assert.throws(() => parseSettings({ ...settings, demand: undefined }), /demand must be an object/);
+});

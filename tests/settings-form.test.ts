@@ -135,3 +135,28 @@ test("multipliers keep up to four decimals of percent", () => {
   assert.ok(r2.ok);
   assert.equal(r2.value.sleeveMultipliers["VG+"], 0.951235);
 });
+
+test("demand thresholds show plainly, round-trip, and must keep fast and slow apart", () => {
+  const f = toForm(defaults);
+  assert.equal(f["demand.fastWantHave"], "1");
+  assert.equal(f["demand.fastMaxForSale"], "10");
+  assert.equal(f["demand.slowWantHave"], "0.3");
+  assert.equal(f["demand.slowForSale"], "200");
+  const back = fromForm(f);
+  assert.ok(back.ok);
+  assert.deepEqual(back.value.demand, defaults.demand);
+  const crossed = fromForm({ ...f, "demand.fastWantHave": "0.2" });
+  assert.ok(!crossed.ok);
+  assert.equal(crossed.errors["demand.fastWantHave"], "Must be more than the slow want/have.");
+  const flooded = fromForm({ ...f, "demand.fastMaxForSale": "300" });
+  assert.ok(!flooded.ok);
+  assert.equal(flooded.errors["demand.fastMaxForSale"], "Must be less than the slow for-sale count.");
+  const half = fromForm({ ...f, "demand.slowForSale": "150.5" });
+  assert.ok(!half.ok);
+  assert.equal(half.errors["demand.slowForSale"], "Use a whole number, 0 or more.");
+});
+
+test("formatDefault shows demand thresholds as plain numbers", () => {
+  assert.equal(formatDefault("demand.slowWantHave", defaults), "0.3");
+  assert.equal(formatDefault("demand.slowForSale", defaults), "200");
+});

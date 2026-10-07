@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { buySheetRows } from "@/lib/collection/export.ts";
 import { parseId } from "@/lib/collection/http.ts";
 import { getSession, listItems, requeueExpired } from "@/lib/collection/store.ts";
-import { cash, offerNotes } from "@/lib/collection/ui.ts";
+import { cash, offerNotes, showsCherryPicks } from "@/lib/collection/ui.ts";
 import { hideExpired, oldestPricedAt, PRICE_MAX_AGE_MS } from "@/lib/collection/view.ts";
 import { dbUnavailable, getDb } from "@/lib/db.ts";
 import { computeOffer, offerInputs } from "@/lib/offer.ts";
@@ -132,7 +132,7 @@ export default async function BuySheetPage({ params }: Props) {
         </header>
 
         <section className="sheet-offers" aria-label="Offers">
-          <Ladder caption={`Cherry-picks (${records(offer.picks)})`} side={offer.pickOnly} opening={offer.openingPercent} currency={currency} />
+          {showsCherryPicks(offer) && <Ladder caption={`Cherry-picks (${records(offer.picks)})`} side={offer.pickOnly} opening={offer.openingPercent} currency={currency} />}
           <Ladder
             caption={`Whole collection (${records(offer.picks + offer.bulkCount)})`}
             side={offer.wholeLot}
@@ -214,6 +214,7 @@ export default async function BuySheetPage({ params }: Props) {
         <footer className="sheet-foot muted small">
           <p>{DATA_CREDIT}: asking prices and suggestions, not confirmed sales.</p>
           {lot.unverified && <p>★ uses the lowered offer grades, so a record can show more than the pick threshold without a star.</p>}
+          {lot.skipSlow && <p>★ leaves out slow sellers, so a record above the pick threshold can be without a star.</p>}
           {oldest !== null && Date.now() - oldest > 3_600_000 && <p>Oldest prices: {relativeTime(oldest)}</p>}
         </footer>
       </main>

@@ -46,6 +46,7 @@ ALTER TABLE items    ADD COLUMN pick           INTEGER;   -- null = automatic, 1
 );
 ALTER TABLE items ADD COLUMN refresh INTEGER NOT NULL DEFAULT 0;  -- 1 = the next lookup for this row skips the cache`,
   `ALTER TABLE items ADD COLUMN notes TEXT NOT NULL DEFAULT '';  -- public listing comment; '' = none`,
+  `ALTER TABLE sessions ADD COLUMN skip_slow INTEGER NOT NULL DEFAULT 0;  -- 1 = automatic picks leave out slow sellers`,
 ];
 
 export function migrate(db: DatabaseSync, steps: string[]): number {

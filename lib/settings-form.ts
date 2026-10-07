@@ -10,6 +10,7 @@ export const FIELD_KEYS = [
   "offer.ladderPercents", "offer.openingPercent", "offer.marginPercent", "offer.overheadPerRecord",
   "offer.pickThreshold", "offer.bulkEach", "offer.unverifiedSteps",
   "discogs.cacheHours",
+  "demand.fastWantHave", "demand.fastMaxForSale", "demand.slowWantHave", "demand.slowForSale",
 ] as const;
 export type FieldKey = (typeof FIELD_KEYS)[number];
 export type SettingsForm = Record<FieldKey, string>;
@@ -18,6 +19,7 @@ export type EditableSettings = {
   sell: Settings["sell"];
   offer: Settings["offer"];
   discogs: { cacheHours: number };
+  demand: Settings["demand"];
 };
 
 /** Stored as a multiplier (0.8), shown and typed as a percent ("80"). */
@@ -25,12 +27,14 @@ export const PERCENT_FIELDS: ReadonlySet<FieldKey> = new Set<FieldKey>(
   GRADES.map((g) => `sleeveMultipliers.${g}` as FieldKey),
 );
 
-type Kind = "mult" | "percent" | "money" | "steps" | "hours" | "ladder";
+type Kind = "mult" | "percent" | "money" | "steps" | "hours" | "ladder" | "ratio" | "count";
 type Rule = { kind: Kind; ok: (n: number) => boolean; message: string };
 
 const BELOW_100: Rule = { kind: "percent", ok: (n) => n >= 0 && n < 100, message: "Use 0 up to (not including) 100." };
 const MONEY: Rule = { kind: "money", ok: (n) => n >= 0, message: "Use 0 or more." };
 const SLEEVE: Rule = { kind: "mult", ok: (n) => n >= 1 && n <= 150, message: "Use 1 to 150." };
+const RATIO: Rule = { kind: "ratio", ok: (n) => n >= 0, message: "Use 0 or more." };
+const COUNT: Rule = { kind: "count", ok: (n) => Number.isInteger(n) && n >= 0, message: "Use a whole number, 0 or more." };
 
 const RULES: Record<FieldKey, Rule> = {
   "sell.undercutPercent": BELOW_100,
@@ -52,6 +56,10 @@ const RULES: Record<FieldKey, Rule> = {
     kind: "hours", ok: (n) => Number.isInteger(n) && n >= 0 && n <= MAX_CACHE_HOURS,
     message: `Use a whole number from 0 to ${MAX_CACHE_HOURS}.`,
   },
+  "demand.fastWantHave": RATIO,
+  "demand.fastMaxForSale": COUNT,
+  "demand.slowWantHave": RATIO,
+  "demand.slowForSale": COUNT,
 };
 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
@@ -131,6 +139,10 @@ export function fromForm(
   else if (nums["offer.openingPercent"] !== undefined && !ladder.value.includes(nums["offer.openingPercent"])) {
     errors["offer.openingPercent"] = "Pick an opening offer from the ladder.";
   }
+  // Fast and slow must never overlap (parseSettings checks the same).
+  const [fw, sw, ff, sf] = (["demand.fastWantHave", "demand.slowWantHave", "demand.fastMaxForSale", "demand.slowForSale"] as const).map((k) => nums[k]);
+  if (fw !== undefined && sw !== undefined && fw <= sw) errors["demand.fastWantHave"] = "Must be more than the slow want/have.";
+  if (ff !== undefined && sf !== undefined && ff >= sf) errors["demand.fastMaxForSale"] = "Must be less than the slow for-sale count.";
   if (Object.keys(errors).length > 0 || !ladder.ok) return { ok: false, errors };
 
   const n = nums as Record<FieldKey, number>;
@@ -149,6 +161,12 @@ export function fromForm(
         unverifiedSteps: n["offer.unverifiedSteps"],
       },
       discogs: { cacheHours: n["discogs.cacheHours"] },
+      demand: {
+        fastWantHave: n["demand.fastWantHave"],
+        fastMaxForSale: n["demand.fastMaxForSale"],
+        slowWantHave: n["demand.slowWantHave"],
+        slowForSale: n["demand.slowForSale"],
+      },
     },
   };
 }

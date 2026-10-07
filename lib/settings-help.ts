@@ -21,6 +21,13 @@ const HELP: Partial<Record<FieldKey, string>> = {
     "When a collection is marked \"Condition unverified\", offers price every record this many grades lower, record and sleeve.",
   "discogs.cacheHours":
     "How long Discogs answers are reused before asking again. At most 6 (Discogs terms); 0 turns the cache off.",
+  "demand.fastWantHave":
+    "A record sells fast when Discogs users want it at least this many times per copy they own (want ÷ have)…",
+  "demand.fastMaxForSale": "…and no more than this many copies are for sale. Fast records get a \"Sells fast\" badge.",
+  "demand.slowWantHave":
+    "A record is a slow seller when want ÷ have is below this, since few people are looking for it.",
+  "demand.slowForSale":
+    "A record is also a slow seller when at least this many copies are for sale. Slow records get a \"Slow seller\" badge, and collections can leave them out of cherry-picks.",
 };
 
 /** One note for the whole sleeve grid, on its section heading. */

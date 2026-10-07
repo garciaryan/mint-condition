@@ -168,3 +168,22 @@ test("hideExpired drops Discogs data older than 6 hours and keeps the rest", () 
   assert.equal(oldestPricedAt([a, b, c, d]), edge.pricedAt);
   assert.equal(old.suggestions, sugg, "input rows are not changed");
 });
+
+test("Totals.slow counts valued slow rows only, and nothing hidden as expired", () => {
+  const slowStats = { lowestPrice: 12, currency: null, numForSale: 50, have: 100, want: 10 };
+  const valued = item({ status: "priced", suggestions: sugg, stats: slowStats, pricedAt: Date.now() });
+  const noValue = item({ status: "no-price", suggestions: null, stats: slowStats });
+  const old = item({ status: "priced", suggestions: sugg, stats: slowStats, pricedAt: Date.now() - PRICE_MAX_AGE_MS - 1 });
+  const fast = item({ status: "priced", suggestions: sugg, stats: { ...slowStats, want: 300, numForSale: 3 } });
+  assert.equal(computeTotals([valued, noValue, fast], settings).slow, 1);
+  assert.equal(computeTotals(hideExpired([old], Date.now()), settings).slow, 0);
+});
+
+test("toItemView carries demand and the want/have counts", () => {
+  const inputs = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);
+  const slow = toItemView(item({ status: "priced", suggestions: sugg, stats: { lowestPrice: 1, currency: null, numForSale: 50, have: 100, want: 10 } }), settings, inputs);
+  assert.equal(slow.demand, "slow");
+  assert.equal(slow.have, 100);
+  assert.equal(slow.want, 10);
+  assert.equal(toItemView(item({ status: "priced", suggestions: sugg, stats }), settings, inputs).demand, null);
+});

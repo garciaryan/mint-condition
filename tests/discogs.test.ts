@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   DiscogsClient,
   DiscogsError,
@@ -8,6 +9,7 @@ import {
   catnoVariants,
   filterByYear,
   parsePriceSuggestions,
+  parseReleaseStats,
   sortByYear,
   toCandidate,
 } from "../lib/discogs.ts";
@@ -194,19 +196,34 @@ test("requests carry the auth header and user agent", async () => {
     userAgent: "Test/1.0",
     fetchImpl: (async (_u: unknown, init?: RequestInit) => {
       seen = new Headers(init?.headers);
-      return json({ num_for_sale: 3, lowest_price: { value: 12.5, currency: "USD" } });
+      return json({ num_for_sale: 3, lowest_price: 12.5 });
     }) as typeof fetch,
     sleep: async () => {},
   });
-  const stats = await client.marketplaceStats(42);
+  const stats = await client.releaseStats(42);
   assert.equal(seen?.get("authorization"), "Discogs token=secret");
   assert.equal(seen?.get("user-agent"), "Test/1.0");
-  assert.deepEqual(stats, { lowestPrice: 12.5, currency: "USD", numForSale: 3 });
+  assert.deepEqual(stats, { lowestPrice: 12.5, currency: null, numForSale: 3, masterId: null, identifiers: [] });
 });
 
-test("marketplaceStats handles releases with nothing for sale", async () => {
-  const { client } = makeClient(() => json({ num_for_sale: 0, lowest_price: null }));
-  assert.deepEqual(await client.marketplaceStats(1), { lowestPrice: null, currency: null, numForSale: 0 });
+test("releaseStats asks /releases/{id}; a missing release has nothing for sale", async () => {
+  const { client, calls } = makeClient(() => new Response("{}", { status: 404 }));
+  assert.deepEqual(await client.releaseStats(42), { lowestPrice: null, currency: null, numForSale: 0 });
+  assert.equal(calls[0].pathname, "/releases/42");
+});
+
+test("parseReleaseStats reads the live Blue Train release", () => {
+  const body = JSON.parse(readFileSync("tests/fixtures/release-5193282.json", "utf8"));
+  assert.deepEqual(parseReleaseStats(body), {
+    lowestPrice: 475, currency: null, numForSale: 6, have: 878, want: 3357, masterId: 32208, identifiers: body.identifiers,
+  });
+});
+
+test("parseReleaseStats leaves out what a release doesn't have", () => {
+  const parsed = parseReleaseStats({ num_for_sale: 0, lowest_price: null, community: {}, master_id: 0, identifiers: [{ type: "x" }] });
+  assert.deepEqual(parsed, { lowestPrice: null, currency: null, numForSale: 0, masterId: null, identifiers: [] });
+  assert.equal("have" in parsed, false);
+  assert.deepEqual(parseReleaseStats(null), { lowestPrice: null, currency: null, numForSale: 0 });
 });
 
 test("priceSuggestions returns null on 404 or empty bodies", async () => {
@@ -241,7 +258,7 @@ test("a second 429 surfaces as an error", async () => {
 
 test("requests are spaced to respect the rate limit", async () => {
   const { client, sleeps } = makeClient(() => json({ num_for_sale: 0, lowest_price: null }));
-  await Promise.all([client.marketplaceStats(1), client.marketplaceStats(2), client.marketplaceStats(3)]);
+  await Promise.all([client.releaseStats(1), client.releaseStats(2), client.releaseStats(3)]);
   const waits = sleeps.filter((s) => s > 0);
   assert.equal(waits.length, 2);
   assert.ok(waits.every((w) => w >= 1000 && w <= 1100));

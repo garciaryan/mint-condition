@@ -26,5 +26,11 @@
     "pickThreshold": 15,
     "bulkEach": 0.5,
     "unverifiedSteps": 1
+  },
+  "demand": {
+    "fastWantHave": 1,
+    "fastMaxForSale": 10,
+    "slowWantHave": 0.3,
+    "slowForSale": 200
   }
 }

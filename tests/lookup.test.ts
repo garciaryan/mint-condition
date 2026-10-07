@@ -34,8 +34,8 @@ function fakeClient(
       calls.push(`suggestions:${id}`);
       return opts.suggestions === undefined ? { "VG+": 30, VG: 20, NM: 40 } : opts.suggestions;
     },
-    async marketplaceStats(id) {
-      calls.push(`stats:${id}`);
+    async releaseStats(id) {
+      calls.push(`release:${id}`);
       return opts.stats ?? { lowestPrice: 25, currency: "USD", numForSale: 4 };
     },
   };
@@ -197,4 +197,24 @@ test("a fresh search skips the cache for the search and the prices", async () =>
   const { client } = fakeClient({ candidates: [mk(1)] }, () => 0, seen);
   await runLookup(client, { ...req, fresh: true }, settings);
   assert.deepEqual(seen.fresh, [true, true, true]);
+});
+
+test("runLookup labels prices with the settings currency, whatever the release reports", async () => {
+  const { client } = fakeClient({ stats: { lowestPrice: 9, currency: "EUR", numForSale: 2 } });
+  const res = await runLookup(client, { ...req, releaseId: 1 }, settings);
+  assert.equal(res.status, "priced");
+  if (res.status === "priced") assert.equal(res.currency, settings.discogs.currency);
+});
+
+test("a no-price result also carries the settings currency for its lowest listing", async () => {
+  const res = await runLookup(fakeClient({ suggestions: null, stats: { lowestPrice: 9, currency: null, numForSale: 2 } }).client, { ...req, releaseId: 1 }, settings);
+  assert.equal(res.status, "no-price");
+  if (res.status === "no-price") assert.equal(res.currency, settings.discogs.currency);
+});
+
+test("a priced lookup says how fast the record sells", async () => {
+  const { client } = fakeClient({ stats: { lowestPrice: 9, currency: null, numForSale: 3, have: 10, want: 30 } });
+  const res = await runLookup(client, { ...req, releaseId: 1 }, settings);
+  assert.equal(res.status, "priced");
+  if (res.status === "priced") assert.equal(res.demand, "fast");
 });

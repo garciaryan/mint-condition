@@ -33,6 +33,10 @@ const LABELS: Partial<Record<FieldKey, string>> = {
   "offer.bulkEach": "Bulk price each ($)",
   "offer.unverifiedSteps": "Unverified steps (1–3)",
   "discogs.cacheHours": "Cache prices for (hours)",
+  "demand.fastWantHave": "Fast: want/have at least",
+  "demand.fastMaxForSale": "Fast: for sale at most",
+  "demand.slowWantHave": "Slow: want/have below",
+  "demand.slowForSale": "Slow: for sale at least",
 };
 const label = (k: FieldKey) => LABELS[k] ?? `${k.split(".")[1]} sleeve (%)`;
 
@@ -54,6 +58,11 @@ const SECTIONS: { legend: string; note?: string; help?: string; grid?: boolean; 
       "offer.ladderPercents", "offer.openingPercent", "offer.marginPercent", "offer.overheadPerRecord",
       "offer.pickThreshold", "offer.bulkEach", "offer.unverifiedSteps",
     ],
+  },
+  {
+    legend: "Demand",
+    note: "How fast a record sells, from Discogs want/have and copies for sale. Neither badge shows in between.",
+    keys: ["demand.fastWantHave", "demand.fastMaxForSale", "demand.slowWantHave", "demand.slowForSale"],
   },
   {
     legend: "Discogs",
@@ -272,7 +281,7 @@ export default function SettingsForm() {
             value={form![k]}
             onChange={(e) => edit(k, e.target.value)}
             inputMode={
-              k === "offer.ladderPercents" ? "text" : k === "offer.unverifiedSteps" || k === "discogs.cacheHours" ? "numeric" : "decimal"
+              k === "offer.ladderPercents" ? "text" : k === "offer.unverifiedSteps" || k === "discogs.cacheHours" || k === "demand.fastMaxForSale" || k === "demand.slowForSale" ? "numeric" : "decimal"
             }
             autoComplete="off"
           />

@@ -1,5 +1,7 @@
 // Lookup orchestration for the web page: request validation, search-or-price, and error mapping.
 // No network of its own; the Discogs client is passed in.
+import { demand } from "./demand.ts";
+import type { Demand } from "./demand.ts";
 import { DiscogsError } from "./discogs.ts";
 import type { CachedLookupClient } from "./discogs-cache.ts";
 import { priceRecord } from "./pricing.ts";
@@ -33,6 +35,8 @@ export type LookupResponse =
       releaseId: number;
       release: Candidate | null;
       stats: MarketplaceStats;
+      /** Settings currency, for the lowest listing. */
+      currency: string;
     } & Age)
   | ({
       status: "priced";
@@ -41,13 +45,15 @@ export type LookupResponse =
       stats: MarketplaceStats;
       currency: string;
       result: PriceResult;
+      /** How fast it sells (lib/demand.ts); null when Discogs gave no want/have. */
+      demand: Demand | null;
     } & Age)
   | { status: "error"; kind: LookupErrorKind; message: string };
 
 export type LookupClient = {
   searchByCatno(catno: string, year?: number): Promise<Candidate[]>;
   priceSuggestions(releaseId: number): Promise<PriceSuggestions | null>;
-  marketplaceStats(releaseId: number): Promise<MarketplaceStats>;
+  releaseStats(releaseId: number): Promise<MarketplaceStats>;
 };
 
 type Parsed = { ok: true; value: LookupRequest } | { ok: false; message: string };
@@ -125,12 +131,12 @@ export async function runLookup(
   }
 
   const opts = { fresh: req.fresh };
-  const [sugg, st] = await Promise.all([client.priceSuggestions(releaseId, opts), client.marketplaceStats(releaseId, opts)]);
+  const [sugg, st] = await Promise.all([client.priceSuggestions(releaseId, opts), client.releaseStats(releaseId, opts)]);
   const suggestions = sugg.value;
   const stats = st.value;
   const fetchedAt = Math.min(sugg.fetchedAt, st.fetchedAt);
   const age: Age = { fetchedAt, cached: fetchedAt < startedAt };
-  if (!suggestions) return { status: "no-price", reason: "no-suggestions", releaseId, release, stats, ...age };
+  if (!suggestions) return { status: "no-price", reason: "no-suggestions", releaseId, release, stats, currency: settings.discogs.currency, ...age };
 
   const result = priceRecord({
     suggestions,
@@ -139,7 +145,7 @@ export async function runLookup(
     sleeve: req.sleeve,
     settings,
   });
-  if (!result) return { status: "no-price", reason: "grade-missing", releaseId, release, stats, ...age };
+  if (!result) return { status: "no-price", reason: "grade-missing", releaseId, release, stats, currency: settings.discogs.currency, ...age };
 
-  return { status: "priced", releaseId, release, stats, currency: stats.currency ?? settings.discogs.currency, result, ...age };
+  return { status: "priced", releaseId, release, stats, currency: settings.discogs.currency, result, demand: demand(stats, settings.demand), ...age };
 }
