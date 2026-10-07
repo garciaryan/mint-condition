@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { createScanFilter } from "@/lib/collection/ui.ts";
-import type { LastScan } from "@/app/ScanFrame.tsx";
+import type { LastScan } from "@/components/scan/ScanFrame.tsx";
 
 const FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
 
