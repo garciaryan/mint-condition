@@ -155,7 +155,7 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   from `lib/collection/notes.ts`, max 255), saved via `PATCH /api/items/:id`; the worker never writes it and lookups
   keep it. Goes to the Discogs CSV `comments` column and the buy sheet; `private_notes` stays the collection name.
   Spec: `docs/superpowers/specs/2026-10-07-condition-notes-design.md`.
-- Phase 10 demand signal (2026-10-07): built on feat/demand-signal; 410 tests passing; migration 6
+- Phase 10 demand signal (2026-10-07): built on feat/demand-signal; 411 tests passing; migration 6
   (`sessions.skip_slow`). `/releases/{id}` replaces marketplace stats (live check in the spec). Fast/slow badge and
   want/have on the result card and lot rows, "N slow" in the totals, "Leave slow sellers out of cherry-picks" per collection
   (cherry-pick offer only; the whole-collection offer still values them as picks)

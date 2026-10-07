@@ -2848,6 +2848,12 @@ kbd {
     width: 100%;
   }
 
+  /* The open panel matches its column (and the inputs beside it); the long label wraps. */
+  .offer-options {
+    min-width: 0;
+    width: 100%;
+  }
+
   .star {
     width: var(--control-h);
     height: var(--control-h);

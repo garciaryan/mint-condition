@@ -215,3 +215,9 @@ test("offer option rows have their own class, so the input widths don't squeeze 
   const css = readFileSync("app/globals.css", "utf8");
   assert.match(css, /\.offer-option \{[^}]*min-height: var\(--control-h\);/);
 });
+
+test("on phones the open Options panel is as wide as its column, like the inputs", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(phone, /\.offer-options \{[^}]*min-width: 0;[^}]*width: 100%;/);
+});
