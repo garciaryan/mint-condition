@@ -101,3 +101,10 @@ test("offerNotes lists only the notes that apply", () => {
     "Picks: none at or above $15",
   ]);
 });
+
+test("phone rows give the actions two columns and let them wrap, so Note + Remove (+ Retry/Pick) never squeeze the title", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(phone, /\.row \{[^}]*grid-template-areas:\s*"thumb main price"\s*"grades grades grades"\s*"status actions actions";/);
+  assert.match(phone, /\.row-actions \{[^}]*grid-area: actions;[^}]*flex-wrap: wrap;[^}]*justify-content: flex-end;/);
+});

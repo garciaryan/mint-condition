@@ -2214,7 +2214,7 @@ kbd {
     grid-template-areas:
       "thumb main price"
       "grades grades grades"
-      "status . actions";
+      "status actions actions";
     gap: 8px 10px;
     margin-bottom: 8px;
     padding: 10px 12px;
@@ -2265,6 +2265,8 @@ kbd {
   .row-actions {
     grid-area: actions;
     flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 8px;
   }
 
