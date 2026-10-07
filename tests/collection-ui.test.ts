@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { coverageText, displayStatus, etaText, offerNotes, offerOptionsLabel, offerSummary, pasteSummary, wantHaveText } from "../lib/collection/ui.ts";
+import { coverageText, displayStatus, etaText, offerNotes, offerOptionsLabel, offerSummary, pasteSummary, showsCherryPicks, wantHaveText } from "../lib/collection/ui.ts";
 import { computeOffer, offerInputs } from "../lib/offer.ts";
 import { parseSettings } from "../lib/settings.ts";
 import type { ItemRow } from "../lib/collection/types.ts";
@@ -220,4 +220,17 @@ test("on phones the open Options panel is as wide as its column, like the inputs
   const css = readFileSync("app/globals.css", "utf8");
   const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
   assert.match(phone, /\.offer-options \{[^}]*min-width: 0;[^}]*width: 100%;/);
+});
+
+test("the cherry-pick ladder shows only when some records are picks and some aren't", () => {
+  const pick = row({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 } });
+  const cheap = row({ status: "priced", suggestions: { NM: 4, "VG+": 3, VG: 2 } });
+  const inputs = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);
+  assert.equal(showsCherryPicks(computeOffer([pick, cheap], inputs, settings)), true);
+  assert.equal(showsCherryPicks(computeOffer([pick, pick], inputs, settings)), false, "all picks");
+  assert.equal(showsCherryPicks(computeOffer([cheap, cheap], inputs, settings)), false, "no picks");
+  assert.equal(showsCherryPicks(computeOffer([], inputs, settings)), false, "empty");
+  for (const f of ["components/collection/OfferPanel.tsx", "app/collection/[id]/print/page.tsx"]) {
+    assert.match(readFileSync(f, "utf8"), /showsCherryPicks\(offer\) && \(?\s*<Ladder caption=\{`Cherry-picks/, f);
+  }
 });

@@ -132,3 +132,9 @@ export function offerOptionsLabel(unverified: boolean, skipSlow: boolean): strin
   const on = Number(unverified) + Number(skipSlow);
   return on === 0 ? "Options" : `Options · ${on} on`;
 }
+
+/** The cherry-pick ladder only adds something when the offer splits the collection: some records are picks and some
+ * aren't. All picks or none, and the whole-collection ladder says it all. */
+export function showsCherryPicks(offer: OfferView): boolean {
+  return offer.picks > 0 && offer.bulkCount > 0;
+}

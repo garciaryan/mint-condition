@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { SessionRow } from "@/lib/collection/types.ts";
-import { cash, offerNotes, offerOptionsLabel, offerSummary } from "@/lib/collection/ui.ts";
+import { cash, offerNotes, offerOptionsLabel, offerSummary, showsCherryPicks } from "@/lib/collection/ui.ts";
 import { useDisclosure } from "@/hooks/useDisclosure.ts";
 import type { OfferSide, OfferView } from "@/lib/offer.ts";
 import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";
@@ -248,7 +248,7 @@ export default function OfferPanel({
             />
           </div>
           <div className="offer-sides">
-            <Ladder caption={`Cherry-picks (${records(offer.picks)})`} side={offer.pickOnly} opening={offer.openingPercent} currency={currency} />
+            {showsCherryPicks(offer) && <Ladder caption={`Cherry-picks (${records(offer.picks)})`} side={offer.pickOnly} opening={offer.openingPercent} currency={currency} />}
             <Ladder
               caption={`Whole collection (${records(offer.picks + offer.bulkCount)})`}
               side={offer.wholeLot}
