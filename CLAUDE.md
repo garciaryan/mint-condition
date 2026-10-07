@@ -38,8 +38,8 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   Lot Re-price and Retry (`items.refresh`) and the single-record "Refresh prices" bypass it; errors are never
   cached. Row `priced_at` is when Discogs answered, so cached prices show their real age.
 - `barcode-detector` is the only runtime dependency beyond Next/React; it is lazy-loaded by the camera scanners.
-  Camera loop: `app/useBarcodeCamera.ts` (lot `Scanner` keeps scanning; `app/LookupScanner.tsx` is one-shot).
-  `app/ScanButton.tsx` is the barcode icon; when `lib/camera.ts` says no camera (plain http, none), pressing it
+  Camera loop: `hooks/useBarcodeCamera.ts` (lot `Scanner` keeps scanning; `components/lookup/LookupScanner.tsx` is one-shot).
+  `components/scan/ScanButton.tsx` is the barcode icon; when `lib/camera.ts` says no camera (plain http, none), pressing it
   explains why instead of hiding. The lookup form clears catno/year once a pressing is shown (`clearsInputs`).
 - Font: Kanit (400/500/600/700, latin) via `next/font/google` in `app/layout.tsx`, self-hosted at build time.
   Kanit has proportional digits and no `tnum`, so every `font-variant-numeric: tabular-nums` rule also sets
@@ -48,9 +48,9 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
 - Discogs API terms (`lib/discogs-terms.ts`): no Discogs data shown more than 6 hours old (`MAX_CACHE_HOURS`; lot
   rows past it are hidden by `hideExpired` and re-queued by `requeueExpired` when the lot or buy sheet opens);
   "Data provided by Discogs" linked next to the data (no `nofollow`): the release on the result card and lot rows,
-  `app/DiscogsCredit.tsx` (Discogs search for pick lists, marketplace for totals, offers, the lots list and scanner);
+  `components/ui/DiscogsCredit.tsx` (Discogs search for pick lists, marketplace for totals, offers, the lots list and scanner);
   `discogs.com/release/<id>` per buy-sheet row; the result card hides its figures past 6 hours (`dataExpired`);
-  the not-affiliated notice in `app/SiteFooter.tsx` on every page. Anything new that shows Discogs data needs a credit
+  the not-affiliated notice in `components/layout/SiteFooter.tsx` on every page. Anything new that shows Discogs data needs a credit
   (`tests/discogs-terms.test.ts`). Price data is Restricted Data: no commercial use, no transfer to third parties.
 
 - Released as self-hosted, MIT-licensed (`LICENSE`): each person runs their own copy (locally or their own Fly app)
@@ -70,41 +70,50 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   `APP_PASSWORD_HASH`) · deploy and ops: see `DEPLOY.md`
 
 ## Layout
-- `lib/types.ts` grades and shared types · `lib/settings.ts` settings loader/validator
-- `lib/discogs.ts` API client (throttled, retries 429, catno variants, barcode detection, year filter)
-- `lib/pricing.ts` pricing logic · `lib/offer.ts` offer ladder/walk-away/picks (pure) · `lib/lookup.ts` lookup flow for the API route · `lib/form.ts` client-side
-  form checks and picker grouping · `tests/` unit tests
-- `scripts/lookup.ts` CLI · `app/` Next.js UI (`api/lookup/route.ts`, `Lookup.tsx`, `globals.css`)
-- `lib/auth.ts` (session signing, authMode, limiter, health config) · `lib/password.ts` (hashing) · `lib/gate.ts` +
-  `middleware.ts` (login gate) · `lib/db.ts` + `lib/migrations.ts` (SQLite, versioned migrations)
-- `app/login/`, `app/api/login|logout|health` · `scripts/hash-password.ts`, `scripts/setup-fly.ts` +
-  `scripts/prompt.ts` + `lib/setup-fly.ts` (pure), `lib/session-secret.ts` · `Dockerfile`, `docker-entrypoint.sh`,
-  `fly.toml`, `DEPLOY.md`, `.github/workflows/fly-deploy.yml`
+Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/specs/2026-10-07-folder-structure-design.md`):
+`app/` routes only (`page.tsx`, `layout.tsx`, `route.ts`, `globals.css`) · `components/<area>/` · `hooks/` ·
+`lib/` (logic; relative imports, no UI, loadable by the Node tests) · `lib/consts.ts` (`LINKS` repo/docs/coffee,
+`ROUTES` page paths; cookie names stay in auth/theme/nav, Discogs URLs in `discogs-terms.ts`). UI files import with
+`@/...`; `lib/` and `app/api/` stay relative.
 
-- `lib/settings-store.ts` (saved settings over defaults) · `lib/settings-form.ts` (form conversion, client-safe) ·
-  `lib/settings-help.ts` (what each setting changes; every field has help, tested; the sleeve grid shares one
-  `SLEEVE_HELP` on its heading) ·
-  `app/settings/` (`SettingsForm`, `HelpTip` ⓘ toggle) · `app/api/settings/`
-- `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `notes` condition notes, `view` totals/prices, `ui`, `http`, `worker`) ·
-  `lib/discogs-client.ts` shared client + `getLookupClient()` · `lib/discogs-cache.ts` response cache ·
-  `lib/relative-time.ts` · `lib/discogs-terms.ts` + `app/SiteFooter.tsx` · `lib/theme.ts` (dark mode) · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
-- `lib/collection/export.ts` (Discogs CSV, buy sheet rows) · `app/collection/[id]/print/` (buy sheet) ·
-  `app/api/sessions/[id]/discogs.csv/`
-- `app/collection/` (lots list) and `app/collection/[id]/` (`LotView`, `EntryBar`, `Scanner`, `PasteList`,
-  `PickPanel`, `TotalsBar`, `OfferPanel`, `ItemRow`) · `app/api/sessions/` and `app/api/items/` · shared `app/Picker.tsx`,
-  `app/GradeSelect.tsx`, `app/SiteHeader.tsx` (server: reads `mc_theme`/`mc_nav`) + `app/SiteNav.tsx` (fixed left
-  sidebar, expanded by default, collapses to an icon rail remembered by `mc_nav` via `lib/nav.ts`; a bottom tab bar
-  at 480px and below; Docs and the coffee pill sit at its foot, the footer shows them only on phones and pages
-  without the sidebar), Log out is on `/settings` (Account card, only when login is on), `app/NavLinks.tsx` (expanded desktop sidebar lists the 3 most recent collections under Collections, then
-  "+N more"; `navLots`), `app/NavIcon.tsx` (inline SVG icons), `app/ThemeSwitch.tsx` (button
-  cycling System/Light/Dark), `app/useDisclosure.ts` + `lib/disclosure.ts` (dropdowns: lot Actions, help tips)
+- **Routes:** `app/page.tsx` (price a record) · `app/collection/` (lots list), `app/collection/[id]/` (lot),
+  `app/collection/[id]/print/` (buy sheet) · `app/settings/` · `app/login/` · `app/api/` (`lookup`, `login|logout|health`,
+  `settings`, `sessions/` incl. `[id]/discogs.csv`, `items/`)
+- **`components/layout/`:** `SiteHeader` (server: reads `mc_theme`/`mc_nav`) + `SiteNav` (fixed left sidebar, expanded
+  by default, collapses to an icon rail remembered by `mc_nav` via `lib/nav.ts`; a bottom tab bar at 480px and below;
+  Docs and the coffee pill sit at its foot, the footer shows them only on phones and pages without the sidebar) ·
+  `NavLinks` (expanded desktop sidebar lists the 3 most recent collections under Collections, then "+N more";
+  `navLots`) · `NavIcon` (inline SVG icons) · `SiteFooter` (not-affiliated notice) · `ThemeSwitch` (cycles
+  System/Light/Dark) · `LogoutButton` (on `/settings`, Account card, only when login is on)
+- **`components/lookup/`:** `Lookup` (form, picker, result card) · `LookupScanner` · `Picker`
+- **`components/scan/`:** `ScanButton`, `ScanFrame` · **`components/ui/`:** `GradeSelect`, `DiscogsCredit`
+- **`components/collection/`:** `LotsList`, `LotView`, `LotHeader`, `EntryBar`, `Scanner`, `PasteList`, `PickPanel`,
+  `TotalsBar`, `OfferPanel`, `ItemRow`, `PrintButton`
+- **`components/settings/`:** `SettingsForm`, `HelpTip` (ⓘ toggle) · **`components/login/`:** `LoginForm`
+- **`hooks/`:** `useBarcodeCamera` (camera loop), `useDisclosure` (+ `lib/disclosure.ts`: lot Actions, help tips),
+  `useFadeOut`, `useDialog`
+- **`lib/`:** `types.ts` grades and shared types · `settings.ts` loader/validator · `discogs.ts` API client (throttled,
+  retries 429, catno variants, barcode detection, year filter) · `pricing.ts` · `offer.ts` (ladder/walk-away/picks,
+  pure) · `lookup.ts` lookup flow for the API route · `form.ts` client-side form checks and picker grouping ·
+  `auth.ts` (session signing, authMode, limiter, health config) · `password.ts` · `gate.ts` + `middleware.ts` (login
+  gate) · `db.ts` + `migrations.ts` (SQLite, versioned) · `setup-fly.ts` (pure) · `session-secret.ts` ·
+  `settings-store.ts` (saved settings over defaults) · `settings-form.ts` (client-safe) · `settings-help.ts` (every
+  field has help, tested; the sleeve grid shares one `SLEEVE_HELP`) · `discogs-client.ts` shared client +
+  `getLookupClient()` · `discogs-cache.ts` · `relative-time.ts` · `discogs-terms.ts` · `theme.ts` · `nav.ts` ·
+  `camera.ts` · `route-auth.ts` per-route session check
+- **`lib/collection/`:** `types`, `store` (SQLite), `parse` (paste parser), `notes` (condition notes), `view`
+  (totals/prices), `ui`, `http`, `worker`, `export` (Discogs CSV, buy sheet rows), `client` (browser fetch helper,
+  `money`)
+- **Other:** `tests/` · `scripts/lookup.ts` CLI, `scripts/hash-password.ts`, `scripts/setup-fly.ts` + `scripts/prompt.ts`
+  · `instrumentation.ts` · `Dockerfile`, `docker-entrypoint.sh`, `fly.toml`, `DEPLOY.md`,
+  `.github/workflows/fly-deploy.yml`
 
 ## Status
 - Phase 1 (Discogs client) and phase 2 (pricing module): done. Verified against the live API (2026-10-04):
   price_suggestions keys and marketplace stats fields match. Search now pages (100/page, up to 3 pages) and sorts
   exact year, then nearby, then unknown year; popular catnos return 100+ pressings, many with no year.
 - Phase 3 (webpage): built. `lib/lookup.ts` (request parsing, search-or-price, error mapping; tested),
-  `app/api/lookup/route.ts` (POST; shared throttled client on globalThis), `app/Lookup.tsx` (form, picker, result
+  `app/api/lookup/route.ts` (POST; shared throttled client on globalThis), `components/lookup/Lookup.tsx` (form, picker, result
   card). Grade changes re-fetch prices for the shown release. 43 tests passing.
 - Phase 3 UX pass (2026-10-04, ui-ux-pro-max review): responsive down to 375px, a11y fixes (3:1 field borders,
   labelled filter, focus moves to new results, status live region, `role="alert"` errors), in-place re-pricing
