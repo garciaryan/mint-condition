@@ -142,7 +142,7 @@ test("phone rows show a labelled, padded Market value box; wider screens keep th
   const css = readFileSync("app/globals.css", "utf8");
   const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
   assert.match(css, /\.row-market \{\s*display: none;\s*\}/, "hidden outside phones");
-  assert.match(phone, /\.row-market \{[^}]*display: block;[^}]*flex: 1;[^}]*padding: /);
+  assert.match(phone, /\.row-market \{[^}]*display: block;[^}]*flex: 1;[^}]*margin: 6px 0;[^}]*padding: /);
   assert.match(phone, /\.row-price \.row-value \{\s*display: none;\s*\}/, "the compact cell is hidden on phones");
   assert.match(css, /\.row-market-title \{[^}]*text-transform: uppercase;[^}]*color: var\(--muted\);/);
   const row = readFileSync("app/collection/[id]/ItemRow.tsx", "utf8");

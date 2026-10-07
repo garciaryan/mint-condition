@@ -2301,6 +2301,7 @@ kbd {
   .row-market {
     display: block;
     flex: 1;
+    margin: 6px 0;
     padding: 10px 12px;
   }
 
