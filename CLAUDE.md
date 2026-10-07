@@ -154,5 +154,8 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
 7. Add tests for any new pure logic; keep `npm test` and `npm run typecheck` green.
 
 ## Later phases (do not start unless asked)
-8. Track price paid and sold price to learn the user's own offer percentage.
+Full plan, build order and terms rules: `docs/ROADMAP.md` (2026-10-07). Phases 9–16: condition notes, release
+details + demand signal, runout matching, master versions, boxes + bulk counts, account inventory/wantlist, listing
+drafts on Discogs, offline scanning.
+8. Track price paid and sold price to learn the user's own offer percentage (built after 15; sold prices from orders).
    The user has no offer-percentage rule of thumb; default ladder starts at 40%.
