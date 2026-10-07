@@ -145,30 +145,28 @@ export default function Picker({
               const panelId = `runouts-${c.id}`;
               return (
                 <li key={c.id}>
-                  <div className="candidate-row">
-                    <button type="button" className="candidate" onClick={() => onPick(c)}>
-                      <Thumb src={c.thumb} />
-                      <span className="candidate-main">
-                        <strong>{c.title}</strong>
-                        <span className="muted">
-                          {[c.label, c.catno].filter(Boolean).join(" · ")} — {c.format ?? "format unknown"}
-                        </span>
+                  <button type="button" className="candidate" onClick={() => onPick(c)}>
+                    <Thumb src={c.thumb} />
+                    <span className="candidate-main">
+                      <strong>{c.title}</strong>
+                      <span className="muted">
+                        {[c.label, c.catno].filter(Boolean).join(" · ")} — {c.format ?? "format unknown"}
                       </span>
-                      <span className="candidate-meta">
-                        <span>{c.country ?? "—"}</span>
-                        <span>{c.year ?? "year ?"}</span>
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className="runout-toggle"
-                      aria-expanded={shown}
-                      aria-controls={panelId}
-                      onClick={() => toggle(c.id, shown)}
-                    >
-                      Runouts<span className="sr-only"> for {c.title}</span>
-                    </button>
-                  </div>
+                    </span>
+                    <span className="candidate-meta">
+                      <span>{c.country ?? "—"}</span>
+                      <span>{c.year ?? "year ?"}</span>
+                    </span>
+                  </button>
+                  <label className="runout-show">
+                    <input
+                      type="checkbox"
+                      checked={shown}
+                      aria-controls={shown ? panelId : undefined}
+                      onChange={() => toggle(c.id, shown)}
+                    />
+                    Show runouts<span className="sr-only"> for {c.title}</span>
+                  </label>
                   {shown && <RunoutPanel id={panelId} state={runouts.get(c.id)} query={runoutQuery} onRetry={() => void load(c.id)} />}
                 </li>
               );

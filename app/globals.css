@@ -865,33 +865,22 @@ a {
   background: var(--bg);
 }
 
-/* A pressing row: the pick button, then its Runouts toggle (never nested). */
-.candidate-row {
-  display: flex;
+/* Under each pressing: a small "Show runouts" checkbox, indented past the cover thumbnail. */
+.runout-show {
+  display: inline-flex;
   align-items: center;
-}
-
-.candidate-row .candidate {
-  flex: 1;
-  min-width: 0;
-}
-
-.runout-toggle {
-  flex-shrink: 0;
-  min-height: 36px;
-  margin-right: 8px;
-  padding: 0 10px;
-  border: 1px solid var(--field-line);
-  border-radius: 6px;
-  background: none;
-  color: var(--accent);
+  gap: 6px;
+  margin: 0 0 8px 70px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--muted);
   cursor: pointer;
 }
 
-.runout-toggle[aria-expanded="true"] {
-  background: var(--accent-soft);
+.runout-show input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
 }
 
 .runout-controls {
@@ -2897,8 +2886,9 @@ kbd {
     grid-template-columns: 1fr;
   }
 
-  .runout-toggle {
+  .runout-show {
     min-height: var(--control-h);
+    margin-left: 8px;
   }
 
   .runout-list {
