@@ -88,6 +88,14 @@ test("migration 5 adds items.notes to a version-4 database", () => {
   migrate(db, migrations.slice(0, 4));
   db.exec("insert into sessions (id,name,default_record,default_sleeve,created_at,updated_at) values (1,'L','NM','NM',1,1)");
   db.exec("insert into items (session_id,query,record_grade,sleeve_grade,status,created_at) values (1,'x','NM','NM','pending',1)");
-  assert.equal(migrate(db, migrations), 5);
+  assert.equal(migrate(db, migrations.slice(0, 5)), 5);
   assert.deepEqual({ ...(db.prepare("select notes from items").get() as object) }, { notes: "" });
+});
+
+test("migration 6 adds sessions.skip_slow to a version-5 database", () => {
+  const db = new DatabaseSync(":memory:");
+  migrate(db, migrations.slice(0, 5));
+  db.exec("insert into sessions (id,name,default_record,default_sleeve,created_at,updated_at) values (1,'L','NM','NM',1,1)");
+  assert.equal(migrate(db, migrations), 6);
+  assert.deepEqual({ ...(db.prepare("select skip_slow from sessions").get() as object) }, { skip_slow: 0 });
 });

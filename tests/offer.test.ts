@@ -19,9 +19,9 @@ const C = item({ status: "pending" });
 const base = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);
 
 test("offerInputs falls back to settings for null threshold and bulk", () => {
-  assert.deepEqual(base, { unverified: false, pickThreshold: 15, bulkEach: 0.5, lotOverhead: 0 });
+  assert.deepEqual(base, { unverified: false, pickThreshold: 15, bulkEach: 0.5, lotOverhead: 0, skipSlow: false });
   assert.deepEqual(offerInputs({ unverified: true, pickThreshold: 5, bulkEach: 1, lotOverhead: 20 }, settings),
-    { unverified: true, pickThreshold: 5, bulkEach: 1, lotOverhead: 20 });
+    { unverified: true, pickThreshold: 5, bulkEach: 1, lotOverhead: 20, skipSlow: false });
 });
 
 test("ladder and walk-away for picks and whole lot", () => {
@@ -90,4 +90,19 @@ test("floor is applied after rounding to cents (29% of $100 is $29)", () => {
   const s = parseSettings({ ...settings, offer: { ...settings.offer, ladderPercents: [29], openingPercent: 29 } });
   const hundred = item({ ...A, suggestions: { NM: 120, "VG+": 100, VG: 80 } });
   assert.equal(computeOffer([hundred], base, s).pickOnly.rungs[0].amount, 29);
+});
+
+test("skipSlow leaves slow sellers out of automatic picks; a star still wins; unknown demand is never skipped", () => {
+  const slowStats = { lowestPrice: 12, currency: null, numForSale: 50, have: 100, want: 10 };
+  const slow = item({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 }, stats: slowStats });
+  const off = base;
+  const on = { ...base, skipSlow: true };
+  assert.equal(base.skipSlow, false);
+  assert.equal(isPickRow(slow, off, settings), true);
+  assert.equal(isPickRow(slow, on, settings), false);
+  assert.equal(isPickRow({ ...slow, pick: true }, on, settings), true);
+  assert.equal(isPickRow(A, on, settings), true, "a row priced before want/have was stored");
+  assert.equal(computeOffer([slow, A], on, settings).picks, 1);
+  assert.equal(computeOffer([slow, A], off, settings).picks, 2);
+  assert.equal(offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0, skipSlow: true }, settings).skipSlow, true);
 });

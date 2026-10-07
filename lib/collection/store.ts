@@ -16,6 +16,7 @@ const toSession = (r: Row): SessionRow => ({
   pickThreshold: (r.pick_threshold as number | null) ?? null,
   bulkEach: (r.bulk_each as number | null) ?? null,
   lotOverhead: r.lot_overhead as number,
+  skipSlow: r.skip_slow === 1,
 });
 
 const parse = <T>(v: unknown): T | null => (typeof v === "string" ? (JSON.parse(v) as T) : null);
@@ -72,7 +73,7 @@ export function updateSession(db: DatabaseSync, id: number, patch: SessionPatch,
   const v = <K extends keyof SessionPatch & keyof SessionRow>(k: K) => (patch[k] !== undefined ? patch[k] : cur[k]);
   db.prepare(
     `UPDATE sessions SET name = ?, default_record = ?, default_sleeve = ?, unverified = ?, pick_threshold = ?,
-       bulk_each = ?, lot_overhead = ?, updated_at = ? WHERE id = ?`,
+       bulk_each = ?, lot_overhead = ?, skip_slow = ?, updated_at = ? WHERE id = ?`,
   ).run(
     v("name")!,
     v("defaultRecord")!,
@@ -81,6 +82,7 @@ export function updateSession(db: DatabaseSync, id: number, patch: SessionPatch,
     v("pickThreshold") ?? null,
     v("bulkEach") ?? null,
     v("lotOverhead")!,
+    v("skipSlow") ? 1 : 0,
     now,
     id,
   );

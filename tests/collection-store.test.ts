@@ -20,7 +20,7 @@ test("sessions: create, get, update, list ordered by updatedAt", () => {
   const { db, s } = setup();
   assert.deepEqual(s, {
     id: s.id, name: "A", defaultRecord: "NM", defaultSleeve: "NM", createdAt: 100, updatedAt: 100,
-    unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0,
+    unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0, skipSlow: false,
   });
   const b = createSession(db, { name: "B", defaultRecord: "VG", defaultSleeve: "VG" }, 200);
   assert.deepEqual(listSessions(db).map((x) => x.name), ["B", "A"]);
@@ -351,4 +351,13 @@ test("notes save alone and survive lookup, year change and pick", () => {
   assert.equal((picked as Exclude<typeof picked, string>).notes, "Promo");
   assert.equal(getItem(db, b.id)!.notes, "Promo");
   assert.equal(addItems(db, s.id, [{ query: "C" }], G, 2)[0].notes, "");
+});
+
+test("updateSession saves skipSlow and keeps the rest", () => {
+  const { db, s } = setup();
+  assert.equal(s.skipSlow, false);
+  const u = updateSession(db, s.id, { skipSlow: true }, 200)!;
+  assert.equal(u.skipSlow, true);
+  assert.equal(u.name, s.name);
+  assert.equal(u.unverified, s.unverified);
 });

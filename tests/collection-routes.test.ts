@@ -538,3 +538,13 @@ test("POST items keeps a cleaned note per line (Undo after Remove restores it)",
   const bad = await addItems(req("POST", { lines: [{ query: "A", notes: 5 }], record: "NM", sleeve: "NM" }), ctx(lotId));
   assert.equal((await j(bad)).message, "Line 1: Note must be text.");
 });
+
+test("PATCH session skipSlow", async () => {
+  const { body } = await newLot();
+  const id = String(body.id);
+  const ok = await j(await patchSession(req("PATCH", { skipSlow: true }), ctx(id)));
+  assert.equal(ok.skipSlow, true);
+  const bad = await patchSession(req("PATCH", { skipSlow: "yes" }), ctx(id));
+  assert.equal(bad.status, 400);
+  assert.equal((await j(bad)).message, "Leave-slow-sellers must be true or false.");
+});

@@ -70,6 +70,10 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
     if (typeof b.unverified !== "boolean") return errorJson("bad-request", 400, "Condition unverified must be true or false.");
     patch.unverified = b.unverified;
   }
+  if (b.skipSlow !== undefined) {
+    if (typeof b.skipSlow !== "boolean") return errorJson("bad-request", 400, "Leave-slow-sellers must be true or false.");
+    patch.skipSlow = b.skipSlow;
+  }
   // Empty threshold or bulk (null) means "use the settings default"; overhead has no default, so it can't be null.
   const amounts = [
     ["pickThreshold", 100000, true, "Pick threshold must be empty or 0 to 100000."],

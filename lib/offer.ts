@@ -1,11 +1,12 @@
 // Pure offer calculator: no network, no filesystem, no DB. Everything tunable comes from Settings.
 import { downgrade, marketValue, roundCents, sellPrice } from "./pricing.ts";
 import type { MarketValue } from "./pricing.ts";
+import { demand } from "./demand.ts";
 import type { Settings } from "./types.ts";
 import type { ItemRow } from "./collection/types.ts";
 
 /** A lot's offer inputs with settings defaults applied. */
-export type OfferInputs = { unverified: boolean; pickThreshold: number; bulkEach: number; lotOverhead: number };
+export type OfferInputs = { unverified: boolean; pickThreshold: number; bulkEach: number; lotOverhead: number; skipSlow: boolean };
 export type Rung = { percent: number; amount: number; keep: number; overMax: boolean };
 export type OfferSide = { rungs: Rung[]; walkAway: number };
 export type OfferView = {
@@ -24,7 +25,7 @@ export type OfferView = {
 const dollars = (n: number): number => Math.floor(roundCents(n));
 
 export function offerInputs(
-  lot: { unverified: boolean; pickThreshold: number | null; bulkEach: number | null; lotOverhead: number },
+  lot: { unverified: boolean; pickThreshold: number | null; bulkEach: number | null; lotOverhead: number; skipSlow?: boolean },
   settings: Settings,
 ): OfferInputs {
   return {
@@ -32,6 +33,7 @@ export function offerInputs(
     pickThreshold: lot.pickThreshold ?? settings.offer.pickThreshold,
     bulkEach: lot.bulkEach ?? settings.offer.bulkEach,
     lotOverhead: lot.lotOverhead,
+    skipSlow: lot.skipSlow ?? false,
   };
 }
 
@@ -42,13 +44,17 @@ export function offerMarket(item: ItemRow, inputs: OfferInputs, settings: Settin
   return marketValue(item.suggestions, downgrade(item.record, steps), downgrade(item.sleeve, steps), settings);
 }
 
-function pickFor(market: MarketValue | null, item: ItemRow, inputs: OfferInputs): boolean {
+/** A pin (the owner's star) always wins; otherwise the threshold decides, and with skipSlow on a slow seller is left
+ * out. Unknown demand (no want/have yet) is never skipped. */
+function pickFor(market: MarketValue | null, item: ItemRow, inputs: OfferInputs, settings: Settings): boolean {
   if (!market) return false;
-  return item.pick ?? market.suggested >= inputs.pickThreshold;
+  if (item.pick !== null) return item.pick;
+  if (inputs.skipSlow && demand(item.stats, settings.demand) === "slow") return false;
+  return market.suggested >= inputs.pickThreshold;
 }
 
 export function isPickRow(item: ItemRow, inputs: OfferInputs, settings: Settings): boolean {
-  return pickFor(offerMarket(item, inputs, settings), item, inputs);
+  return pickFor(offerMarket(item, inputs, settings), item, inputs, settings);
 }
 
 function side(percents: number[], amountAt: (percent: number) => number, walkAway: number): OfferSide {
@@ -68,7 +74,7 @@ export function computeOffer(items: ItemRow[], inputs: OfferInputs, settings: Se
   for (const item of items) {
     const market = offerMarket(item, inputs, settings);
     if (!market) unpricedCount++;
-    if (!pickFor(market, item, inputs)) continue;
+    if (!pickFor(market, item, inputs, settings)) continue;
     picks++;
     pickValue += market!.suggested;
     pickNet += sellPrice(market!, item.stats?.lowestPrice ?? null, settings).price * feeKeep;

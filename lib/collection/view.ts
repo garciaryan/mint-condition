@@ -1,4 +1,5 @@
 // Server-side view logic: prices are calculated when read, never stored.
+import { demand } from "../demand.ts";
 import { MAX_CACHE_HOURS } from "../discogs-terms.ts";
 import { isPickRow, offerMarket } from "../offer.ts";
 import type { OfferInputs } from "../offer.ts";
@@ -76,6 +77,8 @@ export type Totals = {
   refreshing: number;
   /** Rows with a market value whose last refresh failed (error). Counted in `priced`. */
   stale: number;
+  /** Rows with a market value whose demand is slow (lib/demand.ts). */
+  slow: number;
 };
 
 /** Discogs API terms: data more than 6 hours behind discogs.com may not be displayed. */
@@ -102,7 +105,7 @@ export function oldestPricedAt(items: ItemRow[]): number | null {
 }
 
 export function computeTotals(items: ItemRow[], settings: Settings): Totals {
-  const t: Totals = { low: 0, suggested: 0, high: 0, total: items.length, priced: 0, toPick: 0, noPrice: 0, problems: 0, pending: 0, refreshing: 0, stale: 0 };
+  const t: Totals = { low: 0, suggested: 0, high: 0, total: items.length, priced: 0, toPick: 0, noPrice: 0, problems: 0, pending: 0, refreshing: 0, stale: 0, slow: 0 };
   for (const item of items) {
     const m = marketFor(item, settings);
     // Every row lands in exactly one coverage bucket; a row with a market value is "priced" whatever its status.
@@ -111,6 +114,7 @@ export function computeTotals(items: ItemRow[], settings: Settings): Totals {
       t.suggested += m.suggested;
       t.high += m.high;
       t.priced++;
+      if (demand(item.stats, settings.demand) === "slow") t.slow++;
       if (item.status === "pending" || item.status === "working") t.refreshing++;
       else if (item.status === "error") t.stale++;
       continue;
