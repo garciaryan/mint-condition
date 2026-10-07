@@ -15,6 +15,7 @@ import { kickWorker } from "../../../../lib/collection/worker.ts";
 import { getSettings } from "../../../../lib/settings-store.ts";
 import SiteHeader from "../../../SiteHeader.tsx";
 import PrintButton from "./PrintButton.tsx";
+import { ROUTES } from "@/lib/consts.ts";
 
 // SiteHeader reads cookies and the database at request time, and so does the sheet. Never prerender.
 export const dynamic = "force-dynamic";
@@ -112,7 +113,7 @@ export default async function BuySheetPage({ params }: Props) {
       <SiteHeader />
       <main className="page sheet">
         <div className="print-controls">
-          <Link href={`/collection/${lot.id}`}>← Back to collection</Link>
+          <Link href={ROUTES.collection(lot.id)}>← Back to collection</Link>
           <PrintButton />
         </div>
 

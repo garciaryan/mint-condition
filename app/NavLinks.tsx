@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import type { NavLot } from "../lib/nav.ts";
 import NavIcon from "./NavIcon.tsx";
 import type { IconName } from "./NavIcon.tsx";
+import { ROUTES } from "@/lib/consts.ts";
 
 // `label` in the sidebar, `tab` under the icon in the phone tab bar.
 const LINKS: { href: string; label: string; tab: string; icon: IconName }[] = [
-  { href: "/", label: "Price a record", tab: "Price", icon: "record" },
-  { href: "/collection", label: "Collections", tab: "Collections", icon: "lots" },
-  { href: "/settings", label: "Settings", tab: "Settings", icon: "settings" },
+  { href: ROUTES.home, label: "Price a record", tab: "Price", icon: "record" },
+  { href: ROUTES.collections, label: "Collections", tab: "Collections", icon: "lots" },
+  { href: ROUTES.settings, label: "Settings", tab: "Settings", icon: "settings" },
 ];
 
 export default function NavLinks({ collapsed, lots }: { collapsed: boolean; lots: { shown: NavLot[]; more: number } }) {
@@ -18,7 +19,7 @@ export default function NavLinks({ collapsed, lots }: { collapsed: boolean; lots
   return (
     <nav className="nav" aria-label="Main">
       {LINKS.map(({ href, label, tab, icon }) => {
-        const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+        const active = href === ROUTES.home ? pathname === ROUTES.home : pathname === href || pathname.startsWith(`${href}/`);
         return (
           <div key={href} className="nav-group">
             <Link
@@ -33,7 +34,7 @@ export default function NavLinks({ collapsed, lots }: { collapsed: boolean; lots
                 {tab}
               </span>
             </Link>
-            {href === "/collection" && lots.shown.length > 0 && <LotLinks lots={lots} pathname={pathname} />}
+            {href === ROUTES.collections && lots.shown.length > 0 && <LotLinks lots={lots} pathname={pathname} />}
           </div>
         );
       })}
@@ -46,7 +47,7 @@ function LotLinks({ lots, pathname }: { lots: { shown: NavLot[]; more: number };
   return (
     <ul className="nav-sub" aria-label="Recent collections">
       {lots.shown.map(({ id, name }) => {
-        const href = `/collection/${id}`;
+        const href = ROUTES.collection(id);
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <li key={id}>
@@ -58,7 +59,7 @@ function LotLinks({ lots, pathname }: { lots: { shown: NavLot[]; more: number };
       })}
       {lots.more > 0 && (
         <li>
-          <Link href="/collection" className="nav-more">
+          <Link href={ROUTES.collections} className="nav-more">
             +{lots.more} more
           </Link>
         </li>

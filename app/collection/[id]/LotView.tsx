@@ -14,6 +14,7 @@ import LotHeader from "./LotHeader.tsx";
 import OfferPanel from "./OfferPanel.tsx";
 import PickPanel from "./PickPanel.tsx";
 import TotalsBar from "./TotalsBar.tsx";
+import { ROUTES } from "@/lib/consts.ts";
 
 type Filter = "all" | "to-pick" | "problems";
 type Undo = { key: number; label: string; query: string; year: number | null; record: Grade; sleeve: Grade; notes: string };
@@ -170,7 +171,7 @@ export default function LotView({ id }: { id: number }) {
       <div className="card" role="alert">
         <h2 tabIndex={-1}>Collection not found</h2>
         <p>That collection does not exist, or it was deleted.</p>
-        <Link href="/collection">Back to Collections</Link>
+        <Link href={ROUTES.collections}>Back to Collections</Link>
       </div>
     );
   }
@@ -199,7 +200,7 @@ export default function LotView({ id }: { id: number }) {
 
   return (
     <>
-      <LotHeader session={session} oldestPricedAt={oldestPricedAt} exportCounts={exportCounts} onChanged={refresh} onDeleted={() => router.push("/collection")} onError={setNotice} />
+      <LotHeader session={session} oldestPricedAt={oldestPricedAt} exportCounts={exportCounts} onChanged={refresh} onDeleted={() => router.push(ROUTES.collections)} onError={setNotice} />
       <TotalsBar totals={totals} queue={queue} offline={offline} currency={currency} onResume={resume} />
       <OfferPanel offer={offer} session={session} currency={currency} onChanged={refresh} />
       <EntryBar

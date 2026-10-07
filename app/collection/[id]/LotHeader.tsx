@@ -9,6 +9,7 @@ import { relativeTime } from "../../../lib/relative-time.ts";
 import { useDisclosure } from "../../useDisclosure.ts";
 import { api } from "./api.ts";
 import { useDialog } from "./useDialog.ts";
+import { ROUTES } from "@/lib/consts.ts";
 
 export default function LotHeader({
   session,
@@ -152,7 +153,7 @@ export default function LotHeader({
                 </p>
               </li>
               <li>
-                <a className="dropdown-item" href={`/collection/${session.id}/print`}>
+                <a className="dropdown-item" href={ROUTES.print(session.id)}>
                   Print buy sheet
                 </a>
               </li>

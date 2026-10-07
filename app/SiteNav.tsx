@@ -7,6 +7,7 @@ import type { ThemeChoice } from "../lib/theme.ts";
 import NavIcon from "./NavIcon.tsx";
 import NavLinks from "./NavLinks.tsx";
 import ThemeSwitch from "./ThemeSwitch.tsx";
+import { LINKS } from "@/lib/consts.ts";
 
 // Sidebar on wider screens (expanded, or an icon rail once collapsed); a bottom tab bar on phones (CSS decides).
 export default function SiteNav({
@@ -38,7 +39,7 @@ export default function SiteNav({
       <div className="nav-tools">
         {/* Same links as the footer, which shows them instead on phones (CSS decides). No third-party scripts. */}
         <div className="nav-links">
-          <a className="coffee" href="https://www.buymeacoffee.com/rgarciadev" target="_blank" rel="noreferrer" title={collapsed ? "Buy me a coffee" : undefined}>
+          <a className="coffee" href={LINKS.coffee} target="_blank" rel="noreferrer" title={collapsed ? "Buy me a coffee" : undefined}>
             <span aria-hidden="true">☕</span>
             <span className="nav-label">Buy me a coffee</span>
             <span className="sr-only"> (opens in a new tab)</span>
@@ -46,7 +47,7 @@ export default function SiteNav({
         </div>
         <a
           className="nav-item nav-docs"
-          href="https://github.com/garciaryan/mint-condition#readme"
+          href={LINKS.docs}
           target="_blank"
           rel="noreferrer"
           title={collapsed ? "Docs" : undefined}

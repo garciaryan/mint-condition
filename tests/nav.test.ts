@@ -54,8 +54,8 @@ test("the lots submenu shows only in the expanded desktop sidebar", () => {
 
 test("Docs and Buy me a coffee are in the sidebar as plain new-tab links (coffee keeps its pill)", () => {
   const nav = readFileSync("app/SiteNav.tsx", "utf8");
-  assert.match(nav, /href="https:\/\/github\.com\/garciaryan\/mint-condition#readme"/);
-  assert.match(nav, /className="coffee" href="https:\/\/www\.buymeacoffee\.com\/rgarciadev"/);
+  assert.match(nav, /href=\{LINKS\.docs\}/);
+  assert.match(nav, /className="coffee" href=\{LINKS\.coffee\}/);
   assert.equal(nav.match(/target="_blank"/g)?.length, 2);
   assert.match(nav, /className="nav-item nav-docs"[\s\S]*<NavIcon name="github" \/>/, "Docs is a sidebar item with the GitHub logo");
   assert.doesNotMatch(nav, /<script|nofollow|LogoutButton/);

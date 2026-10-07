@@ -13,6 +13,7 @@ import type { Candidate, Grade } from "../lib/types.ts";
 import GradeSelect from "./GradeSelect.tsx";
 import Picker, { Thumb } from "./Picker.tsx";
 import ScanButton from "./ScanButton.tsx";
+import { ROUTES } from "@/lib/consts.ts";
 
 // Loaded only when the scan icon is pressed, so the camera code and detector stay out of the page bundle.
 const LookupScanner = dynamic(() => import("./LookupScanner.tsx"), { ssr: false });
@@ -86,7 +87,7 @@ export default function Lookup() {
       });
       const res = (await r.json()) as LookupResponse;
       if (res.status === "error" && res.kind === "auth") {
-        location.assign("/login?next=/");
+        location.assign(ROUTES.login(ROUTES.home));
         return null;
       }
       return res;

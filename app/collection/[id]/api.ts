@@ -2,6 +2,7 @@
 import type { SessionRow } from "../../../lib/collection/types.ts";
 import type { ItemView, QueueState, Totals } from "../../../lib/collection/view.ts";
 import type { OfferView } from "../../../lib/offer.ts";
+import { ROUTES } from "../../../lib/consts.ts";
 
 export type LotData = {
   session: SessionRow;
@@ -56,7 +57,7 @@ export async function api<T = unknown>(
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     if (r.status === 401) {
-      location.assign(`/login?next=${location.pathname}`);
+      location.assign(ROUTES.login(location.pathname));
       return { ok: false, status: 401, message: "Signing in again…" };
     }
     if (!r.ok) {

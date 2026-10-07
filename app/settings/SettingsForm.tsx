@@ -8,6 +8,7 @@ import type { FieldKey, SettingsForm as Form } from "../../lib/settings-form.ts"
 import { GRADES } from "../../lib/types.ts";
 import type { Settings } from "../../lib/types.ts";
 import HelpTip from "./HelpTip.tsx";
+import { ROUTES } from "@/lib/consts.ts";
 
 type State = {
   settings: Settings;
@@ -110,7 +111,7 @@ export default function SettingsForm() {
     (async () => {
       try {
         const r = await fetch("/api/settings", { signal: ctrl.signal });
-        if (r.status === 401) return location.assign("/login?next=/settings");
+        if (r.status === 401) return location.assign(ROUTES.login(ROUTES.settings));
         if (!r.ok) return setLoadError((await readError(r)).message);
         apply((await r.json()) as State);
       } catch {
@@ -329,7 +330,7 @@ export default function SettingsForm() {
       </p>
       {signedOut && (
         <p className="field-error" role="alert">
-          {SIGNED_OUT} <a href="/login?next=/settings">Log in</a>
+          {SIGNED_OUT} <a href={ROUTES.login(ROUTES.settings)}>Log in</a>
         </p>
       )}
       {formError && (

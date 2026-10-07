@@ -10,6 +10,7 @@ import type { Grade } from "../../lib/types.ts";
 import DiscogsCredit from "../DiscogsCredit.tsx";
 import GradeSelect from "../GradeSelect.tsx";
 import { money } from "./[id]/api.ts";
+import { ROUTES } from "@/lib/consts.ts";
 
 type LotSummary = {
   id: number;
@@ -55,7 +56,7 @@ export default function LotsList() {
     (async () => {
       try {
         const r = await fetch("/api/sessions", { signal: ctrl.signal });
-        if (r.status === 401) return location.assign("/login?next=/collection");
+        if (r.status === 401) return location.assign(ROUTES.login(ROUTES.collections));
         if (!r.ok) return setLoadError(await readError(r));
         const body = (await r.json()) as { sessions: LotSummary[]; currency?: string };
         setLots(body.sessions);
@@ -79,13 +80,13 @@ export default function LotsList() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: name.trim() || undefined, defaultRecord: record, defaultSleeve: sleeve }),
       });
-      if (r.status === 401) return location.assign("/login?next=/collection");
+      if (r.status === 401) return location.assign(ROUTES.login(ROUTES.collections));
       if (!r.ok) {
         setCreateError(await readError(r));
         return;
       }
       const lot = (await r.json()) as { id: number };
-      router.push(`/collection/${lot.id}`);
+      router.push(ROUTES.collection(lot.id));
       // Stay disabled until navigation replaces the page, so a second click cannot create a duplicate.
       return;
     } catch {
@@ -155,7 +156,7 @@ export default function LotsList() {
           <ul className="lots">
             {lots.map((lot) => (
               <li key={lot.id}>
-                <Link href={`/collection/${lot.id}`} className="lot-row">
+                <Link href={ROUTES.collection(lot.id)} className="lot-row">
                   <span className="lot-name">{lot.name}</span>
                   <span className="lot-meta muted small">
                     <span>Updated {relativeTime(lot.updatedAt)}</span>
