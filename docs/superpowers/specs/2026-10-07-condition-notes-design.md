@@ -78,6 +78,9 @@ Client-safe (no Node or server imports), like `parse.ts`.
   `row-note`). Shown on every status, including rows with no match. Long notes wrap and are never cut off.
 - **Button:** "Note", or "Edit note" when there is a note, in `row-actions` before Remove. It has `aria-expanded`
   and `aria-controls` pointing at the editor, and screen-reader text naming the record, as the other row actions do.
+- **Phones (≤480px):** the Note button is a 44px pencil icon. Its text stays for screen readers, and it is filled
+  when the row has a note. Rec and Slv stack, each full width. The status badge and buttons share one bottom line
+  (`.row-foot`, `display: contents` on wider screens), and the buttons wrap to a second line when they don't fit.
 - **Editor:** a block spanning the row's full width (`grid-column: 1 / -1`, below the rest). It
   contains:
   - A labelled `<textarea>` ("Note for <title>", visually hidden label), 2 rows, 16px,
