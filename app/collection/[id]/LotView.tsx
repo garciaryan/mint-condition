@@ -97,6 +97,15 @@ export default function LotView({ id }: { id: number }) {
     [refresh],
   );
 
+  const note = useCallback(
+    async (itemId: number, notes: string): Promise<{ ok: true } | { ok: false; message: string }> => {
+      const res = await api(`/api/items/${itemId}`, "PATCH", { notes });
+      refresh();
+      return res.ok ? { ok: true } : { ok: false, message: res.message };
+    },
+    [refresh],
+  );
+
   const star = useCallback(
     async (itemId: number, pick: boolean) => {
       const res = await api(`/api/items/${itemId}`, "PATCH", { pick });
@@ -241,6 +250,7 @@ export default function LotView({ id }: { id: number }) {
               currency={currency}
               onGrade={grade}
               onStar={star}
+              onNote={note}
               onPick={(it, trigger) => setPicking({ item: it, trigger })}
               onRetry={retry}
               onRemove={remove}

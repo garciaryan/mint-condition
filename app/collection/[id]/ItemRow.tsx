@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import type { ItemView } from "../../../lib/collection/view.ts";
 import { DATA_CREDIT, releaseUrl } from "../../../lib/discogs-terms.ts";
 import type { Grade } from "../../../lib/types.ts";
 import GradeSelect from "../../GradeSelect.tsx";
 import { Thumb } from "../../Picker.tsx";
+import { addTag, hasTag, NOTE_MAX, NOTE_TAGS } from "../../../lib/collection/notes.ts";
 import { STATUS_INFO, displayStatus } from "../../../lib/collection/ui.ts";
 import { money } from "./api.ts";
 
@@ -74,6 +75,7 @@ export default function ItemRow({
   onPick,
   onRetry,
   onRemove,
+  onNote,
 }: {
   item: ItemView;
   currency: string;
@@ -82,6 +84,7 @@ export default function ItemRow({
   onPick: (item: ItemView, trigger: HTMLButtonElement) => void;
   onRetry: (id: number) => void;
   onRemove: (item: ItemView) => void;
+  onNote: (id: number, notes: string) => Promise<{ ok: true } | { ok: false; message: string }>;
 }) {
   // Shown immediately on change; snaps back if the save fails.
   const [record, setRecord] = useState(item.record);
@@ -96,6 +99,55 @@ export default function ItemRow({
     const ok = await onGrade(item.id, { [which]: g });
     setSaving(false);
     if (!ok) (which === "record" ? setRecord : setSleeve)(item[which]);
+  }
+
+  // Note editor. The draft is the row's own state, so a poll refresh never resets it.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const noteButton = useRef<HTMLButtonElement>(null);
+  const noteField = useRef<HTMLTextAreaElement>(null);
+  const focusButton = useRef(false);
+  const noteId = useId();
+  useEffect(() => {
+    if (editing) noteField.current?.focus();
+    else if (focusButton.current) {
+      focusButton.current = false;
+      noteButton.current?.focus();
+    }
+  }, [editing]);
+
+  function openNote() {
+    setDraft(item.notes);
+    setNoteError(null);
+    setEditing(true);
+  }
+
+  function closeNote() {
+    focusButton.current = true;
+    setEditing(false);
+  }
+
+  async function saveNote() {
+    if (noteSaving) return;
+    setNoteSaving(true);
+    setNoteError(null);
+    const res = await onNote(item.id, draft);
+    setNoteSaving(false);
+    if (res.ok) closeNote();
+    else setNoteError(res.message);
+  }
+
+  function noteKey(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeNote();
+    } else if (e.key === "Enter" && e.target === noteField.current) {
+      // A note is one line; Enter saves, with or without Shift.
+      e.preventDefault();
+      void saveNote();
+    }
   }
 
   const st = STATUS[displayStatus(item)];
@@ -119,6 +171,7 @@ export default function ItemRow({
             </a>
           </div>
         )}
+        {item.notes && <div className="sub row-note">{item.notes}</div>}
       </div>
       <div className="row-grades">
         <span className="grade">
@@ -162,10 +215,79 @@ export default function ItemRow({
             Retry<span className="sr-only"> {title}</span>
           </button>
         )}
+        <button
+          type="button"
+          className="row-action"
+          ref={noteButton}
+          aria-expanded={editing}
+          aria-controls={editing ? `${noteId}-editor` : undefined}
+          onClick={() => (editing ? closeNote() : openNote())}
+        >
+          {item.notes ? "Edit note" : "Note"}
+          <span className="sr-only"> for {title}</span>
+        </button>
         <button type="button" className="row-action danger" onClick={() => onRemove(item)}>
           Remove<span className="sr-only"> {title}</span>
         </button>
       </div>
+      {editing && (
+        <form
+          className="note-editor"
+          id={`${noteId}-editor`}
+          onKeyDown={noteKey}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void saveNote();
+          }}
+        >
+          <label className="sr-only" htmlFor={`${noteId}-text`}>
+            Note for {title}
+          </label>
+          <textarea
+            id={`${noteId}-text`}
+            ref={noteField}
+            rows={2}
+            maxLength={NOTE_MAX}
+            value={draft}
+            placeholder="Condition notes for the listing"
+            aria-describedby={`${noteId}-count${noteError ? ` ${noteId}-error` : ""}`}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          <div className="note-tags">
+            {NOTE_TAGS.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className="note-chip"
+                disabled={hasTag(draft, tag) || addTag(draft, tag) === null}
+                onClick={() => {
+                  const next = addTag(draft, tag);
+                  if (next !== null) setDraft(next);
+                  noteField.current?.focus();
+                }}
+              >
+                + {tag}
+              </button>
+            ))}
+          </div>
+          {noteError && (
+            <p className="field-error" role="alert" id={`${noteId}-error`}>
+              {noteError}
+            </p>
+          )}
+          <div className="note-foot">
+            <span className="note-count" id={`${noteId}-count`}>
+              {draft.length}/{NOTE_MAX}
+            </span>
+            <button type="button" className="secondary" onClick={closeNote}>
+              Cancel
+            </button>
+            <button type="submit" disabled={noteSaving} aria-busy={noteSaving}>
+              {noteSaving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
+      )}
     </li>
   );
 }
