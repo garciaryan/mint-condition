@@ -2721,6 +2721,11 @@ kbd {
   display: none;
 }
 
+/* Account sits apart from the form, not under its Save buttons. */
+.card.account {
+  margin-top: 32px;
+}
+
 @media (max-width: 768px) {
   .settings-grid.sleeve {
     grid-template-columns: repeat(2, minmax(0, 1fr));
