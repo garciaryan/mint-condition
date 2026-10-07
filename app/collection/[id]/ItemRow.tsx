@@ -18,6 +18,7 @@ export const ICONS = {
   warn: "M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
   x: "M18 6 6 18M6 6l12 12",
   clock: "M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z",
+  pencil: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z",
   star: "m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9L12 3Z",
 } as const;
 
@@ -211,37 +212,42 @@ export default function ItemRow({
         )}
         <div className="row-value">{marketCell(item, currency)}</div>
       </div>
-      <div className="row-status">
-        <span className={`status ${st.cls}`}>
-          {st.icon === "spinner" ? <span className="spinner" aria-hidden="true" /> : <Icon name={st.icon} />}
-          {st.text}
-        </span>
-      </div>
-      <div className="row-actions">
-        {item.status === "to-pick" && (
-          <button type="button" className="row-action" data-pick-for={item.id} onClick={(e) => onPick(item, e.currentTarget)}>
-            Pick pressing<span className="sr-only"> for {title}</span>
+      <div className="row-foot">
+        <div className="row-status">
+          <span className={`status ${st.cls}`}>
+            {st.icon === "spinner" ? <span className="spinner" aria-hidden="true" /> : <Icon name={st.icon} />}
+            {st.text}
+          </span>
+        </div>
+        <div className="row-actions">
+          {item.status === "to-pick" && (
+            <button type="button" className="row-action" data-pick-for={item.id} onClick={(e) => onPick(item, e.currentTarget)}>
+              Pick pressing<span className="sr-only"> for {title}</span>
+            </button>
+          )}
+          {(item.status === "error" || item.status === "no-match") && (
+            <button type="button" className="row-action" onClick={() => onRetry(item.id)}>
+              Retry<span className="sr-only"> {title}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className={`row-action note-btn${item.notes ? " has-note" : ""}`}
+            ref={noteButton}
+            aria-expanded={editing}
+            aria-controls={editing ? `${noteId}-editor` : undefined}
+            onClick={() => (editing ? closeNote() : openNote())}
+          >
+            <Icon name="pencil" />
+            <span className="note-label">
+              {item.notes ? "Edit note" : "Note"}
+              <span className="sr-only"> for {title}</span>
+            </span>
           </button>
-        )}
-        {(item.status === "error" || item.status === "no-match") && (
-          <button type="button" className="row-action" onClick={() => onRetry(item.id)}>
-            Retry<span className="sr-only"> {title}</span>
+          <button type="button" className="row-action danger" onClick={() => onRemove(item)}>
+            Remove<span className="sr-only"> {title}</span>
           </button>
-        )}
-        <button
-          type="button"
-          className="row-action"
-          ref={noteButton}
-          aria-expanded={editing}
-          aria-controls={editing ? `${noteId}-editor` : undefined}
-          onClick={() => (editing ? closeNote() : openNote())}
-        >
-          {item.notes ? "Edit note" : "Note"}
-          <span className="sr-only"> for {title}</span>
-        </button>
-        <button type="button" className="row-action danger" onClick={() => onRemove(item)}>
-          Remove<span className="sr-only"> {title}</span>
-        </button>
+        </div>
       </div>
       {editing && (
         <form

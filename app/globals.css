@@ -1572,6 +1572,16 @@ kbd {
   color: var(--danger);
 }
 
+/* Status and actions share one wrapper so phones can lay them out as one line; wider screens place them directly. */
+.row-foot {
+  display: contents;
+}
+
+/* The note button is text on wider screens and a pencil icon on phones. */
+.note-btn .icon {
+  display: none;
+}
+
 /* Condition note: the saved line under the title, and its editor across the row's full width. */
 .row-note {
   overflow-wrap: anywhere;
@@ -2224,7 +2234,7 @@ kbd {
     grid-template-areas:
       "thumb main price"
       "grades grades grades"
-      "status actions actions";
+      "foot foot foot";
     gap: 8px 10px;
     margin-bottom: 8px;
     padding: 10px 12px;
@@ -2255,7 +2265,7 @@ kbd {
 
   .row-grades {
     grid-area: grades;
-    flex-direction: row;
+    flex-direction: column;
   }
 
   .grade {
@@ -2264,16 +2274,23 @@ kbd {
   }
 
   .row .grade select {
+    flex: 1;
+    min-width: 0;
     min-height: var(--control-h);
     font-size: 16px;
   }
 
-  .row-status {
-    grid-area: status;
+  .row-foot {
+    grid-area: foot;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
   }
 
   .row-actions {
-    grid-area: actions;
+    flex: 1 1 auto;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -2294,6 +2311,36 @@ kbd {
   .row-action.danger {
     border-color: var(--line);
     font-weight: 500;
+  }
+
+  .note-btn {
+    width: var(--control-h);
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .note-btn .icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
+
+  .note-btn .note-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  /* A row with a note gets a filled pencil, so it shows at a glance. */
+  .note-btn.has-note {
+    background: var(--fill);
+    border-color: var(--fill);
+    color: var(--fill-ink);
   }
 
   .note-chip {

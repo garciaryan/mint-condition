@@ -102,11 +102,23 @@ test("offerNotes lists only the notes that apply", () => {
   ]);
 });
 
-test("phone rows give the actions two columns and let them wrap, so Note + Remove (+ Retry/Pick) never squeeze the title", () => {
+test("phone rows: stacked grades, and status + actions share a wrapping foot line (no overlap, price column stays narrow)", () => {
   const css = readFileSync("app/globals.css", "utf8");
   const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
-  assert.match(phone, /\.row \{[^}]*grid-template-areas:\s*"thumb main price"\s*"grades grades grades"\s*"status actions actions";/);
-  assert.match(phone, /\.row-actions \{[^}]*grid-area: actions;[^}]*flex-wrap: wrap;[^}]*justify-content: flex-end;/);
+  assert.match(css, /\.row-foot \{\s*display: contents;\s*\}/, "the foot wrapper is invisible to the desktop grid");
+  assert.match(phone, /\.row \{[^}]*grid-template-areas:\s*"thumb main price"\s*"grades grades grades"\s*"foot foot foot";/);
+  assert.match(phone, /\.row-foot \{[^}]*grid-area: foot;[^}]*display: flex;[^}]*flex-wrap: wrap;[^}]*justify-content: space-between;/);
+  assert.match(phone, /\.row-grades \{[^}]*grid-area: grades;[^}]*flex-direction: column;/);
+  assert.match(phone, /\.row-actions \{[^}]*flex-wrap: wrap;[^}]*justify-content: flex-end;/);
+});
+
+test("the note button is a pencil icon on phones and text on wider screens", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.note-btn \.icon \{\s*display: none;\s*\}/);
+  assert.match(phone, /\.note-btn \.icon \{[^}]*display: block;/);
+  assert.match(phone, /\.note-btn \.note-label \{[^}]*clip: rect\(0, 0, 0, 0\);/);
+  assert.match(phone, /\.note-btn\.has-note \{[^}]*background: var\(--/);
 });
 
 test("note chips get a hover state, and an over-limit note count turns red", () => {
