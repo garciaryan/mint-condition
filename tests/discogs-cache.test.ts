@@ -31,8 +31,8 @@ const inner: LookupClient = {
     if (fail) throw fail;
     return sugg;
   },
-  async marketplaceStats(id) {
-    calls.push(`stats:${id}`);
+  async releaseStats(id) {
+    calls.push(`release:${id}`);
     if (fail) throw fail;
     return STATS;
   },
@@ -59,13 +59,13 @@ test("a miss fetches and stores; a hit makes no inner call", async () => {
 });
 
 test("an entry exactly cacheHours old is expired", async () => {
-  await c.marketplaceStats(7);
+  await c.releaseStats(7);
   t += 24 * 3_600_000 - 1;
-  await c.marketplaceStats(7);
-  assert.equal(count("stats:7"), 1);
+  await c.releaseStats(7);
+  assert.equal(count("release:7"), 1);
   t += 1;
-  await c.marketplaceStats(7);
-  assert.equal(count("stats:7"), 2);
+  await c.releaseStats(7);
+  assert.equal(count("release:7"), 2);
 });
 
 test("fresh bypasses the cache and overwrites the entry", async () => {
@@ -150,7 +150,7 @@ test("a failing database never fails the lookup", async () => {
   const orig = console.error;
   console.error = () => {};
   try {
-    assert.deepEqual((await broken.marketplaceStats(7)).value, STATS);
+    assert.deepEqual((await broken.releaseStats(7)).value, STATS);
   } finally {
     console.error = orig;
   }
@@ -168,4 +168,10 @@ test("search results are cached per query and year", async () => {
   assert.equal(calls.length, 1);
   await c.searchByCatno("SD 7208", 1972);
   assert.equal(calls.length, 2);
+});
+
+test("release details are cached under release:<id>", async () => {
+  await c.releaseStats(7);
+  const keys = (db.prepare("select key from discogs_cache").all() as { key: string }[]).map((r) => r.key);
+  assert.deepEqual(keys, ["release:7"]);
 });

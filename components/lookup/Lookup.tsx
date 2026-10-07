@@ -384,7 +384,7 @@ function ResultCard({
   onRefresh: () => void;
   onBack?: () => void;
 }) {
-  const cur = res.status === "priced" ? res.currency : (res.stats.currency ?? "USD");
+  const cur = res.currency;
   const money = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
 
   // Discogs terms: nothing shown more than 6 hours behind discogs.com. A card left open that long hides its figures.

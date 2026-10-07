@@ -1,5 +1,5 @@
 // Minimal Discogs REST client. Server-side only: it holds the personal access token.
-import type { Candidate, Grade, MarketplaceStats, PriceSuggestions } from "./types.ts";
+import type { Candidate, Grade, Identifier, MarketplaceStats, PriceSuggestions } from "./types.ts";
 
 const BASE = "https://api.discogs.com";
 
@@ -221,15 +221,42 @@ export class DiscogsClient {
     return Object.keys(parsed).length > 0 ? parsed : null;
   }
 
-  async marketplaceStats(releaseId: number): Promise<MarketplaceStats> {
-    const body = await this.get<{
-      lowest_price?: { value?: number; currency?: string } | null;
-      num_for_sale?: number;
-    }>(`/marketplace/stats/${releaseId}`);
-    return {
-      lowestPrice: body?.lowest_price?.value ?? null,
-      currency: body?.lowest_price?.currency ?? null,
-      numForSale: body?.num_for_sale ?? 0,
-    };
+  /** Copies for sale, lowest listing, want/have, master and identifiers from /releases/{id}. Replaces
+   * /marketplace/stats so pricing stays at two calls per record (live check in the Phase 10 spec). */
+  async releaseStats(releaseId: number): Promise<MarketplaceStats> {
+    return parseReleaseStats(await this.get<unknown>(`/releases/${releaseId}`));
   }
+}
+
+/** The /releases/{id} fields pricing and demand use. `lowest_price` is a bare number in the account's currency, so
+ * `currency` is null. Fields a release lacks are left out (have/want) or defaulted. */
+export function parseReleaseStats(body: unknown): MarketplaceStats {
+  const empty: MarketplaceStats = { lowestPrice: null, currency: null, numForSale: 0 };
+  if (!body || typeof body !== "object") return empty;
+  const b = body as {
+    lowest_price?: unknown;
+    num_for_sale?: unknown;
+    community?: { have?: unknown; want?: unknown } | null;
+    master_id?: unknown;
+    identifiers?: unknown;
+  };
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+  const out: MarketplaceStats = {
+    lowestPrice: num(b.lowest_price) ?? null,
+    currency: null,
+    numForSale: num(b.num_for_sale) ?? 0,
+  };
+  const have = num(b.community?.have);
+  const want = num(b.community?.want);
+  if (have !== undefined) out.have = have;
+  if (want !== undefined) out.want = want;
+  const master = num(b.master_id);
+  out.masterId = master ? master : null;
+  out.identifiers = Array.isArray(b.identifiers)
+    ? b.identifiers.flatMap((i): Identifier[] => {
+        if (!i || typeof i.type !== "string" || typeof i.value !== "string") return [];
+        return [typeof i.description === "string" ? { type: i.type, value: i.value, description: i.description } : { type: i.type, value: i.value }];
+      })
+    : [];
+  return out;
 }

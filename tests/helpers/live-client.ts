@@ -2,7 +2,7 @@
 import type { CachedLookupClient, FetchOpts } from "../../lib/discogs-cache.ts";
 import type { LookupClient } from "../../lib/lookup.ts";
 
-export type Method = "search" | "suggestions" | "stats";
+export type Method = "search" | "suggestions" | "release";
 
 export function live(
   inner: LookupClient,
@@ -16,6 +16,6 @@ export function live(
   return {
     searchByCatno: (q, y, opts) => wrap("search", opts, () => inner.searchByCatno(q, y)),
     priceSuggestions: (id, opts) => wrap("suggestions", opts, () => inner.priceSuggestions(id)),
-    marketplaceStats: (id, opts) => wrap("stats", opts, () => inner.marketplaceStats(id)),
+    releaseStats: (id, opts) => wrap("release", opts, () => inner.releaseStats(id)),
   };
 }

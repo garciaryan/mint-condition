@@ -50,7 +50,7 @@ if (releaseId === undefined) {
   console.log(`Matched: ${candidates[0].title} (${candidates[0].year}, ${candidates[0].country}) id ${releaseId}`);
 }
 
-const [suggestions, stats] = await Promise.all([client.priceSuggestions(releaseId), client.marketplaceStats(releaseId)]);
+const [suggestions, stats] = await Promise.all([client.priceSuggestions(releaseId), client.releaseStats(releaseId)]);
 if (!suggestions) {
   fail("No price suggestions for this release (none exist, or the seller account isn't set up).", 3);
 }

@@ -21,7 +21,7 @@ function fake(script: Script = {}, at = 0, seen?: { fresh: (boolean | undefined)
   const client: LookupClient = {
     async searchByCatno(q, y) { calls.push(`search:${q}`); return script.search ? script.search(q, y) : [cand(1)]; },
     async priceSuggestions(id) { calls.push(`sugg:${id}`); return script.suggestions ? script.suggestions(id) : SUG; },
-    async marketplaceStats(id) { calls.push(`stats:${id}`); return STATS; },
+    async releaseStats(id) { calls.push(`release:${id}`); return STATS; },
   };
   return { client: live(client, () => at, seen), calls };
 }
@@ -54,7 +54,7 @@ test("one match is priced in the same call, in order search, suggestions, stats"
   const { db, items } = setup();
   const f = fake({ search: () => [cand(7)] }, 777);
   await kickWorker({ db, client: f.client, now: () => 777 });
-  assert.deepEqual(f.calls, ["search:A", "sugg:7", "stats:7"]);
+  assert.deepEqual(f.calls, ["search:A", "sugg:7", "release:7"]);
   const r = getItem(db, items[0].id)!;
   assert.equal(r.status, "priced");
   assert.equal(r.releaseId, 7);
@@ -232,7 +232,7 @@ test("processItem with a release id skips the search", async () => {
   const { items } = setup();
   const f = fake();
   const patch = await processItem(f.client, { ...items[0], releaseId: 5 }, 1);
-  assert.deepEqual(f.calls, ["sugg:5", "stats:5"]);
+  assert.deepEqual(f.calls, ["sugg:5", "release:5"]);
   assert.equal(patch.status, "priced");
   assert.equal("release" in patch, false);
 });
@@ -245,14 +245,14 @@ test("processItem passes fresh from the row and prices at the data's age", async
   assert.equal(patch.pricedAt, 400);
 });
 
-test("pricedAt is the older of suggestions and stats", async () => {
+test("pricedAt is the older of suggestions and release details", async () => {
   const { items } = setup();
   const inner: LookupClient = {
     async searchByCatno() { return [cand(1)]; },
     async priceSuggestions() { return SUG; },
-    async marketplaceStats() { return STATS; },
+    async releaseStats() { return STATS; },
   };
-  const patch = await processItem(live(inner, (m) => (m === "stats" ? 300 : 500)), { ...items[0], releaseId: 1 }, 900);
+  const patch = await processItem(live(inner, (m) => (m === "release" ? 300 : 500)), { ...items[0], releaseId: 1 }, 900);
   assert.equal(patch.pricedAt, 300);
 });
 

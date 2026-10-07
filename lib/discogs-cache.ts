@@ -9,7 +9,7 @@ export type FetchOpts = { fresh?: boolean };
 export type CachedLookupClient = {
   searchByCatno(query: string, year: number | undefined, opts?: FetchOpts): Promise<Fetched<Candidate[]>>;
   priceSuggestions(releaseId: number, opts?: FetchOpts): Promise<Fetched<PriceSuggestions | null>>;
-  marketplaceStats(releaseId: number, opts?: FetchOpts): Promise<Fetched<MarketplaceStats>>;
+  releaseStats(releaseId: number, opts?: FetchOpts): Promise<Fetched<MarketplaceStats>>;
 };
 
 export function searchKey(query: string, year: number | undefined): string {
@@ -41,8 +41,8 @@ export class CachedClient implements CachedLookupClient {
     return this.cached(`suggestions:${releaseId}`, opts.fresh, () => this.inner.priceSuggestions(releaseId));
   }
 
-  marketplaceStats(releaseId: number, opts: FetchOpts = {}): Promise<Fetched<MarketplaceStats>> {
-    return this.cached(`stats:${releaseId}`, opts.fresh, () => this.inner.marketplaceStats(releaseId));
+  releaseStats(releaseId: number, opts: FetchOpts = {}): Promise<Fetched<MarketplaceStats>> {
+    return this.cached(`release:${releaseId}`, opts.fresh, () => this.inner.releaseStats(releaseId));
   }
 
   private ttl(): number {

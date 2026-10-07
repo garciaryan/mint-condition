@@ -33,7 +33,7 @@ let suggFn: (id: number) => PriceSuggestions | null = () => SUG;
 const fakeClient: LookupClient = {
   async searchByCatno(q) { return searchFn(q); },
   async priceSuggestions(id) { return suggFn(id); },
-  async marketplaceStats() { return STATS; },
+  async releaseStats() { return STATS; },
 };
 
 before(async () => {
