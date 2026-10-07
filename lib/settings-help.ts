@@ -27,7 +27,7 @@ const HELP: Partial<Record<FieldKey, string>> = {
   "demand.slowWantHave":
     "A record is a slow seller when want ÷ have is below this, since few people are looking for it.",
   "demand.slowForSale":
-    "A record is also a slow seller when at least this many copies are for sale. Slow records get a \"Slow seller\" badge, and collections can leave them out of picks.",
+    "A record is also a slow seller when at least this many copies are for sale. Slow records get a \"Slow seller\" badge, and collections can leave them out of cherry-picks.",
 };
 
 /** One note for the whole sleeve grid, on its section heading. */

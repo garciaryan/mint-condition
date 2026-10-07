@@ -67,34 +67,43 @@ function side(percents: number[], amountAt: (percent: number) => number, walkAwa
   };
 }
 
-export function computeOffer(items: ItemRow[], inputs: OfferInputs, settings: Settings): OfferView {
-  const o = settings.offer;
+type PickTally = { picks: number; pickValue: number; pickNet: number };
+
+function tallyPicks(items: ItemRow[], inputs: OfferInputs, settings: Settings): PickTally {
   const feeKeep = 1 - settings.sell.discogsFeePercent / 100;
-  let picks = 0, unpricedCount = 0, pickValue = 0, pickNet = 0;
+  const t: PickTally = { picks: 0, pickValue: 0, pickNet: 0 };
   for (const item of items) {
     const market = offerMarket(item, inputs, settings);
-    if (!market) unpricedCount++;
     if (!pickFor(market, item, inputs, settings)) continue;
-    picks++;
-    pickValue += market!.suggested;
-    pickNet += sellPrice(market!, item.stats?.lowestPrice ?? null, settings).price * feeKeep;
+    t.picks++;
+    t.pickValue += market!.suggested;
+    t.pickNet += sellPrice(market!, item.stats?.lowestPrice ?? null, settings).price * feeKeep;
   }
-  const bulkCount = items.length - picks;
-  const bulk = inputs.bulkEach * bulkCount;
+  return t;
+}
+
+export function computeOffer(items: ItemRow[], inputs: OfferInputs, settings: Settings): OfferView {
+  const o = settings.offer;
+  const unpricedCount = items.filter((item) => !offerMarket(item, inputs, settings)).length;
+  // skipSlow narrows the cherry-picks only: you buy the slow records either way in a whole-collection offer, so that
+  // side still values them as picks.
+  const cherry = tallyPicks(items, inputs, settings);
+  const whole = inputs.skipSlow ? tallyPicks(items, { ...inputs, skipSlow: false }, settings) : cherry;
   // What the picks leave after margin and overhead. It can be negative when the lot overhead is more than the picks
   // cover; the whole-lot walk-away still has to pay for that, so only the final amounts are floored at 0.
-  const pickRoom = pickNet * (1 - o.marginPercent / 100) - o.overheadPerRecord * picks - inputs.lotOverhead;
-  const pickWalkAway = Math.max(0, dollars(pickRoom));
-  const wholeWalkAway = Math.max(0, dollars(pickRoom + bulk));
+  const room = (t: PickTally) => t.pickNet * (1 - o.marginPercent / 100) - o.overheadPerRecord * t.picks - inputs.lotOverhead;
+  const wholeBulk = inputs.bulkEach * (items.length - whole.picks);
+  const pickWalkAway = Math.max(0, dollars(room(cherry)));
+  const wholeWalkAway = Math.max(0, dollars(room(whole) + wholeBulk));
   return {
     inputs: { ...inputs, unverifiedSteps: o.unverifiedSteps, overheadPerRecord: o.overheadPerRecord, marginPercent: o.marginPercent },
     openingPercent: o.openingPercent,
-    picks,
-    bulkCount,
+    picks: cherry.picks,
+    bulkCount: items.length - cherry.picks,
     unpricedCount,
-    pickValue: roundCents(pickValue),
-    pickNet: roundCents(pickNet),
-    pickOnly: side(o.ladderPercents, (p) => dollars((p / 100) * pickValue), pickWalkAway),
-    wholeLot: side(o.ladderPercents, (p) => dollars((p / 100) * pickValue + bulk), wholeWalkAway),
+    pickValue: roundCents(cherry.pickValue),
+    pickNet: roundCents(cherry.pickNet),
+    pickOnly: side(o.ladderPercents, (p) => dollars((p / 100) * cherry.pickValue), pickWalkAway),
+    wholeLot: side(o.ladderPercents, (p) => dollars((p / 100) * whole.pickValue + wholeBulk), wholeWalkAway),
   };
 }

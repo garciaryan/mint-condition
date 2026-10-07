@@ -166,7 +166,7 @@ test("offer notes say when slow sellers are left out of picks", () => {
   const slow = row({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 }, stats: { lowestPrice: 1, currency: null, numForSale: 50, have: 100, want: 10 } });
   const on = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0, skipSlow: true }, settings);
   assert.deepEqual(offerNotes(computeOffer([slow], on, settings), "USD"), [
-    "Slow sellers left out of picks",
+    "Slow sellers left out of cherry-picks",
     "Picks: none at or above $15 once slow sellers are left out",
   ]);
   const off = offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0 }, settings);

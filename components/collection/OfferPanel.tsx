@@ -201,7 +201,7 @@ export default function OfferPanel({
             </label>
             <label className="field inline switch">
               <input type="checkbox" checked={skipSlow} onChange={(e) => void changeSkipSlow(e.target.checked)} />
-              Leave slow sellers out of picks
+              Leave slow sellers out of cherry-picks
             </label>
             <AmountField
               id="offer-threshold"

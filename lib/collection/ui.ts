@@ -113,7 +113,7 @@ export function offerNotes(offer: OfferView, currency: string): string[] {
     const s = offer.inputs.unverifiedSteps;
     notes.push(`Grades lowered ${s} ${s === 1 ? "step" : "steps"} for this offer (condition unverified)`);
   }
-  if (offer.inputs.skipSlow) notes.push("Slow sellers left out of picks");
+  if (offer.inputs.skipSlow) notes.push("Slow sellers left out of cherry-picks");
   if (offer.picks === 0) {
     const tail = offer.inputs.skipSlow ? " once slow sellers are left out" : "";
     notes.push(`Picks: none at or above ${cash(offer.inputs.pickThreshold, currency)}${tail}`);

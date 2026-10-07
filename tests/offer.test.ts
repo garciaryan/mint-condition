@@ -106,3 +106,14 @@ test("skipSlow leaves slow sellers out of automatic picks; a star still wins; un
   assert.equal(computeOffer([slow, A], off, settings).picks, 2);
   assert.equal(offerInputs({ unverified: false, pickThreshold: null, bulkEach: null, lotOverhead: 0, skipSlow: true }, settings).skipSlow, true);
 });
+
+test("skipSlow changes the cherry-pick offer only; the whole-collection offer still values slow records as picks", () => {
+  const slowStats = { lowestPrice: 12, currency: null, numForSale: 50, have: 100, want: 10 };
+  const slow = item({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 }, stats: slowStats });
+  const off = computeOffer([slow, A, B], base, settings);
+  const on = computeOffer([slow, A, B], { ...base, skipSlow: true }, settings);
+  assert.deepEqual(on.wholeLot, off.wholeLot);
+  assert.ok(on.pickOnly.walkAway < off.pickOnly.walkAway);
+  assert.equal(on.picks, off.picks - 1);
+  assert.equal(on.picks + on.bulkCount, 3);
+});

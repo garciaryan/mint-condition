@@ -100,7 +100,8 @@ export function demand(stats: MarketplaceStats | null, s: Settings["demand"]): D
   provided by Discogs" link, on every layout.
 - **Totals bar:** `Totals.slow` counts rows with a market value and `demand === "slow"`. The bar shows "N slow" when
   N > 0.
-- **Offer panel:** a checkbox "Leave slow sellers out of picks", saved to `skipSlow`.
+- **Offer panel:** a checkbox "Leave slow sellers out of cherry-picks", saved to `skipSlow`. It changes the
+  cherry-pick offer only; the whole-collection offer still values slow records as picks (you buy them either way).
 - **Discogs terms:** the badge and counts appear only where the release credit already sits. The single-record card
   and lot rows both have it, and `tests/discogs-terms.test.ts` gains a check that the badge is used only in files
   that carry the credit.
@@ -111,6 +112,8 @@ export function demand(stats: MarketplaceStats | null, s: Settings["demand"]): D
 - Automatic pick: a row is a pick when it isn't pinned, meets the threshold, and isn't
   (`inputs.skipSlow && demand(item.stats, settings.demand) === "slow"`). Pins (`pick` true or false) still win.
   `isPickRow` and `computeOffer` stay pure.
+- skipSlow narrows the **cherry-pick** side only (picks count, value, walk-away and ladder). The whole-collection
+  side is computed with skipSlow off, so toggling it never changes the whole-collection offer (decided 2026-10-07).
 
 ## Tests
 
