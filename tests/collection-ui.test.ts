@@ -238,8 +238,8 @@ test("the cherry-pick ladder shows only when some records are picks and some are
 
 test("the Options button is as wide as the offer inputs on desktop", () => {
   const css = readFileSync("app/globals.css", "utf8");
-  const desktop = css.slice(0, css.indexOf("@media (max-width: 480px)"));
-  const field = desktop.match(/\.offer-inputs \.field \{[^}]*width: (\d+px);/)?.[1];
+  // Top-level (desktop) rules start at column 0; the phone overrides are indented inside their @media block.
+  const field = css.match(/^\.offer-inputs \.field \{[^}]*width: (\d+px);/m)?.[1];
   assert.ok(field, "offer input width");
-  assert.match(desktop, new RegExp(`\\.offer-inputs > \\.dropdown > button \\{[^}]*width: ${field};`));
+  assert.match(css, new RegExp(`^\\.offer-inputs > \\.dropdown > button \\{[^}]*width: ${field};`, "m"));
 });
