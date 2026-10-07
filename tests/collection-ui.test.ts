@@ -108,7 +108,7 @@ test("phone rows: stacked grades, and status + actions share a wrapping foot lin
   assert.match(css, /\.row-foot \{\s*display: contents;\s*\}/, "the foot wrapper is invisible to the desktop grid");
   assert.match(phone, /\.row \{[^}]*grid-template-areas:\s*"title title"\s*"thumb meta"\s*"price price"\s*"grades grades"\s*"foot foot";/);
   assert.match(phone, /\.row-foot \{[^}]*grid-area: foot;[^}]*display: flex;[^}]*flex-wrap: wrap;[^}]*justify-content: space-between;/);
-  assert.match(phone, /\.row-grades \{[^}]*grid-area: grades;[^}]*flex-direction: column;/);
+  assert.match(phone, /\.row-grades \{[^}]*grid-area: grades;[^}]*flex-direction: column;[^}]*gap: 12px;/);
   assert.match(phone, /\.row-actions \{[^}]*flex-wrap: wrap;[^}]*justify-content: flex-end;/);
 });
 
