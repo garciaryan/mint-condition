@@ -1,6 +1,6 @@
 # Phase 9: Condition notes
 
-Date: 2026-10-07 · Status: approved design, awaiting spec review
+Date: 2026-10-07 · Status: built on feat/condition-notes; live CSV upload check pending
 Builds on: `docs/superpowers/specs/2026-10-04-collection-mode-design.md` (lots, rows),
 `docs/superpowers/specs/2026-10-04-export-print-design.md` (CSV export, buy sheet). Roadmap: `docs/ROADMAP.md`.
 
