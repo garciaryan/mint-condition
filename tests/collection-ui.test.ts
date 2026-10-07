@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-import { coverageText, displayStatus, etaText, offerNotes, offerSummary, pasteSummary, wantHaveText } from "../lib/collection/ui.ts";
+import { coverageText, displayStatus, etaText, offerNotes, offerOptionsLabel, offerSummary, pasteSummary, wantHaveText } from "../lib/collection/ui.ts";
 import { computeOffer, offerInputs } from "../lib/offer.ts";
 import { parseSettings } from "../lib/settings.ts";
 import type { ItemRow } from "../lib/collection/types.ts";
@@ -189,4 +189,11 @@ test("the demand badge gives its counts once (screen-reader text, no title toolt
   const badge = readFileSync("components/ui/DemandBadge.tsx", "utf8");
   assert.doesNotMatch(badge, /title=/);
   assert.match(badge, /className="sr-only"/);
+});
+
+test("offerOptionsLabel says how many offer options are on", () => {
+  assert.equal(offerOptionsLabel(false, false), "Options");
+  assert.equal(offerOptionsLabel(true, false), "Options · 1 on");
+  assert.equal(offerOptionsLabel(false, true), "Options · 1 on");
+  assert.equal(offerOptionsLabel(true, true), "Options · 2 on");
 });

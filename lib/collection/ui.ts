@@ -126,3 +126,9 @@ export function wantHaveText(c: { want?: number; have?: number }): string | null
   if (c.want === undefined || c.have === undefined) return null;
   return `${c.want.toLocaleString("en-US")} want · ${c.have.toLocaleString("en-US")} have`;
 }
+
+/** The offer panel's Options button: "Options", or "Options · 1 on" when any option is ticked. */
+export function offerOptionsLabel(unverified: boolean, skipSlow: boolean): string {
+  const on = Number(unverified) + Number(skipSlow);
+  return on === 0 ? "Options" : `Options · ${on} on`;
+}

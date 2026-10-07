@@ -2660,6 +2660,18 @@ kbd {
   padding: 0 16px 16px;
 }
 
+/* Offer options dropdown (Condition unverified, Leave slow sellers out of cherry-picks): one row per checkbox. */
+.offer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.offer-options .field {
+  min-height: var(--control-h);
+  padding: 0 8px;
+}
+
 .offer-inputs {
   display: flex;
   flex-wrap: wrap;

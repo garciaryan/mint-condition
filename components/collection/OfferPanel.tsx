@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { SessionRow } from "@/lib/collection/types.ts";
-import { cash, offerNotes, offerSummary } from "@/lib/collection/ui.ts";
+import { cash, offerNotes, offerOptionsLabel, offerSummary } from "@/lib/collection/ui.ts";
+import { useDisclosure } from "@/hooks/useDisclosure.ts";
 import type { OfferSide, OfferView } from "@/lib/offer.ts";
 import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";
 import { api } from "@/lib/collection/client.ts";
@@ -152,6 +153,8 @@ export default function OfferPanel({
   useEffect(() => setOpen(readOpen()), []);
   useEffect(() => setUnverified(session.unverified), [session.unverified]);
   const [skipSlow, setSkipSlow] = useState(session.skipSlow);
+  // Unverified and leave-slow-sellers live in a dropdown so they don't crowd the offer inputs.
+  const options = useDisclosure();
   useEffect(() => setSkipSlow(session.skipSlow), [session.skipSlow]);
 
   function toggle() {
@@ -195,14 +198,31 @@ export default function OfferPanel({
       {open && (
         <div id="offer-detail" className="offer-detail">
           <div className="offer-inputs">
-            <label className="field inline switch">
-              <input type="checkbox" checked={unverified} onChange={(e) => void changeUnverified(e.target.checked)} />
-              Condition unverified
-            </label>
-            <label className="field inline switch">
-              <input type="checkbox" checked={skipSlow} onChange={(e) => void changeSkipSlow(e.target.checked)} />
-              Leave slow sellers out of cherry-picks
-            </label>
+            <div ref={options.root} className="dropdown">
+              <button
+                ref={options.button}
+                type="button"
+                className="secondary"
+                aria-expanded={options.open}
+                aria-controls="offer-options"
+                onClick={options.toggle}
+              >
+                {offerOptionsLabel(unverified, skipSlow)}
+                <span aria-hidden="true"> ▾</span>
+              </button>
+              {options.open && (
+                <div id="offer-options" className="dropdown-panel offer-options">
+                  <label className="field inline switch">
+                    <input type="checkbox" checked={unverified} onChange={(e) => void changeUnverified(e.target.checked)} />
+                    Condition unverified
+                  </label>
+                  <label className="field inline switch">
+                    <input type="checkbox" checked={skipSlow} onChange={(e) => void changeSkipSlow(e.target.checked)} />
+                    Leave slow sellers out of cherry-picks
+                  </label>
+                </div>
+              )}
+            </div>
             <AmountField
               id="offer-threshold"
               label="Pick threshold $"
