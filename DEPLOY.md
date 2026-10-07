@@ -194,7 +194,7 @@ curl https://<app>.fly.dev/api/health
 
 Step 3 can wait until the restore is confirmed, but then two `mint_data` volumes exist and the new machine may pick the wrong one. Confirm the snapshot id and destroy the old volume before step 4.
 
-Copy the database file off the machine for your own backup. The machine auto-stops when idle, so start it first (`fly machine start <machine-id>`, or request `/api/health`):
+Copy the database file off the machine for your own backup. The machine suspends when idle, so wake it first (`fly machine start <machine-id>`, or request `/api/health`):
 
 ```sh
 fly ssh sftp get /data/mint.db

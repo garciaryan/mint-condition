@@ -18,7 +18,9 @@ primary_region = 'sjc'
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = 'stop'
+  # Suspend (not stop) when idle: resuming restores memory in well under a second, where a cold Node boot
+  # left a blank page for ~4.5 s.
+  auto_stop_machines = 'suspend'
   auto_start_machines = true
   min_machines_running = 0
 

@@ -5,7 +5,8 @@ Input: catalog number (or barcode), pressing year, record grade, sleeve grade. O
 sell price (with the net after the Discogs fee). Collection (bulk buying) tools build on it.
 
 ## Decisions already made
-- Hosted on Fly.io (one machine, SQLite on a volume at `/data`), single-password login, no OAuth. The password is
+- Hosted on Fly.io (one machine, SQLite on a volume at `/data`; it suspends when idle rather than stopping, since a
+  cold boot showed a blank page for ~4.5 s, 2026-10-07), single-password login, no OAuth. The password is
   `APP_PASSWORD` (plain, min 12) or `APP_PASSWORD_HASH` (scrypt), never both. `SESSION_SECRET` comes from the env or,
   when unset, `DATA_DIR/session-secret`, made once at boot by `lib/session-secret.ts` (`instrumentation.ts`); env
   wins. `npm run setup:fly` sets the Fly secrets via `fly secrets import` on stdin (2026-10-05). Discogs access uses a
