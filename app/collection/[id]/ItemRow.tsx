@@ -60,12 +60,42 @@ function marketCell(item: ItemView, currency: string): ReactNode {
       </>
     );
   }
-  const note =
-    item.status === "to-pick" ? "not counted yet"
+  return <span className="sub">{marketNote(item)}</span>;
+}
+
+/** Why a row has no market value yet. */
+function marketNote(item: ItemView): string {
+  return item.status === "to-pick" ? "not counted yet"
     : item.status === "no-price" || item.status === "priced" ? "no Discogs suggestions"
     : item.status === "error" || item.status === "no-match" ? "not counted"
     : "—";
-  return <span className="sub">{note}</span>;
+}
+
+/** Phones: the market value labelled like the single-record result card. Hidden on wider screens. */
+function marketBlock(item: ItemView, currency: string): ReactNode {
+  return (
+    <div className="price-block row-market">
+      <div className="row-market-title">Market value</div>
+      {item.market ? (
+        <div className="range">
+          <span>
+            <small>Low</small>
+            {money(item.market.low, currency)}
+          </span>
+          <span className="big">
+            <small>Suggested</small>
+            {money(item.market.suggested, currency)}
+          </span>
+          <span>
+            <small>High</small>
+            {money(item.market.high, currency)}
+          </span>
+        </div>
+      ) : (
+        <p className="muted small">{marketNote(item)}</p>
+      )}
+    </div>
+  );
 }
 
 export default function ItemRow({
@@ -213,6 +243,7 @@ export default function ItemRow({
           </button>
         )}
         <div className="row-value">{marketCell(item, currency)}</div>
+        {marketBlock(item, currency)}
       </div>
       <div className="row-foot">
         <div className="row-status">

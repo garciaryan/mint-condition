@@ -1572,6 +1572,20 @@ kbd {
   color: var(--danger);
 }
 
+/* Phones label the market value like the result card (.row-market); wider screens keep the compact cell. */
+.row-market {
+  display: none;
+}
+
+.row-market-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
 /* Status and actions share one wrapper so phones can lay them out as one line; wider screens place them directly. */
 .row-foot {
   display: contents;
@@ -2280,15 +2294,18 @@ kbd {
     text-align: left;
   }
 
-  .row-value {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 2px 10px;
+  .row-price .row-value {
+    display: none;
   }
 
-  .row-price b {
-    font-size: 20px;
+  .row-market {
+    display: block;
+    flex: 1;
+    padding: 10px 12px;
+  }
+
+  .row-market .big {
+    font-size: 22px;
   }
 
   .row .star {

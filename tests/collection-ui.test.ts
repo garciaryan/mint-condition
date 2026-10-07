@@ -137,3 +137,16 @@ test("phone rows: the title gets a full-width line, the star sits top-right, and
   assert.match(phone, /\.row \.star \{[^}]*position: absolute;[^}]*top: [^}]*right: [^}]*width: var\(--control-h\);/);
   assert.match(phone, /\.row-price \{[^}]*grid-area: price;[^}]*justify-content: flex-start;[^}]*text-align: left;/);
 });
+
+test("phone rows show a labelled, padded Market value box; wider screens keep the compact price cell", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.row-market \{\s*display: none;\s*\}/, "hidden outside phones");
+  assert.match(phone, /\.row-market \{[^}]*display: block;[^}]*flex: 1;[^}]*padding: /);
+  assert.match(phone, /\.row-price \.row-value \{\s*display: none;\s*\}/, "the compact cell is hidden on phones");
+  assert.match(css, /\.row-market-title \{[^}]*text-transform: uppercase;[^}]*color: var\(--muted\);/);
+  const row = readFileSync("app/collection/[id]/ItemRow.tsx", "utf8");
+  assert.match(row, /className="price-block row-market"/);
+  assert.match(row, /<small>Low<\/small>[\s\S]*<small>Suggested<\/small>[\s\S]*<small>High<\/small>/);
+  assert.match(row, /Market value/);
+});

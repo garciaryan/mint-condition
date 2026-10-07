@@ -79,7 +79,9 @@ Client-safe (no Node or server imports), like `parse.ts`.
 - **Button:** "Note", or "Edit note" when there is a note, in `row-actions` before Remove. It has `aria-expanded`
   and `aria-controls` pointing at the editor, and screen-reader text naming the record, as the other row actions do.
 - **Phones (≤480px):** the title has its own full-width line, with the cherry-pick star pinned top-right. The
-  details (label line, Discogs credit, note; `.row-meta`) sit beside the cover, and the price gets its own line. The
+  details (label line, Discogs credit, note; `.row-meta`) sit beside the cover, and the price gets its own line: a padded "Market value" box with
+  Low / Suggested / High labelled like the single-record result card (`.row-market`; wider screens keep the compact
+  cell). The
   Note button is a 44px pencil icon. Its text stays for screen readers, and it is filled
   when the row has a note. Rec and Slv stack, each full width. The status badge and buttons share one bottom line
   (`.row-foot`, `display: contents` on wider screens), and the buttons wrap to a second line when they don't fit.
