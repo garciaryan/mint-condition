@@ -1,6 +1,6 @@
 # Phase 11: Matching by runout in the picker
 
-Date: 2026-10-07 · Status: approved design, awaiting spec review
+Date: 2026-10-07 · Status: built on feat/runout-match (live: 5193282 → 5 identifiers; repeat is a cache hit; pricing it then costs 1 call)
 Roadmap: `docs/ROADMAP.md` (Phase 11). Builds on Phase 10 (`docs/superpowers/specs/2026-10-07-demand-signal-design.md`),
 which stores identifiers from `/releases/{id}` and caches them as `release:<id>`.
 

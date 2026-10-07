@@ -83,7 +83,7 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
 
 - **Routes:** `app/page.tsx` (price a record) · `app/collection/` (lots list), `app/collection/[id]/` (lot),
   `app/collection/[id]/print/` (buy sheet) · `app/settings/` · `app/login/` · `app/api/` (`lookup`, `login|logout|health`,
-  `settings`, `sessions/` incl. `[id]/discogs.csv`, `items/`)
+  `settings`, `sessions/` incl. `[id]/discogs.csv`, `items/`, `releases/[id]/identifiers`)
 - **`components/layout/`:** `SiteHeader` (server: reads `mc_theme`/`mc_nav`) + `SiteNav` (fixed left sidebar, expanded
   by default, collapses to an icon rail remembered by `mc_nav` via `lib/nav.ts`; a bottom tab bar at 480px and below;
   Docs and the coffee pill sit at its foot, the footer shows them only on phones and pages without the sidebar) ·
@@ -102,7 +102,8 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   pure) · `lookup.ts` lookup flow for the API route · `form.ts` client-side form checks and picker grouping ·
   `auth.ts` (session signing, authMode, limiter, health config) · `password.ts` · `gate.ts` + `middleware.ts` (login
   gate) · `db.ts` + `migrations.ts` (SQLite, versioned) · `setup-fly.ts` (pure) · `session-secret.ts` ·
-  `demand.ts` (fast/slow from want/have, pure) · `settings-store.ts` (saved settings over defaults) ·
+  `demand.ts` (fast/slow from want/have, pure) · `runout.ts` (runout matching and highlight, pure) ·
+  `settings-store.ts` (saved settings over defaults) ·
   `settings-form.ts` (client-safe) · `settings-help.ts` (every
   field has help, tested; the sleeve grid shares one `SLEEVE_HELP`) · `discogs-client.ts` shared client +
   `getLookupClient()` · `discogs-cache.ts` · `relative-time.ts` · `discogs-terms.ts` · `theme.ts` · `nav.ts` ·
@@ -160,6 +161,11 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   want/have on the result card and lot rows, "N slow" in the totals, "Leave slow sellers out of cherry-picks" per collection
   (cherry-pick offer only; the whole-collection offer still values them as picks)
   (stars still win), Demand card on `/settings`. Spec: `docs/superpowers/specs/2026-10-07-demand-signal-design.md`.
+- Phase 11 runout matching (2026-10-07): built on feat/runout-match; 429 tests passing; no migration. The shared
+  `Picker` (lookup and lot Pick panel) loads a pressing's identifiers on demand from `GET /api/releases/:id/identifiers`
+  (cached `release:<id>`), "Check runouts" for up to 25 showing pressings, and "Runout contains…" filters by a
+  letters+digits fragment across all identifiers, highlighted (`lib/runout.ts`). Picking a checked pressing prices
+  with one call. Spec: `docs/superpowers/specs/2026-10-07-runout-match-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns
