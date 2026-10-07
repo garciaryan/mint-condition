@@ -1607,6 +1607,12 @@ kbd {
   cursor: default;
 }
 
+@media (hover: hover) {
+  .note-chip:hover:not(:disabled) {
+    background: var(--bg);
+  }
+}
+
 .note-foot {
   display: flex;
   align-items: center;
@@ -1620,6 +1626,10 @@ kbd {
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   font-family: var(--font-numeric);
+}
+
+.note-count.over {
+  color: var(--danger);
 }
 
 .empty-rows {

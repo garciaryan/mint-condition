@@ -99,7 +99,9 @@ export default function LotView({ id }: { id: number }) {
 
   const note = useCallback(
     async (itemId: number, notes: string): Promise<{ ok: true } | { ok: false; message: string }> => {
-      const res = await api(`/api/items/${itemId}`, "PATCH", { notes });
+      const res = await api<ItemView>(`/api/items/${itemId}`, "PATCH", { notes });
+      // Show the saved row now, rather than the old note until the refresh lands.
+      if (res.ok) setData((d) => (d ? { ...d, items: d.items.map((i) => (i.id === itemId ? res.data : i)) } : d));
       refresh();
       return res.ok ? { ok: true } : { ok: false, message: res.message };
     },

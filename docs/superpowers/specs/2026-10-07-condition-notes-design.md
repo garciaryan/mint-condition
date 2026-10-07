@@ -53,8 +53,9 @@ Client-safe (no Node or server imports), like `parse.ts`.
 - `addTag(note: string, tag: string): string | null`.
   - Returns `note` unchanged when `hasTag` is true.
   - On an empty note, returns the tag with its first letter capitalised ("Seam split"). "OBI" is already capitals.
-  - Otherwise returns `note + ", " + tag`, after trimming trailing spaces and one trailing comma from `note`.
-  - Returns `null` when the result would be longer than `NOTE_MAX`.
+  - Otherwise returns `note + ", " + tag`, after trimming trailing spaces and one trailing comma, full
+    stop or semicolon from `note` ("Light wear." + promo → "Light wear, promo").
+  - Returns `null` when the cleaned result would be longer than `NOTE_MAX`.
 
 ## API
 
@@ -68,6 +69,8 @@ Client-safe (no Node or server imports), like `parse.ts`.
 - `updateItemFields` takes `notes?: string` in its patch and runs a separate `UPDATE items SET notes = ?` only when it
   is given.
 - The response is the row's `ItemView`, as now, including `notes`.
+- `POST /api/sessions/:id/items` takes an optional `notes` per line, with the same cleaning and limit (`parseNote`;
+  errors start "Line N: "). Undo after Remove sends the removed row's note, so it comes back.
 
 ## Row UI (`app/collection/[id]/ItemRow.tsx`)
 
@@ -75,20 +78,25 @@ Client-safe (no Node or server imports), like `parse.ts`.
   `row-note`). Shown on every status, including rows with no match. Long notes wrap and are never cut off.
 - **Button:** "Note", or "Edit note" when there is a note, in `row-actions` before Remove. It has `aria-expanded`
   and `aria-controls` pointing at the editor, and screen-reader text naming the record, as the other row actions do.
-- **Editor:** a block spanning the row's full width (a new `note` grid area in each row layout, below the rest). It
+- **Editor:** a block spanning the row's full width (`grid-column: 1 / -1`, below the rest). It
   contains:
-  - A labelled `<textarea>` ("Note for <title>", visually hidden label), 2 rows, 16px, `maxLength={NOTE_MAX}`,
+  - A labelled `<textarea>` ("Note for <title>", visually hidden label), 2 rows, 16px,
+    `maxLength={NOTE_MAX * 4}` (only to stop huge pastes),
     placeholder "Condition notes for the listing". Its `aria-describedby` points at the counter and any error.
-  - A counter, "31/255".
+  - A counter of the cleaned length, "31/255". It turns red past the limit, and Save is then disabled.
   - Chip buttons, one per `NOTE_TAGS` entry, labelled "+ sealed" and so on. Pressing one sets the draft to
-    `addTag(draft, tag)`. A chip is disabled when `hasTag(draft, tag)` is true or `addTag` returns `null`.
+    `addTag(draft, tag)`. A chip is disabled when `hasTag(draft, tag)` is true, `addTag` returns `null`, or a save is
+    in progress. Chips have a hover state.
   - Cancel and Save buttons, at least 44px tall.
 - **Behaviour:**
   - Opening the editor copies the saved note into a draft held in the row's own state, so polling never overwrites
     it. Focus moves to the textarea.
   - Enter saves, with or without Shift, and never inserts a line break (they would be cleaned away anyway). Escape
-    cancels.
-  - Saving sends `PATCH { notes: draft }`. While saving, Save is disabled and shows that it is busy. On success the
+    cancels. Neither acts while an input method is composing (`noteKeyAction`), so confirming a composed word never
+    saves early.
+  - Saving sends `PATCH { notes: draft }`. While saving, Save is disabled and shows that it is busy, the textarea
+    is read-only and the chips are disabled. A save that answers after Cancel is ignored. On success the saved row
+    replaces the old one at once, before the refresh. On success the
     editor closes, and focus returns to the Note button.
   - On failure the editor stays open with the draft, and the API's message appears in a `role="alert"` line inside
     the editor.
@@ -117,7 +125,7 @@ Notes are the owner's own words, not Discogs data, so no credit and no 6-hour li
 - `tests/notes.test.ts`:
   - `cleanNote`: collapsing whitespace and line breaks, trimming.
   - `hasTag`: whole words, ignoring case.
-  - `addTag`: capitalising on an empty note, appending with ", ", trimming trailing commas, no change for a
+  - `addTag`: capitalising on an empty note, appending with ", ", trimming a trailing comma, full stop or semicolon, measuring the cleaned note, no change for a
     duplicate, `null` when over `NOTE_MAX`.
 - Migration: existing items get `notes = ''` after migration 5.
 - Store and route:

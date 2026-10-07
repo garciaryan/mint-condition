@@ -7,7 +7,7 @@ import { DATA_CREDIT, releaseUrl } from "../../../lib/discogs-terms.ts";
 import type { Grade } from "../../../lib/types.ts";
 import GradeSelect from "../../GradeSelect.tsx";
 import { Thumb } from "../../Picker.tsx";
-import { addTag, hasTag, NOTE_MAX, NOTE_TAGS } from "../../../lib/collection/notes.ts";
+import { addTag, cleanNote, hasTag, NOTE_MAX, NOTE_TAGS, noteKeyAction } from "../../../lib/collection/notes.ts";
 import { STATUS_INFO, displayStatus } from "../../../lib/collection/ui.ts";
 import { money } from "./api.ts";
 
@@ -109,6 +109,8 @@ export default function ItemRow({
   const noteButton = useRef<HTMLButtonElement>(null);
   const noteField = useRef<HTMLTextAreaElement>(null);
   const focusButton = useRef(false);
+  // Bumped on every open and close, so a save that answers after Cancel never closes a newer editor.
+  const noteSession = useRef(0);
   const noteId = useId();
   useEffect(() => {
     if (editing) noteField.current?.focus();
@@ -119,35 +121,46 @@ export default function ItemRow({
   }, [editing]);
 
   function openNote() {
+    noteSession.current++;
+    setNoteSaving(false);
     setDraft(item.notes);
     setNoteError(null);
     setEditing(true);
   }
 
   function closeNote() {
+    noteSession.current++;
     focusButton.current = true;
     setEditing(false);
   }
 
+  // The limit applies to the cleaned note (what is stored), not the raw text with its extra spaces.
+  const noteLength = cleanNote(draft).length;
+  const noteOver = noteLength > NOTE_MAX;
+
   async function saveNote() {
-    if (noteSaving) return;
+    if (noteSaving || noteOver) return;
+    const session = noteSession.current;
     setNoteSaving(true);
     setNoteError(null);
     const res = await onNote(item.id, draft);
+    if (session !== noteSession.current) return;
     setNoteSaving(false);
     if (res.ok) closeNote();
     else setNoteError(res.message);
   }
 
   function noteKey(e: KeyboardEvent) {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      closeNote();
-    } else if (e.key === "Enter" && e.target === noteField.current) {
-      // A note is one line; Enter saves, with or without Shift.
-      e.preventDefault();
-      void saveNote();
-    }
+    const action = noteKeyAction({
+      key: e.key,
+      isComposing: e.nativeEvent.isComposing,
+      keyCode: e.keyCode,
+      inField: e.target === noteField.current,
+    });
+    if (!action) return;
+    e.preventDefault();
+    if (action === "cancel") closeNote();
+    else void saveNote();
   }
 
   const st = STATUS[displayStatus(item)];
@@ -247,7 +260,8 @@ export default function ItemRow({
             id={`${noteId}-text`}
             ref={noteField}
             rows={2}
-            maxLength={NOTE_MAX}
+            maxLength={NOTE_MAX * 4}
+            readOnly={noteSaving}
             value={draft}
             placeholder="Condition notes for the listing"
             aria-describedby={`${noteId}-count${noteError ? ` ${noteId}-error` : ""}`}
@@ -259,7 +273,7 @@ export default function ItemRow({
                 key={tag}
                 type="button"
                 className="note-chip"
-                disabled={hasTag(draft, tag) || addTag(draft, tag) === null}
+                disabled={noteSaving || hasTag(draft, tag) || addTag(draft, tag) === null}
                 onClick={() => {
                   const next = addTag(draft, tag);
                   if (next !== null) setDraft(next);
@@ -276,13 +290,14 @@ export default function ItemRow({
             </p>
           )}
           <div className="note-foot">
-            <span className="note-count" id={`${noteId}-count`}>
-              {draft.length}/{NOTE_MAX}
+            <span className={`note-count${noteOver ? " over" : ""}`} id={`${noteId}-count`}>
+              {noteLength}/{NOTE_MAX}
+              {noteOver && <span className="sr-only"> (too long)</span>}
             </span>
             <button type="button" className="secondary" onClick={closeNote}>
               Cancel
             </button>
-            <button type="submit" disabled={noteSaving} aria-busy={noteSaving}>
+            <button type="submit" disabled={noteSaving || noteOver} aria-busy={noteSaving}>
               {noteSaving ? "Saving…" : "Save"}
             </button>
           </div>

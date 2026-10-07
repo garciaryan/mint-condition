@@ -108,3 +108,9 @@ test("phone rows give the actions two columns and let them wrap, so Note + Remov
   assert.match(phone, /\.row \{[^}]*grid-template-areas:\s*"thumb main price"\s*"grades grades grades"\s*"status actions actions";/);
   assert.match(phone, /\.row-actions \{[^}]*grid-area: actions;[^}]*flex-wrap: wrap;[^}]*justify-content: flex-end;/);
 });
+
+test("note chips get a hover state, and an over-limit note count turns red", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /@media \(hover: hover\) \{\s*\.note-chip:hover:not\(:disabled\) \{[^}]*background: var\(--/);
+  assert.match(css, /\.note-count\.over \{[^}]*color: var\(--danger\);/);
+});

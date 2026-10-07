@@ -8,7 +8,7 @@ export const NOTE_TAGS = ["sealed", "hype sticker", "promo", "OBI", "seam split"
 
 /** One line of text: line breaks and runs of whitespace become one space. May still be longer than NOTE_MAX. */
 export function cleanNote(text: string): string {
-  return text.replace(/[\s　 ]+/g, " ").trim();
+  return text.replace(/\s+/g, " ").trim(); // \s includes U+00A0 and U+3000
 }
 
 /** A note from a request body, cleaned and checked against NOTE_MAX. */
@@ -25,10 +25,21 @@ export function hasTag(note: string, tag: string): boolean {
   return new RegExp(`\\b${escaped}\\b`, "i").test(note);
 }
 
-/** The note with the tag appended (", tag"), unchanged if it is already there, or null if it would not fit. */
+/** The note with the tag appended (", tag"), unchanged if it is already there, or null if the cleaned result would
+ * not fit. */
 export function addTag(note: string, tag: string): string | null {
   if (hasTag(note, tag)) return note;
-  const base = note.trimEnd().replace(/,$/, "").trimEnd();
+  // A trailing comma, full stop or semicolon gives way to the joining comma.
+  const base = note.trimEnd().replace(/[,.;]$/, "").trimEnd();
   const next = base ? `${base}, ${tag}` : tag.charAt(0).toUpperCase() + tag.slice(1);
-  return next.length > NOTE_MAX ? null : next;
+  return cleanNote(next).length > NOTE_MAX ? null : next;
+}
+
+/** What a key press in the note editor does. Enter in the text field saves (a note is one line), Escape cancels; both
+ * are ignored while an input method is composing, so confirming a composed word never saves early. */
+export function noteKeyAction(e: { key: string; isComposing: boolean; keyCode: number; inField: boolean }): "save" | "cancel" | null {
+  if (e.isComposing || e.keyCode === 229) return null;
+  if (e.key === "Escape") return "cancel";
+  if (e.key === "Enter" && e.inField) return "save";
+  return null;
 }
