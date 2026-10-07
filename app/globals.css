@@ -2230,11 +2230,14 @@ kbd {
   }
 
   .row {
-    grid-template-columns: 48px minmax(0, 1fr) auto;
+    position: relative;
+    grid-template-columns: 48px minmax(0, 1fr);
     grid-template-areas:
-      "thumb main price"
-      "grades grades grades"
-      "foot foot foot";
+      "title title"
+      "thumb meta"
+      "price price"
+      "grades grades"
+      "foot foot";
     gap: 8px 10px;
     margin-bottom: 8px;
     padding: 10px 12px;
@@ -2253,14 +2256,47 @@ kbd {
 
   .row-thumb {
     grid-area: thumb;
+    align-self: start;
   }
 
+  /* Titles can be long: the title gets its own line, the details sit beside the cover. */
   .row-main {
-    grid-area: main;
+    display: contents;
   }
 
+  .row .title {
+    grid-area: title;
+    padding-right: 40px;
+  }
+
+  .row-meta {
+    grid-area: meta;
+  }
+
+  /* The price is what matters: its own line, suggested value large with the range beside it. */
   .row-price {
     grid-area: price;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .row-value {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 10px;
+  }
+
+  .row-price b {
+    font-size: 20px;
+  }
+
+  .row .star {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: var(--control-h);
+    height: var(--control-h);
   }
 
   .row-grades {

@@ -106,7 +106,7 @@ test("phone rows: stacked grades, and status + actions share a wrapping foot lin
   const css = readFileSync("app/globals.css", "utf8");
   const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
   assert.match(css, /\.row-foot \{\s*display: contents;\s*\}/, "the foot wrapper is invisible to the desktop grid");
-  assert.match(phone, /\.row \{[^}]*grid-template-areas:\s*"thumb main price"\s*"grades grades grades"\s*"foot foot foot";/);
+  assert.match(phone, /\.row \{[^}]*grid-template-areas:\s*"title title"\s*"thumb meta"\s*"price price"\s*"grades grades"\s*"foot foot";/);
   assert.match(phone, /\.row-foot \{[^}]*grid-area: foot;[^}]*display: flex;[^}]*flex-wrap: wrap;[^}]*justify-content: space-between;/);
   assert.match(phone, /\.row-grades \{[^}]*grid-area: grades;[^}]*flex-direction: column;/);
   assert.match(phone, /\.row-actions \{[^}]*flex-wrap: wrap;[^}]*justify-content: flex-end;/);
@@ -125,4 +125,15 @@ test("note chips get a hover state, and an over-limit note count turns red", () 
   const css = readFileSync("app/globals.css", "utf8");
   assert.match(css, /@media \(hover: hover\) \{\s*\.note-chip:hover:not\(:disabled\) \{[^}]*background: var\(--/);
   assert.match(css, /\.note-count\.over \{[^}]*color: var\(--danger\);/);
+});
+
+test("phone rows: the title gets a full-width line, the star sits top-right, and the price gets its own line", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(phone, /\.row-main \{\s*display: contents;\s*\}/, "title and details become separate grid items");
+  assert.match(phone, /\.row \.title \{[^}]*grid-area: title;[^}]*padding-right: /, "the title keeps clear of the star");
+  assert.match(phone, /\.row-meta \{[^}]*grid-area: meta;/);
+  assert.match(phone, /\.row \{[^}]*position: relative;/);
+  assert.match(phone, /\.row \.star \{[^}]*position: absolute;[^}]*top: [^}]*right: [^}]*width: var\(--control-h\);/);
+  assert.match(phone, /\.row-price \{[^}]*grid-area: price;[^}]*justify-content: flex-start;[^}]*text-align: left;/);
 });

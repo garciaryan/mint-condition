@@ -176,16 +176,18 @@ export default function ItemRow({
       </div>
       <div className="row-main">
         <div className="title">{title}</div>
-        <div className="sub">{subline(item)}</div>
-        {item.release && (
-          <div className="sub">
-            <a href={releaseUrl(item.release.id)} target="_blank" rel="noreferrer">
-              {DATA_CREDIT}<span aria-hidden="true"> ↗</span>
-              <span className="sr-only"> for {title} (opens in a new tab)</span>
-            </a>
-          </div>
-        )}
-        {item.notes && <div className="sub row-note">{item.notes}</div>}
+        <div className="row-meta">
+          <div className="sub">{subline(item)}</div>
+          {item.release && (
+            <div className="sub">
+              <a href={releaseUrl(item.release.id)} target="_blank" rel="noreferrer">
+                {DATA_CREDIT}<span aria-hidden="true"> ↗</span>
+                <span className="sr-only"> for {title} (opens in a new tab)</span>
+              </a>
+            </div>
+          )}
+          {item.notes && <div className="sub row-note">{item.notes}</div>}
+        </div>
       </div>
       <div className="row-grades">
         <span className="grade">
