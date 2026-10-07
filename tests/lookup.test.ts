@@ -211,3 +211,10 @@ test("a no-price result also carries the settings currency for its lowest listin
   assert.equal(res.status, "no-price");
   if (res.status === "no-price") assert.equal(res.currency, settings.discogs.currency);
 });
+
+test("a priced lookup says how fast the record sells", async () => {
+  const { client } = fakeClient({ stats: { lowestPrice: 9, currency: null, numForSale: 3, have: 10, want: 30 } });
+  const res = await runLookup(client, { ...req, releaseId: 1 }, settings);
+  assert.equal(res.status, "priced");
+  if (res.status === "priced") assert.equal(res.demand, "fast");
+});

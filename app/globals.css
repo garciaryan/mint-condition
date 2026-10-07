@@ -1532,6 +1532,39 @@ kbd {
   background: var(--accent-soft);
 }
 
+/* Demand badge (components/ui/DemandBadge): fast reads like the Priced pill, slow like To pick. */
+.demand {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.demand.fast {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.demand.slow {
+  color: var(--warn);
+  background: var(--notice-bg);
+  border: 1px solid var(--warn-line);
+}
+
+.price-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.price-head h3 {
+  margin-bottom: 8px;
+}
+
 .s-pick {
   color: var(--warn);
   background: var(--notice-bg);

@@ -1,5 +1,7 @@
 // Lookup orchestration for the web page: request validation, search-or-price, and error mapping.
 // No network of its own; the Discogs client is passed in.
+import { demand } from "./demand.ts";
+import type { Demand } from "./demand.ts";
 import { DiscogsError } from "./discogs.ts";
 import type { CachedLookupClient } from "./discogs-cache.ts";
 import { priceRecord } from "./pricing.ts";
@@ -43,6 +45,8 @@ export type LookupResponse =
       stats: MarketplaceStats;
       currency: string;
       result: PriceResult;
+      /** How fast it sells (lib/demand.ts); null when Discogs gave no want/have. */
+      demand: Demand | null;
     } & Age)
   | { status: "error"; kind: LookupErrorKind; message: string };
 
@@ -143,5 +147,5 @@ export async function runLookup(
   });
   if (!result) return { status: "no-price", reason: "grade-missing", releaseId, release, stats, currency: settings.discogs.currency, ...age };
 
-  return { status: "priced", releaseId, release, stats, currency: settings.discogs.currency, result, ...age };
+  return { status: "priced", releaseId, release, stats, currency: settings.discogs.currency, result, demand: demand(stats, settings.demand), ...age };
 }

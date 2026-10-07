@@ -150,3 +150,14 @@ test("phone rows show a labelled, padded Market value box; wider screens keep th
   assert.match(row, /<small>Low<\/small>[\s\S]*<small>Suggested<\/small>[\s\S]*<small>High<\/small>/);
   assert.match(row, /Market value/);
 });
+
+test("demand badges use the status pill tokens: fast like Priced, slow like To pick", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\.demand\.fast \{[^}]*color: var\(--accent\);[^}]*background: var\(--accent-soft\);/);
+  assert.match(css, /\.demand\.slow \{[^}]*color: var\(--warn\);[^}]*background: var\(--notice-bg\);[^}]*border: 1px solid var\(--warn-line\);/);
+});
+
+test("coverageText counts slow sellers", () => {
+  assert.equal(coverageText({ priced: 5, total: 6, toPick: 1, noPrice: 0, problems: 0, slow: 2 }), "5 of 6 priced · 1 to pick · 2 slow");
+  assert.equal(coverageText({ priced: 5, total: 5, toPick: 0, noPrice: 0, problems: 0, slow: 0 }), "5 of 5 priced");
+});

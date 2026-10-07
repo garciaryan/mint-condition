@@ -1,5 +1,6 @@
 // Server-side view logic: prices are calculated when read, never stored.
 import { demand } from "../demand.ts";
+import type { Demand } from "../demand.ts";
 import { MAX_CACHE_HOURS } from "../discogs-terms.ts";
 import { isPickRow, offerMarket } from "../offer.ts";
 import type { OfferInputs } from "../offer.ts";
@@ -41,6 +42,10 @@ export type ItemView = {
   error: string | null;
   /** Public listing comment; '' = none. */
   notes: string;
+  /** How fast it sells (lib/demand.ts), with the Discogs counts behind it; null when unknown. */
+  demand: Demand | null;
+  have?: number;
+  want?: number;
 };
 
 export function toItemView(item: ItemRow, settings: Settings, inputs: OfferInputs): ItemView {
@@ -60,6 +65,9 @@ export function toItemView(item: ItemRow, settings: Settings, inputs: OfferInput
     pricedAt: item.pricedAt,
     error: item.error,
     notes: item.notes,
+    demand: demand(item.stats, settings.demand),
+    have: item.stats?.have,
+    want: item.stats?.want,
   };
 }
 

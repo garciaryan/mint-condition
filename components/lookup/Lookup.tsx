@@ -10,6 +10,7 @@ import type { FieldErrors } from "@/lib/form.ts";
 import type { LookupResponse } from "@/lib/lookup.ts";
 import { GRADE_NAMES } from "@/lib/types.ts";
 import type { Candidate, Grade } from "@/lib/types.ts";
+import DemandBadge from "@/components/ui/DemandBadge.tsx";
 import GradeSelect from "@/components/ui/GradeSelect.tsx";
 import Picker, { Thumb } from "@/components/lookup/Picker.tsx";
 import ScanButton from "@/components/scan/ScanButton.tsx";
@@ -463,7 +464,10 @@ function ResultCard({
       ) : (
         <div className="prices">
           <div className="price-block market">
-            <h3>Market value</h3>
+            <div className="price-head">
+              <h3>Market value</h3>
+              <DemandBadge demand={res.demand} have={res.stats.have} want={res.stats.want} forSale={res.stats.numForSale} />
+            </div>
             <div className="range">
               <span>
                 <small>Low</small>
@@ -506,6 +510,14 @@ function ResultCard({
             <dt>Lowest listing</dt>
             <dd>{res.stats.lowestPrice === null ? "none" : money(res.stats.lowestPrice)}</dd>
           </div>
+          {res.stats.have !== undefined && res.stats.want !== undefined && (
+            <div>
+              <dt>Want / have</dt>
+              <dd>
+                {res.stats.want.toLocaleString("en-US")} / {res.stats.have.toLocaleString("en-US")}
+              </dd>
+            </div>
+          )}
         </dl>
       )}
       <p className="muted small">

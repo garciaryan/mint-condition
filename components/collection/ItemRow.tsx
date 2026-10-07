@@ -5,6 +5,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import type { ItemView } from "@/lib/collection/view.ts";
 import { DATA_CREDIT, releaseUrl } from "@/lib/discogs-terms.ts";
 import type { Grade } from "@/lib/types.ts";
+import DemandBadge from "@/components/ui/DemandBadge.tsx";
 import GradeSelect from "@/components/ui/GradeSelect.tsx";
 import { Thumb } from "@/components/lookup/Picker.tsx";
 import { addTag, cleanNote, hasTag, NOTE_MAX, NOTE_TAGS, noteKeyAction } from "@/lib/collection/notes.ts";
@@ -208,6 +209,11 @@ export default function ItemRow({
         <div className="title">{title}</div>
         <div className="row-meta">
           <div className="sub">{subline(item)}</div>
+          {item.demand && (item.demand === "fast" || item.demand === "slow") && (
+            <div className="sub">
+              <DemandBadge demand={item.demand} have={item.have} want={item.want} forSale={item.stats?.numForSale ?? 0} />
+            </div>
+          )}
           {item.release && (
             <div className="sub">
               <a href={releaseUrl(item.release.id)} target="_blank" rel="noreferrer">

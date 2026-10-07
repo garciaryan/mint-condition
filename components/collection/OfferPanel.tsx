@@ -151,6 +151,8 @@ export default function OfferPanel({
   const [unverified, setUnverified] = useState(session.unverified);
   useEffect(() => setOpen(readOpen()), []);
   useEffect(() => setUnverified(session.unverified), [session.unverified]);
+  const [skipSlow, setSkipSlow] = useState(session.skipSlow);
+  useEffect(() => setSkipSlow(session.skipSlow), [session.skipSlow]);
 
   function toggle() {
     const next = !open;
@@ -162,7 +164,9 @@ export default function OfferPanel({
     }
   }
 
-  async function save(patch: Partial<Record<AmountKey, number | null>> | { unverified: boolean }): Promise<string | null> {
+  async function save(
+    patch: Partial<Record<AmountKey, number | null>> | { unverified: boolean } | { skipSlow: boolean },
+  ): Promise<string | null> {
     const res = await api(`/api/sessions/${session.id}`, "PATCH", patch);
     onChanged();
     return res.ok ? null : res.message;
@@ -171,6 +175,11 @@ export default function OfferPanel({
   async function changeUnverified(v: boolean) {
     setUnverified(v);
     if (await save({ unverified: v })) setUnverified(!v);
+  }
+
+  async function changeSkipSlow(v: boolean) {
+    setSkipSlow(v);
+    if (await save({ skipSlow: v })) setSkipSlow(!v);
   }
 
   const i = offer.inputs;
@@ -189,6 +198,10 @@ export default function OfferPanel({
             <label className="field inline switch">
               <input type="checkbox" checked={unverified} onChange={(e) => void changeUnverified(e.target.checked)} />
               Condition unverified
+            </label>
+            <label className="field inline switch">
+              <input type="checkbox" checked={skipSlow} onChange={(e) => void changeSkipSlow(e.target.checked)} />
+              Leave slow sellers out of picks
             </label>
             <AmountField
               id="offer-threshold"

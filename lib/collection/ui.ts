@@ -35,6 +35,7 @@ export function coverageText(t: {
   problems: number;
   refreshing?: number;
   stale?: number;
+  slow?: number;
 }): string {
   const parts = [`${t.priced} of ${t.total} priced`];
   if (t.toPick > 0) parts.push(`${t.toPick} to pick`);
@@ -42,6 +43,7 @@ export function coverageText(t: {
   if (t.problems > 0) parts.push(`${t.problems} error`);
   if (t.refreshing) parts.push(`${t.refreshing} updating`);
   if (t.stale) parts.push(`${t.stale} couldn't refresh`);
+  if (t.slow) parts.push(`${t.slow} slow`);
   return parts.join(" · ");
 }
 

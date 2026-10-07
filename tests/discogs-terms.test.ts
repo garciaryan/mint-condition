@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { DATA_CREDIT, NOT_AFFILIATED, releaseUrl } from "../lib/discogs-terms.ts";
 
 const src = (p: string) => readFileSync(p, "utf8");
@@ -59,4 +60,15 @@ test("every place that shows Discogs data or numbers worked out from it carries 
 
 test("the result card hides prices once they pass the 6-hour limit", () => {
   assert.match(src("components/lookup/Lookup.tsx"), /dataExpired\(/);
+});
+
+test("the demand badge (want/have from Discogs) only appears where the Discogs credit sits", () => {
+  const walk = (dir: string): string[] =>
+    !existsSync(dir) ? [] : readdirSync(dir).flatMap((n) => {
+      const p = path.join(dir, n);
+      return statSync(p).isDirectory() ? walk(p) : /\.tsx$/.test(n) ? [p] : [];
+    });
+  const users = ["components", "app"].flatMap(walk).filter((f) => /<DemandBadge\b/.test(src(f)));
+  assert.ok(users.length > 0, "something renders the badge");
+  for (const f of users) assert.match(src(f), /DATA_CREDIT|<DiscogsCredit\b/, f);
 });
