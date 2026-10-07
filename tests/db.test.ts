@@ -78,7 +78,16 @@ test("migration 4 adds discogs_cache and items.refresh to a version-3 database",
   migrate(db, migrations.slice(0, 3));
   db.exec("insert into sessions (id,name,default_record,default_sleeve,created_at,updated_at) values (1,'L','NM','NM',1,1)");
   db.exec("insert into items (session_id,query,record_grade,sleeve_grade,status,created_at) values (1,'x','NM','NM','pending',1)");
-  assert.equal(migrate(db, migrations), 4);
+  assert.equal(migrate(db, migrations.slice(0, 4)), 4);
   assert.deepEqual({ ...(db.prepare("select refresh from items").get() as object) }, { refresh: 0 });
   db.exec("insert into discogs_cache (key, json, fetched_at) values ('k', '1', 1)");
+});
+
+test("migration 5 adds items.notes to a version-4 database", () => {
+  const db = new DatabaseSync(":memory:");
+  migrate(db, migrations.slice(0, 4));
+  db.exec("insert into sessions (id,name,default_record,default_sleeve,created_at,updated_at) values (1,'L','NM','NM',1,1)");
+  db.exec("insert into items (session_id,query,record_grade,sleeve_grade,status,created_at) values (1,'x','NM','NM','pending',1)");
+  assert.equal(migrate(db, migrations), 5);
+  assert.deepEqual({ ...(db.prepare("select notes from items").get() as object) }, { notes: "" });
 });

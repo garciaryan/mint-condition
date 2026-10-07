@@ -85,7 +85,7 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   `lib/settings-help.ts` (what each setting changes; every field has help, tested; the sleeve grid shares one
   `SLEEVE_HELP` on its heading) ·
   `app/settings/` (`SettingsForm`, `HelpTip` ⓘ toggle) · `app/api/settings/`
-- `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `view` totals/prices, `ui`, `http`, `worker`) ·
+- `lib/collection/` (`types`, `store` SQLite, `parse` paste parser, `notes` condition notes, `view` totals/prices, `ui`, `http`, `worker`) ·
   `lib/discogs-client.ts` shared client + `getLookupClient()` · `lib/discogs-cache.ts` response cache ·
   `lib/relative-time.ts` · `lib/discogs-terms.ts` + `app/SiteFooter.tsx` · `lib/theme.ts` (dark mode) · `lib/route-auth.ts` per-route session check · `instrumentation.ts`
 - `lib/collection/export.ts` (Discogs CSV, buy sheet rows) · `app/collection/[id]/print/` (buy sheet) ·
@@ -135,6 +135,11 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   are plain links (no BMC widget script), in the sidebar on wider screens and the footer on phones; `body` is a flex column so the footer sits at the bottom. Motion uses the
   `--dur-fast`/`--dur`/`--ease` tokens (`--t-interactive` for hover/focus); menus, dialogs and the pick drawer
   animate in only, and `prefers-reduced-motion` turns all of it off (`tests/motion.test.ts`). Spec: `docs/superpowers/specs/2026-10-04-export-print-design.md`.
+- Phase 9 condition notes (2026-10-07): built on feat/condition-notes; 360 tests passing; migration 5 (`items.notes`,
+  '' = none). One public note per lot row (listing text for buyers), edited under the row ("Note" button, tag chips
+  from `lib/collection/notes.ts`, max 255), saved via `PATCH /api/items/:id`; the worker never writes it and lookups
+  keep it. Goes to the Discogs CSV `comments` column and the buy sheet; `private_notes` stays the collection name.
+  Spec: `docs/superpowers/specs/2026-10-07-condition-notes-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns

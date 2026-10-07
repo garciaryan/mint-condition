@@ -150,7 +150,8 @@ body {
   color: inherit;
 }
 
-/* Buy sheet: the release each row was priced from (paper can't carry a link). */
+/* Buy sheet: the row's condition note, and the release each row was priced from (paper can't carry a link). */
+.sheet-note,
 .sheet-ref {
   display: block;
 }
@@ -1571,6 +1572,90 @@ kbd {
   color: var(--danger);
 }
 
+/* Phones label the market value like the result card (.row-market); wider screens keep the compact cell. */
+.row-market {
+  display: none;
+}
+
+.row-market-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+/* Status and actions share one wrapper so phones can lay them out as one line; wider screens place them directly. */
+.row-foot {
+  display: contents;
+}
+
+/* The note button is text on wider screens and a pencil icon on phones. */
+.note-btn .icon {
+  display: none;
+}
+
+/* Condition note: the saved line under the title, and its editor across the row's full width. */
+.row-note {
+  overflow-wrap: anywhere;
+}
+
+.note-editor {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: drop-in var(--dur) var(--ease);
+}
+
+.note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.note-chip {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--field-line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.note-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .note-chip:hover:not(:disabled) {
+    background: var(--bg);
+  }
+}
+
+.note-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.note-count {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-numeric);
+}
+
+.note-count.over {
+  color: var(--danger);
+}
+
 .empty-rows {
   padding: 16px;
 }
@@ -2159,11 +2244,14 @@ kbd {
   }
 
   .row {
-    grid-template-columns: 48px minmax(0, 1fr) auto;
+    position: relative;
+    grid-template-columns: 48px minmax(0, 1fr);
     grid-template-areas:
-      "thumb main price"
-      "grades grades grades"
-      "status . actions";
+      "title title"
+      "thumb meta"
+      "price price"
+      "grades grades"
+      "foot foot";
     gap: 8px 10px;
     margin-bottom: 8px;
     padding: 10px 12px;
@@ -2182,19 +2270,57 @@ kbd {
 
   .row-thumb {
     grid-area: thumb;
+    align-self: start;
   }
 
+  /* Titles can be long: the title gets its own line, the details sit beside the cover. */
   .row-main {
-    grid-area: main;
+    display: contents;
   }
 
+  .row .title {
+    grid-area: title;
+    padding-right: 40px;
+  }
+
+  .row-meta {
+    grid-area: meta;
+  }
+
+  /* The price is what matters: its own line, suggested value large with the range beside it. */
   .row-price {
     grid-area: price;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .row-price .row-value {
+    display: none;
+  }
+
+  .row-market {
+    display: block;
+    flex: 1;
+    margin: 6px 0;
+    padding: 10px 12px;
+  }
+
+  .row-market .big {
+    font-size: 22px;
+  }
+
+  .row .star {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: var(--control-h);
+    height: var(--control-h);
   }
 
   .row-grades {
     grid-area: grades;
-    flex-direction: row;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .grade {
@@ -2203,17 +2329,26 @@ kbd {
   }
 
   .row .grade select {
+    flex: 1;
+    min-width: 0;
     min-height: var(--control-h);
     font-size: 16px;
   }
 
-  .row-status {
-    grid-area: status;
+  .row-foot {
+    grid-area: foot;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
   }
 
   .row-actions {
-    grid-area: actions;
+    flex: 1 1 auto;
     flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 8px;
   }
 
@@ -2231,6 +2366,41 @@ kbd {
   .row-action.danger {
     border-color: var(--line);
     font-weight: 500;
+  }
+
+  .note-btn {
+    width: var(--control-h);
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .note-btn .icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
+
+  .note-btn .note-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  /* A row with a note gets a filled pencil, so it shows at a glance. */
+  .note-btn.has-note {
+    background: var(--fill);
+    border-color: var(--fill);
+    color: var(--fill-ink);
+  }
+
+  .note-chip {
+    min-height: var(--control-h);
+    font-size: 15px;
   }
 
   .undo button.link {

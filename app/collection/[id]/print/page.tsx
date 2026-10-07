@@ -178,6 +178,7 @@ export default async function BuySheetPage({ params }: Props) {
                 <td>
                   {r.title ?? <span className="muted">—</span>}
                   {r.detail && <span className="muted"> · {r.detail}</span>}
+                  {r.notes && <span className="sheet-note muted small">{r.notes}</span>}
                   {r.releaseId !== null && <span className="sheet-ref muted small">discogs.com/release/{r.releaseId}</span>}
                 </td>
                 <td>

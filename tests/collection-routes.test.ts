@@ -500,3 +500,41 @@ test("a database that won't open is reported as a database error, not a settings
     delete g.__mintDb;
   }
 });
+
+test("PATCH item notes: cleaned, validated, no re-queue", async () => {
+  const { body } = await newLot();
+  const lotId = String(body.id);
+  const [a] = (await j(await addItems(req("POST", { lines: [{ query: "A" }], record: "NM", sleeve: "NM" }), ctx(lotId)))).added;
+  await kickWorker();
+  const itemId = String(a.id);
+  const v = await j(await patchItem(req("PATCH", { notes: "  Seam\nsplit  " }), ctx(itemId)));
+  assert.equal(v.notes, "Seam split");
+  assert.equal(v.status, "priced");
+  assert.equal((await j(await patchItem(req("PATCH", { notes: "\n\n" }), ctx(itemId)))).notes, "");
+  const exact = `${"a".repeat(253)}  b`; // 256 raw, 255 cleaned
+  assert.equal((await j(await patchItem(req("PATCH", { notes: exact }), ctx(itemId)))).notes.length, 255);
+  const long = await patchItem(req("PATCH", { notes: "a".repeat(256) }), ctx(itemId));
+  assert.equal(long.status, 400);
+  assert.equal((await j(long)).message, "Note is longer than 255 characters.");
+  const bad = await patchItem(req("PATCH", { notes: 5 }), ctx(itemId));
+  assert.equal(bad.status, 400);
+  assert.equal((await j(bad)).message, "Note must be text.");
+  const item = (await j(await getSession(req("GET"), ctx(lotId)))).items[0];
+  assert.equal(item.notes, `${"a".repeat(253)} b`);
+  assert.equal(item.status, "priced");
+});
+
+test("POST items keeps a cleaned note per line (Undo after Remove restores it)", async () => {
+  const { body } = await newLot();
+  const lotId = String(body.id);
+  const r = await addItems(req("POST", { lines: [{ query: "A", notes: " Seam\nsplit " }, { query: "B" }], record: "NM", sleeve: "NM" }), ctx(lotId));
+  assert.equal(r.status, 201);
+  const added = (await j(r)).added;
+  assert.equal(added[0].notes, "Seam split");
+  assert.equal(added[1].notes, "");
+  const long = await addItems(req("POST", { lines: [{ query: "A", notes: "a".repeat(256) }], record: "NM", sleeve: "NM" }), ctx(lotId));
+  assert.equal(long.status, 400);
+  assert.equal((await j(long)).message, "Line 1: Note is longer than 255 characters.");
+  const bad = await addItems(req("POST", { lines: [{ query: "A", notes: 5 }], record: "NM", sleeve: "NM" }), ctx(lotId));
+  assert.equal((await j(bad)).message, "Line 1: Note must be text.");
+});

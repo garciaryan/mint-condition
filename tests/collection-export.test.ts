@@ -14,9 +14,9 @@ let nextId = 1;
 const item = (o: Partial<ItemRow>): ItemRow => ({
   id: nextId++, sessionId: 1, query: "Q", year: null, record: "VG+", sleeve: "VG+", status: "pending",
   releaseId: null, release: null, candidates: null, suggestions: null, stats: null, pricedAt: null,
-  error: null, createdAt: 0, pick: null, refresh: false, ...o,
+  error: null, createdAt: 0, pick: null, refresh: false, notes: "", ...o,
 });
-const HEADER = "release_id,price,media_condition,sleeve_condition,status,external_id,private_notes";
+const HEADER = "release_id,price,media_condition,sleeve_condition,comments,status,external_id,private_notes";
 const sugg = { NM: 40, "VG+": 30, VG: 20, "G+": 10 };
 const priced = (o: Partial<ItemRow> = {}) => item({ status: "priced", releaseId: 101, suggestions: sugg, stats: null, ...o });
 const withSell = (sell: Partial<Settings["sell"]>): Settings => ({ ...settings, sell: { ...settings.sell, ...sell } });
@@ -26,7 +26,7 @@ test("header and one row in Discogs wording at the sell price", () => {
   const sell = priceRecord({ suggestions: sugg, lowestListing: null, record: "VG+", sleeve: "VG", settings })!.sell.price;
   assert.equal(
     toDiscogsCsv("Estate", [it], settings),
-    `${HEADER}\r\n101,${sell.toFixed(2)},Very Good Plus (VG+),Very Good (VG),Draft,mc-7,Estate\r\n`,
+    `${HEADER}\r\n101,${sell.toFixed(2)},Very Good Plus (VG+),Very Good (VG),,Draft,mc-7,Estate\r\n`,
   );
 });
 
@@ -107,7 +107,7 @@ test("buy sheet row fields", () => {
   const p = priceRecord({ suggestions: sugg, lowestListing: null, record: "VG+", sleeve: "VG", settings })!;
   assert.deepEqual(r, {
     id: 1, releaseId: 101, query: "SD 1", title: "Blue", detail: "Atlantic · 1971", record: "VG+", sleeve: "VG",
-    suggested: marketFor(it, settings)!.suggested, sell: p.sell.price, isPick: true, statusLabel: null,
+    suggested: marketFor(it, settings)!.suggested, sell: p.sell.price, isPick: true, notes: "", statusLabel: null,
   });
   assert.equal(buySheetRows([priced({ release: rel({ label: "", year: null }) })], settings, INPUTS)[0].detail, "");
   assert.equal(buySheetRows([item({ status: "no-match" })], settings, INPUTS)[0].title, null);
@@ -127,4 +127,15 @@ test("exportHint", () => {
   assert.equal(exportHint({ exportable: 0, lookingUp: 2, skipped: 1 }), "Nothing to export yet · 2 still looking up · 1 can't be listed");
   assert.equal(exportHint({ exportable: 0, lookingUp: 0, skipped: 4 }), "Nothing to export · 4 can't be listed");
   assert.equal(exportHint({ exportable: 0, lookingUp: 0, skipped: 0 }), "Nothing to export");
+});
+
+test("notes go to comments, quoted and formula-safe", () => {
+  const row = (notes: string) => toDiscogsCsv("Estate", [priced({ id: 8, notes })], settings).split("\r\n")[1];
+  assert.match(row('Seam split, "promo"'), /,Very Good Plus \(VG\+\),"Seam split, ""promo""",Draft,mc-8,Estate$/);
+  assert.match(row("-light wear"), /,Very Good Plus \(VG\+\), -light wear,Draft,mc-8,Estate$/);
+});
+
+test("buy sheet rows carry notes", () => {
+  assert.equal(buySheetRows([priced({ notes: "OBI" })], settings, INPUTS)[0].notes, "OBI");
+  assert.equal(buySheetRows([priced()], settings, INPUTS)[0].notes, "");
 });

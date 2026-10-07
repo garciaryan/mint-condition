@@ -10,7 +10,7 @@ let nextId = 1;
 const item = (o: Partial<ItemRow>): ItemRow => ({
   id: nextId++, sessionId: 1, query: "Q", year: null, record: "VG+", sleeve: "NM", status: "pending",
   releaseId: null, release: null, candidates: null, suggestions: null, stats: null, pricedAt: null,
-  error: null, createdAt: 0, pick: null, refresh: false, ...o,
+  error: null, createdAt: 0, pick: null, refresh: false, notes: "", ...o,
 });
 const stats = { lowestPrice: 12, currency: "USD", numForSale: 3 };
 const A = item({ status: "priced", suggestions: { NM: 40, "VG+": 30, VG: 20 }, stats });

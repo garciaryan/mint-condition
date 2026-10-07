@@ -1,6 +1,7 @@
 // PATCH/DELETE /api/items/:id
 import { errorJson, isObject, MAX_BODY, parseId, parseYear, readJson, withSettings } from "../../../../lib/collection/http.ts";
 import { deleteItem, getItem, getSession, pickRelease, setItemPick, updateItemFields } from "../../../../lib/collection/store.ts";
+import { parseNote } from "../../../../lib/collection/notes.ts";
 import { hideExpired, toItemView } from "../../../../lib/collection/view.ts";
 import { kickWorker } from "../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../lib/db.ts";
@@ -24,7 +25,7 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
   const b = body.value;
   if (!isObject(b)) return errorJson("bad-request", 400, "Body must be a JSON object.");
 
-  const fields: { record?: Grade; sleeve?: Grade; year?: number | null } = {};
+  const fields: { record?: Grade; sleeve?: Grade; year?: number | null; notes?: string } = {};
   for (const key of ["record", "sleeve"] as const) {
     if (b[key] !== undefined) {
       const v = b[key];
@@ -36,6 +37,11 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
     const y = parseYear(b.year);
     if (!y.ok) return errorJson("bad-request", 400, "Year must be empty or 1890 to 2100.");
     fields.year = y.value;
+  }
+  if (b.notes !== undefined) {
+    const n = parseNote(b.notes);
+    if (!n.ok) return errorJson("bad-request", 400, n.message);
+    fields.notes = n.value;
   }
   let releaseId: number | undefined;
   if (b.releaseId !== undefined) {

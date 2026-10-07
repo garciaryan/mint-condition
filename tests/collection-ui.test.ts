@@ -78,7 +78,7 @@ const settings = parseSettings(JSON.parse(readFileSync("settings.json", "utf8"))
 const row = (o: Partial<ItemRow>): ItemRow => ({
   id: 1, sessionId: 1, query: "Q", year: null, record: "VG+", sleeve: "NM", status: "pending", releaseId: null,
   release: null, candidates: null, suggestions: null, stats: null, pricedAt: null, error: null, createdAt: 0,
-  pick: null, refresh: false, ...o,
+  pick: null, refresh: false, notes: "", ...o,
 });
 const stats = { lowestPrice: 12, currency: "USD", numForSale: 3 };
 const lot = [
@@ -100,4 +100,53 @@ test("offerNotes lists only the notes that apply", () => {
     "Grades lowered 1 step for this offer (condition unverified)",
     "Picks: none at or above $15",
   ]);
+});
+
+test("phone rows: stacked grades, and status + actions share a wrapping foot line (no overlap, price column stays narrow)", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.row-foot \{\s*display: contents;\s*\}/, "the foot wrapper is invisible to the desktop grid");
+  assert.match(phone, /\.row \{[^}]*grid-template-areas:\s*"title title"\s*"thumb meta"\s*"price price"\s*"grades grades"\s*"foot foot";/);
+  assert.match(phone, /\.row-foot \{[^}]*grid-area: foot;[^}]*display: flex;[^}]*flex-wrap: wrap;[^}]*justify-content: space-between;/);
+  assert.match(phone, /\.row-grades \{[^}]*grid-area: grades;[^}]*flex-direction: column;[^}]*gap: 12px;/);
+  assert.match(phone, /\.row-actions \{[^}]*flex-wrap: wrap;[^}]*justify-content: flex-end;/);
+});
+
+test("the note button is a pencil icon on phones and text on wider screens", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.note-btn \.icon \{\s*display: none;\s*\}/);
+  assert.match(phone, /\.note-btn \.icon \{[^}]*display: block;/);
+  assert.match(phone, /\.note-btn \.note-label \{[^}]*clip: rect\(0, 0, 0, 0\);/);
+  assert.match(phone, /\.note-btn\.has-note \{[^}]*background: var\(--/);
+});
+
+test("note chips get a hover state, and an over-limit note count turns red", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /@media \(hover: hover\) \{\s*\.note-chip:hover:not\(:disabled\) \{[^}]*background: var\(--/);
+  assert.match(css, /\.note-count\.over \{[^}]*color: var\(--danger\);/);
+});
+
+test("phone rows: the title gets a full-width line, the star sits top-right, and the price gets its own line", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(phone, /\.row-main \{\s*display: contents;\s*\}/, "title and details become separate grid items");
+  assert.match(phone, /\.row \.title \{[^}]*grid-area: title;[^}]*padding-right: /, "the title keeps clear of the star");
+  assert.match(phone, /\.row-meta \{[^}]*grid-area: meta;/);
+  assert.match(phone, /\.row \{[^}]*position: relative;/);
+  assert.match(phone, /\.row \.star \{[^}]*position: absolute;[^}]*top: [^}]*right: [^}]*width: var\(--control-h\);/);
+  assert.match(phone, /\.row-price \{[^}]*grid-area: price;[^}]*justify-content: flex-start;[^}]*text-align: left;/);
+});
+
+test("phone rows show a labelled, padded Market value box; wider screens keep the compact price cell", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.row-market \{\s*display: none;\s*\}/, "hidden outside phones");
+  assert.match(phone, /\.row-market \{[^}]*display: block;[^}]*flex: 1;[^}]*margin: 6px 0;[^}]*padding: /);
+  assert.match(phone, /\.row-price \.row-value \{\s*display: none;\s*\}/, "the compact cell is hidden on phones");
+  assert.match(css, /\.row-market-title \{[^}]*text-transform: uppercase;[^}]*color: var\(--muted\);/);
+  const row = readFileSync("app/collection/[id]/ItemRow.tsx", "utf8");
+  assert.match(row, /className="price-block row-market"/);
+  assert.match(row, /<small>Low<\/small>[\s\S]*<small>Suggested<\/small>[\s\S]*<small>High<\/small>/);
+  assert.match(row, /Market value/);
 });

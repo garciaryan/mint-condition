@@ -48,6 +48,8 @@ export type ItemRow = {
   pick: boolean | null;
   /** The next lookup skips the Discogs cache (set by re-price and retry). */
   refresh: boolean;
+  /** Public listing comment; '' = none. Never written by the worker. */
+  notes: string;
 };
 
 export type LookupPatch = {
@@ -61,4 +63,4 @@ export type LookupPatch = {
   error?: string | null;
 };
 
-export type NewLine = { query: string; year?: number };
+export type NewLine = { query: string; year?: number; notes?: string };

@@ -38,6 +38,8 @@ export type ItemView = {
   stats: MarketplaceStats | null;
   pricedAt: number | null;
   error: string | null;
+  /** Public listing comment; '' = none. */
+  notes: string;
 };
 
 export function toItemView(item: ItemRow, settings: Settings, inputs: OfferInputs): ItemView {
@@ -56,6 +58,7 @@ export function toItemView(item: ItemRow, settings: Settings, inputs: OfferInput
     stats: item.stats,
     pricedAt: item.pricedAt,
     error: item.error,
+    notes: item.notes,
   };
 }
 
