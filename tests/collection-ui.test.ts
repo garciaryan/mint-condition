@@ -235,3 +235,11 @@ test("the cherry-pick ladder shows only when some records are picks and some are
     assert.match(readFileSync(f, "utf8"), /showsCherryPicks\(offer\) && \(?\s*<Ladder caption=\{`Cherry-picks/, f);
   }
 });
+
+test("the Options button is as wide as the offer inputs on desktop", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const desktop = css.slice(0, css.indexOf("@media (max-width: 480px)"));
+  const field = desktop.match(/\.offer-inputs \.field \{[^}]*width: (\d+px);/)?.[1];
+  assert.ok(field, "offer input width");
+  assert.match(desktop, new RegExp(`\\.offer-inputs > \\.dropdown > button \\{[^}]*width: ${field};`));
+});

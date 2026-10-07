@@ -2702,9 +2702,11 @@ kbd {
   margin-right: auto;
 }
 
+/* As wide as the amount inputs beside it (.offer-inputs .field); phones make both fill their column. */
 .offer-inputs > .dropdown > button {
+  width: 150px;
   min-height: var(--control-h);
-  padding: 0 16px;
+  padding: 0 12px;
 }
 
 .offer-inputs .field {
