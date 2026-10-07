@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { coverageText, etaText } from "../../../lib/collection/ui.ts";
-import type { QueueState, Totals } from "../../../lib/collection/view.ts";
-import DiscogsCredit from "../../DiscogsCredit.tsx";
-import { money } from "./api.ts";
+import { coverageText, etaText } from "@/lib/collection/ui.ts";
+import type { QueueState, Totals } from "@/lib/collection/view.ts";
+import DiscogsCredit from "@/app/DiscogsCredit.tsx";
+import { money } from "@/app/collection/[id]/api.ts";
 
 export default function TotalsBar({
   totals,

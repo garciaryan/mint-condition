@@ -1,8 +1,8 @@
 // Browser-side fetch helper for the lot page. Client-safe: types only from server modules.
-import type { SessionRow } from "../../../lib/collection/types.ts";
-import type { ItemView, QueueState, Totals } from "../../../lib/collection/view.ts";
-import type { OfferView } from "../../../lib/offer.ts";
-import { ROUTES } from "../../../lib/consts.ts";
+import type { SessionRow } from "@/lib/collection/types.ts";
+import type { ItemView, QueueState, Totals } from "@/lib/collection/view.ts";
+import type { OfferView } from "@/lib/offer.ts";
+import { ROUTES } from "@/lib/consts.ts";
 
 export type LotData = {
   session: SessionRow;

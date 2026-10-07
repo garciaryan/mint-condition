@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { parseBulkLines } from "../../../lib/collection/parse.ts";
-import { pasteSummary } from "../../../lib/collection/ui.ts";
-import type { NewLine } from "../../../lib/collection/types.ts";
+import { parseBulkLines } from "@/lib/collection/parse.ts";
+import { pasteSummary } from "@/lib/collection/ui.ts";
+import type { NewLine } from "@/lib/collection/types.ts";
 
 export default function PasteList({ onAdd }: { onAdd: (lines: NewLine[]) => Promise<string | null> }) {
   const [text, setText] = useState("");

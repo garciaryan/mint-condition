@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { browserCameraSupport } from "../lib/camera.ts";
-import type { CameraSupport } from "../lib/camera.ts";
+import { browserCameraSupport } from "@/lib/camera.ts";
+import type { CameraSupport } from "@/lib/camera.ts";
 
 // Pressable barcode icon that opens a scanner. When the camera can't be used (plain http, no camera, no detector)
 // it stays visible and pressing it says why, instead of the button silently disappearing.

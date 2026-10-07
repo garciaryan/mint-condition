@@ -1,5 +1,5 @@
-import { safeNext } from "../../lib/auth.ts";
-import LoginForm from "./LoginForm.tsx";
+import { safeNext } from "@/lib/auth.ts";
+import LoginForm from "@/app/login/LoginForm.tsx";
 
 export const metadata = { title: "Log in - Mint Condition" };
 

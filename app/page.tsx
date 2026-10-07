@@ -1,5 +1,5 @@
-import Lookup from "./Lookup.tsx";
-import SiteHeader from "./SiteHeader.tsx";
+import Lookup from "@/app/Lookup.tsx";
+import SiteHeader from "@/app/SiteHeader.tsx";
 
 // SiteHeader reads cookies and the database at request time; never prerender at build.
 export const dynamic = "force-dynamic";

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
-import { shouldRestoreFocus } from "../../../lib/disclosure.ts";
+import { shouldRestoreFocus } from "@/lib/disclosure.ts";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 

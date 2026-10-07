@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { SLEEVE_HELP, settingHelp } from "../../lib/settings-help.ts";
-import { FIELD_KEYS, formatDefault, formView, fromForm, parseLadder, toForm } from "../../lib/settings-form.ts";
-import type { FieldKey, SettingsForm as Form } from "../../lib/settings-form.ts";
-import { GRADES } from "../../lib/types.ts";
-import type { Settings } from "../../lib/types.ts";
-import HelpTip from "./HelpTip.tsx";
+import { SLEEVE_HELP, settingHelp } from "@/lib/settings-help.ts";
+import { FIELD_KEYS, formatDefault, formView, fromForm, parseLadder, toForm } from "@/lib/settings-form.ts";
+import type { FieldKey, SettingsForm as Form } from "@/lib/settings-form.ts";
+import { GRADES } from "@/lib/types.ts";
+import type { Settings } from "@/lib/types.ts";
+import HelpTip from "@/app/settings/HelpTip.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 type State = {

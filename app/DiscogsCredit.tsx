@@ -1,4 +1,4 @@
-import { DATA_CREDIT, MARKETPLACE_URL } from "../lib/discogs-terms.ts";
+import { DATA_CREDIT, MARKETPLACE_URL } from "@/lib/discogs-terms.ts";
 
 // "Data provided by Discogs", linked to the discogs.com page holding the data (Discogs API terms). The link must pass
 // ranking credit, so no rel value that withholds it.

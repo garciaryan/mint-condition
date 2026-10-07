@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LOOKUP_HOLD_MS } from "../lib/camera.ts";
-import ScanFrame from "./ScanFrame.tsx";
-import { useFadeOut } from "./useFadeOut.ts";
-import { useDialog } from "./collection/[id]/useDialog.ts";
-import { useBarcodeCamera } from "./useBarcodeCamera.ts";
+import { LOOKUP_HOLD_MS } from "@/lib/camera.ts";
+import ScanFrame from "@/app/ScanFrame.tsx";
+import { useFadeOut } from "@/hooks/useFadeOut.ts";
+import { useDialog } from "@/hooks/useDialog.ts";
+import { useBarcodeCamera } from "@/hooks/useBarcodeCamera.ts";
 
 // One-shot scanner for the single-record page: the first barcode read closes the camera and is handed back.
 export default function LookupScanner({

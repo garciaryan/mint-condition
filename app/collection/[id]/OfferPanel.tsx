@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { SessionRow } from "../../../lib/collection/types.ts";
-import { cash, offerNotes, offerSummary } from "../../../lib/collection/ui.ts";
-import type { OfferSide, OfferView } from "../../../lib/offer.ts";
-import DiscogsCredit from "../../DiscogsCredit.tsx";
-import { api } from "./api.ts";
+import type { SessionRow } from "@/lib/collection/types.ts";
+import { cash, offerNotes, offerSummary } from "@/lib/collection/ui.ts";
+import type { OfferSide, OfferView } from "@/lib/offer.ts";
+import DiscogsCredit from "@/app/DiscogsCredit.tsx";
+import { api } from "@/app/collection/[id]/api.ts";
 
 const OPEN_KEY = "offerPanelOpen";
 

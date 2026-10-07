@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { exitMs } from "../lib/motion.ts";
+import { exitMs } from "@/lib/motion.ts";
 
 /** Close with a fade: `start` adds the closing state (CSS fades it out), then calls `onDone` once the fade is over. */
 export function useFadeOut(onDone: () => void): { closing: boolean; start: () => void } {

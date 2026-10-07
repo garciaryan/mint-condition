@@ -1,8 +1,8 @@
 import { Kanit } from "next/font/google";
 import { cookies } from "next/headers";
-import { parseThemeCookie, THEME_COOKIE } from "../lib/theme.ts";
-import SiteFooter from "./SiteFooter.tsx";
-import "./globals.css";
+import { parseThemeCookie, THEME_COOKIE } from "@/lib/theme.ts";
+import SiteFooter from "@/app/SiteFooter.tsx";
+import "@/app/globals.css";
 
 export const metadata = { title: "Mint Condition" };
 

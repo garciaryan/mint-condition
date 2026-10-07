@@ -1,17 +1,17 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Grade } from "../../../lib/types.ts";
-import { STATUS_INFO, displayStatus } from "../../../lib/collection/ui.ts";
-import type { ItemView } from "../../../lib/collection/view.ts";
-import { money } from "./api.ts";
-import { Icon } from "./ItemRow.tsx";
-import { LOT_CUE_MS } from "../../../lib/camera.ts";
-import ScanFrame from "../../ScanFrame.tsx";
-import DiscogsCredit from "../../DiscogsCredit.tsx";
-import { useBarcodeCamera } from "../../useBarcodeCamera.ts";
-import { useFadeOut } from "../../useFadeOut.ts";
-import { useDialog } from "./useDialog.ts";
+import type { Grade } from "@/lib/types.ts";
+import { STATUS_INFO, displayStatus } from "@/lib/collection/ui.ts";
+import type { ItemView } from "@/lib/collection/view.ts";
+import { money } from "@/app/collection/[id]/api.ts";
+import { Icon } from "@/app/collection/[id]/ItemRow.tsx";
+import { LOT_CUE_MS } from "@/lib/camera.ts";
+import ScanFrame from "@/app/ScanFrame.tsx";
+import DiscogsCredit from "@/app/DiscogsCredit.tsx";
+import { useBarcodeCamera } from "@/hooks/useBarcodeCamera.ts";
+import { useFadeOut } from "@/hooks/useFadeOut.ts";
+import { useDialog } from "@/hooks/useDialog.ts";
 
 /** Add result for one scanned code: the created item's id, or the error to show. */
 export type ScanAddResult = { ok: true; id: number } | { ok: false; message: string };

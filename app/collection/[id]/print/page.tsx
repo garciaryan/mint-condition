@@ -1,20 +1,20 @@
 // Printable buy sheet for a lot: the owner's own copy (offers, walk-away, picks), not for the seller.
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { buySheetRows } from "../../../../lib/collection/export.ts";
-import { parseId } from "../../../../lib/collection/http.ts";
-import { getSession, listItems, requeueExpired } from "../../../../lib/collection/store.ts";
-import { cash, offerNotes } from "../../../../lib/collection/ui.ts";
-import { hideExpired, oldestPricedAt, PRICE_MAX_AGE_MS } from "../../../../lib/collection/view.ts";
-import { dbUnavailable, getDb } from "../../../../lib/db.ts";
-import { computeOffer, offerInputs } from "../../../../lib/offer.ts";
-import type { OfferSide } from "../../../../lib/offer.ts";
-import { DATA_CREDIT } from "../../../../lib/discogs-terms.ts";
-import { relativeTime } from "../../../../lib/relative-time.ts";
-import { kickWorker } from "../../../../lib/collection/worker.ts";
-import { getSettings } from "../../../../lib/settings-store.ts";
-import SiteHeader from "../../../SiteHeader.tsx";
-import PrintButton from "./PrintButton.tsx";
+import { buySheetRows } from "@/lib/collection/export.ts";
+import { parseId } from "@/lib/collection/http.ts";
+import { getSession, listItems, requeueExpired } from "@/lib/collection/store.ts";
+import { cash, offerNotes } from "@/lib/collection/ui.ts";
+import { hideExpired, oldestPricedAt, PRICE_MAX_AGE_MS } from "@/lib/collection/view.ts";
+import { dbUnavailable, getDb } from "@/lib/db.ts";
+import { computeOffer, offerInputs } from "@/lib/offer.ts";
+import type { OfferSide } from "@/lib/offer.ts";
+import { DATA_CREDIT } from "@/lib/discogs-terms.ts";
+import { relativeTime } from "@/lib/relative-time.ts";
+import { kickWorker } from "@/lib/collection/worker.ts";
+import { getSettings } from "@/lib/settings-store.ts";
+import SiteHeader from "@/app/SiteHeader.tsx";
+import PrintButton from "@/app/collection/[id]/print/PrintButton.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 // SiteHeader reads cookies and the database at request time, and so does the sheet. Never prerender.

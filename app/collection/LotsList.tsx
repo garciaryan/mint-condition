@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { defaultLotName } from "../../lib/collection/ui.ts";
-import { relativeTime } from "../../lib/relative-time.ts";
-import type { Grade } from "../../lib/types.ts";
-import DiscogsCredit from "../DiscogsCredit.tsx";
-import GradeSelect from "../GradeSelect.tsx";
-import { money } from "./[id]/api.ts";
+import { defaultLotName } from "@/lib/collection/ui.ts";
+import { relativeTime } from "@/lib/relative-time.ts";
+import type { Grade } from "@/lib/types.ts";
+import DiscogsCredit from "@/app/DiscogsCredit.tsx";
+import GradeSelect from "@/app/GradeSelect.tsx";
+import { money } from "@/app/collection/[id]/api.ts";
 import { ROUTES } from "@/lib/consts.ts";
 
 type LotSummary = {

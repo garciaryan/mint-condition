@@ -3,18 +3,18 @@
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 import type { FormEvent, RefObject } from "react";
-import type { NewLine } from "../../../lib/collection/types.ts";
-import type { ItemView } from "../../../lib/collection/view.ts";
-import type { Grade } from "../../../lib/types.ts";
-import GradeSelect from "../../GradeSelect.tsx";
-import ScanButton from "../../ScanButton.tsx";
-import { createSerialQueue } from "../../../lib/collection/ui.ts";
-import { api } from "./api.ts";
-import type { ScanAddResult } from "./Scanner.tsx";
-import PasteList from "./PasteList.tsx";
+import type { NewLine } from "@/lib/collection/types.ts";
+import type { ItemView } from "@/lib/collection/view.ts";
+import type { Grade } from "@/lib/types.ts";
+import GradeSelect from "@/app/GradeSelect.tsx";
+import ScanButton from "@/app/ScanButton.tsx";
+import { createSerialQueue } from "@/lib/collection/ui.ts";
+import { api } from "@/app/collection/[id]/api.ts";
+import type { ScanAddResult } from "@/app/collection/[id]/Scanner.tsx";
+import PasteList from "@/app/collection/[id]/PasteList.tsx";
 
 // Loaded only when Scan is opened, so the camera code and detector stay out of the page bundle.
-const Scanner = dynamic(() => import("./Scanner.tsx"), { ssr: false });
+const Scanner = dynamic(() => import("@/app/collection/[id]/Scanner.tsx"), { ssr: false });
 
 type FailedLine = { key: number; line: NewLine; grades: { record: Grade; sleeve: Grade } };
 let failedKey = 0;

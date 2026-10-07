@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { closeReason } from "../lib/disclosure.ts";
+import { closeReason } from "@/lib/disclosure.ts";
 
 /**
  * Open/closed state for a dropdown: `root` wraps the toggle button and its panel. While open, Escape closes it and

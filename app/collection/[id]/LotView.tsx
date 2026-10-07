@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { pollDelayMs } from "../../../lib/collection/ui.ts";
-import type { ItemView } from "../../../lib/collection/view.ts";
-import type { Grade } from "../../../lib/types.ts";
-import { api } from "./api.ts";
-import type { LotData } from "./api.ts";
-import EntryBar from "./EntryBar.tsx";
-import ItemRow from "./ItemRow.tsx";
-import LotHeader from "./LotHeader.tsx";
-import OfferPanel from "./OfferPanel.tsx";
-import PickPanel from "./PickPanel.tsx";
-import TotalsBar from "./TotalsBar.tsx";
+import { pollDelayMs } from "@/lib/collection/ui.ts";
+import type { ItemView } from "@/lib/collection/view.ts";
+import type { Grade } from "@/lib/types.ts";
+import { api } from "@/app/collection/[id]/api.ts";
+import type { LotData } from "@/app/collection/[id]/api.ts";
+import EntryBar from "@/app/collection/[id]/EntryBar.tsx";
+import ItemRow from "@/app/collection/[id]/ItemRow.tsx";
+import LotHeader from "@/app/collection/[id]/LotHeader.tsx";
+import OfferPanel from "@/app/collection/[id]/OfferPanel.tsx";
+import PickPanel from "@/app/collection/[id]/PickPanel.tsx";
+import TotalsBar from "@/app/collection/[id]/TotalsBar.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 type Filter = "all" | "to-pick" | "problems";

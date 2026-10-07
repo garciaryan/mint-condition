@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Candidate } from "../../../lib/types.ts";
-import type { ItemView } from "../../../lib/collection/view.ts";
-import Picker from "../../Picker.tsx";
-import { api } from "./api.ts";
-import { useDialog } from "./useDialog.ts";
+import type { Candidate } from "@/lib/types.ts";
+import type { ItemView } from "@/lib/collection/view.ts";
+import Picker from "@/app/Picker.tsx";
+import { api } from "@/app/collection/[id]/api.ts";
+import { useDialog } from "@/hooks/useDialog.ts";
 
 export default function PickPanel({
   item,

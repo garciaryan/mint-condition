@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { SessionRow } from "../../../lib/collection/types.ts";
-import { exportHint } from "../../../lib/collection/export.ts";
-import { relativeTime } from "../../../lib/relative-time.ts";
-import { useDisclosure } from "../../useDisclosure.ts";
-import { api } from "./api.ts";
-import { useDialog } from "./useDialog.ts";
+import type { SessionRow } from "@/lib/collection/types.ts";
+import { exportHint } from "@/lib/collection/export.ts";
+import { relativeTime } from "@/lib/relative-time.ts";
+import { useDisclosure } from "@/hooks/useDisclosure.ts";
+import { api } from "@/app/collection/[id]/api.ts";
+import { useDialog } from "@/hooks/useDialog.ts";
 import { ROUTES } from "@/lib/consts.ts";
 
 export default function LotHeader({

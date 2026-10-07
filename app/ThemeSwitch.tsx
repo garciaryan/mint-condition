@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { nextTheme, themeCookie } from "../lib/theme.ts";
-import type { ThemeChoice } from "../lib/theme.ts";
-import NavIcon from "./NavIcon.tsx";
+import { nextTheme, themeCookie } from "@/lib/theme.ts";
+import type { ThemeChoice } from "@/lib/theme.ts";
+import NavIcon from "@/app/NavIcon.tsx";
 
 const NAMES: Record<ThemeChoice, string> = { system: "System", light: "Light", dark: "Dark" };
 

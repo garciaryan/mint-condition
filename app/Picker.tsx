@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { searchUrl } from "../lib/discogs-terms.ts";
-import { groupCandidates } from "../lib/form.ts";
-import type { Candidate } from "../lib/types.ts";
-import DiscogsCredit from "./DiscogsCredit.tsx";
+import { searchUrl } from "@/lib/discogs-terms.ts";
+import { groupCandidates } from "@/lib/form.ts";
+import type { Candidate } from "@/lib/types.ts";
+import DiscogsCredit from "@/app/DiscogsCredit.tsx";
 
 export default function Picker({
   candidates,

@@ -2,14 +2,14 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
-import type { ItemView } from "../../../lib/collection/view.ts";
-import { DATA_CREDIT, releaseUrl } from "../../../lib/discogs-terms.ts";
-import type { Grade } from "../../../lib/types.ts";
-import GradeSelect from "../../GradeSelect.tsx";
-import { Thumb } from "../../Picker.tsx";
-import { addTag, cleanNote, hasTag, NOTE_MAX, NOTE_TAGS, noteKeyAction } from "../../../lib/collection/notes.ts";
-import { STATUS_INFO, displayStatus } from "../../../lib/collection/ui.ts";
-import { money } from "./api.ts";
+import type { ItemView } from "@/lib/collection/view.ts";
+import { DATA_CREDIT, releaseUrl } from "@/lib/discogs-terms.ts";
+import type { Grade } from "@/lib/types.ts";
+import GradeSelect from "@/app/GradeSelect.tsx";
+import { Thumb } from "@/app/Picker.tsx";
+import { addTag, cleanNote, hasTag, NOTE_MAX, NOTE_TAGS, noteKeyAction } from "@/lib/collection/notes.ts";
+import { STATUS_INFO, displayStatus } from "@/lib/collection/ui.ts";
+import { money } from "@/app/collection/[id]/api.ts";
 
 export const ICONS = {
   check: "M20 6 9 17l-5-5",

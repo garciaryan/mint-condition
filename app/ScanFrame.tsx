@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { scanCueVisible } from "../lib/camera.ts";
+import { scanCueVisible } from "@/lib/camera.ts";
 
 export type LastScan = { code: string; at: number; n: number };
 

@@ -3,20 +3,20 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { DATA_CREDIT, dataExpired, MAX_CACHE_HOURS, releaseUrl } from "../lib/discogs-terms.ts";
-import { clearsInputs, fieldErrors, movesToResult } from "../lib/form.ts";
-import { relativeTime } from "../lib/relative-time.ts";
-import type { FieldErrors } from "../lib/form.ts";
-import type { LookupResponse } from "../lib/lookup.ts";
-import { GRADE_NAMES } from "../lib/types.ts";
-import type { Candidate, Grade } from "../lib/types.ts";
-import GradeSelect from "./GradeSelect.tsx";
-import Picker, { Thumb } from "./Picker.tsx";
-import ScanButton from "./ScanButton.tsx";
+import { DATA_CREDIT, dataExpired, MAX_CACHE_HOURS, releaseUrl } from "@/lib/discogs-terms.ts";
+import { clearsInputs, fieldErrors, movesToResult } from "@/lib/form.ts";
+import { relativeTime } from "@/lib/relative-time.ts";
+import type { FieldErrors } from "@/lib/form.ts";
+import type { LookupResponse } from "@/lib/lookup.ts";
+import { GRADE_NAMES } from "@/lib/types.ts";
+import type { Candidate, Grade } from "@/lib/types.ts";
+import GradeSelect from "@/app/GradeSelect.tsx";
+import Picker, { Thumb } from "@/app/Picker.tsx";
+import ScanButton from "@/app/ScanButton.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 // Loaded only when the scan icon is pressed, so the camera code and detector stay out of the page bundle.
-const LookupScanner = dynamic(() => import("./LookupScanner.tsx"), { ssr: false });
+const LookupScanner = dynamic(() => import("@/app/LookupScanner.tsx"), { ssr: false });
 
 type Priced = Extract<LookupResponse, { status: "priced" | "no-price" }>;
 type LookupError = Extract<LookupResponse, { status: "error" }>;

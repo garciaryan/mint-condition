@@ -1,6 +1,6 @@
 "use client";
 
-import { useDisclosure } from "../useDisclosure.ts";
+import { useDisclosure } from "@/hooks/useDisclosure.ts";
 
 // An ⓘ button that shows what a setting changes. The text is always in the page (hidden until opened) so the field
 // can point at it with aria-describedby and screen readers hear it without opening the bubble.

@@ -1,5 +1,5 @@
-import { GRADES, GRADE_NAMES } from "../lib/types.ts";
-import type { Grade } from "../lib/types.ts";
+import { GRADES, GRADE_NAMES } from "@/lib/types.ts";
+import type { Grade } from "@/lib/types.ts";
 
 export default function GradeSelect({
   id,
