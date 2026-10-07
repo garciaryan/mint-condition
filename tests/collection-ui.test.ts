@@ -243,3 +243,24 @@ test("the Options button is as wide as the offer inputs on desktop", () => {
   assert.ok(field, "offer input width");
   assert.match(css, new RegExp(`^\\.offer-inputs > \\.dropdown > button \\{[^}]*width: ${field};`, "m"));
 });
+
+test("runout matches are marked with tokens; the small Show runouts checkbox sits under the listing (44px on phones)", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
+  assert.match(css, /\.runout-hit \{[^}]*background: var\(--accent-soft\);[^}]*color: var\(--ink\);/);
+  assert.match(css, /\.runout-show \{[^}]*font-size: 13px;/);
+  assert.match(phone, /\.runout-show \{[^}]*min-height: var\(--control-h\);/);
+  const picker = readFileSync("components/lookup/Picker.tsx", "utf8");
+  assert.match(picker, /<label className="runout-show">\s*<input\s+type="checkbox"/);
+  assert.match(picker, /Show runouts<span className="sr-only"> for \{c\.title\}<\/span>/);
+  assert.doesNotMatch(picker, /runout-toggle|candidate-row/, "no button beside the title any more");
+});
+
+test("the Picker keeps failed pressings in sight while searching and lets one click collapse an auto-opened row", () => {
+  const picker = readFileSync("components/lookup/Picker.tsx", "utf8");
+  assert.match(picker, /searchVisible\(/);
+  assert.match(picker, /isExpanded\(/);
+  assert.match(picker, /toggleExpanded\(/);
+  assert.match(picker, /runoutCounts\(/);
+  assert.doesNotMatch(picker, /type RunoutState =/, "one RunoutState, from lib/runout.ts");
+});

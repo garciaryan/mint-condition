@@ -865,6 +865,58 @@ a {
   background: var(--bg);
 }
 
+/* Under each pressing: a small "Show runouts" checkbox, indented past the cover thumbnail. */
+.runout-show {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px 70px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.runout-show input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.runout-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+
+.runout-controls input {
+  width: 300px;
+  max-width: 100%;
+}
+
+.runout-status:empty {
+  display: none;
+}
+
+/* Identifiers under a pressing, indented past the cover thumbnail. */
+.runout-list {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 10px;
+  padding: 0 8px 0 70px;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+
+.runout-hit {
+  padding: 0 1px;
+  border-radius: 2px;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
 .candidate-main {
   display: flex;
   flex-direction: column;
@@ -2832,6 +2884,15 @@ kbd {
 @media (max-width: 480px) {
   .offer-sides {
     grid-template-columns: 1fr;
+  }
+
+  .runout-show {
+    min-height: var(--control-h);
+    margin-left: 8px;
+  }
+
+  .runout-list {
+    padding-left: 8px;
   }
 
   /* An even two-column grid: Options and the three amounts, each cell the same width. */

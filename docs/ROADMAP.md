@@ -10,7 +10,7 @@ Today the app calls three Discogs endpoints: `/database/search`, `/marketplace/p
 | Phase | Feature | Needs | Migration | New Discogs calls |
 |---|---|---|---|---|
 | 9 | Condition notes (**built 2026-10-07**, PR #29) | none | yes | none |
-| 10 | Release details and demand signal | none | yes | `/releases/{id}` (replaces stats) |
+| 10 | Release details and demand signal (**built 2026-10-07**, PR #33) | none | yes | `/releases/{id}` (replaces stats) |
 | 11 | Matching by runout in the picker | 10 | no | `/releases/{id}` per candidate, on demand |
 | 12 | Versions of a master | 10 | no | `/masters/{id}/versions` |
 | 13 | Boxes and bulk counts | none | yes | none |
@@ -59,7 +59,11 @@ worth and what goes in the listing. Right now none of it can be written down.
 **Done when** I can type a note on a row on my phone, it survives a re-price, and it shows up in the CSV and on the
 buy sheet.
 
-## Phase 10: Release details and demand signal
+## Phase 10: Release details and demand signal (built)
+
+Built 2026-10-07 (PR #33): `/releases/{id}` replaces marketplace stats (still two calls per record), migration 6
+(`sessions.skip_slow`), fast/slow badge and want/have, "Leave slow sellers out of cherry-picks", Demand card on
+`/settings`. Spec: `docs/superpowers/specs/2026-10-07-demand-signal-design.md`.
 
 **Why.** A $30 suggestion with 1,800 for sale and few wants can sit for a year, while a want/have above 1 with four
 for sale moves in a week. How fast a record sells decides what to cherry-pick.
