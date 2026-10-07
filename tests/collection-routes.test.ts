@@ -523,3 +523,18 @@ test("PATCH item notes: cleaned, validated, no re-queue", async () => {
   assert.equal(item.notes, `${"a".repeat(253)} b`);
   assert.equal(item.status, "priced");
 });
+
+test("POST items keeps a cleaned note per line (Undo after Remove restores it)", async () => {
+  const { body } = await newLot();
+  const lotId = String(body.id);
+  const r = await addItems(req("POST", { lines: [{ query: "A", notes: " Seam\nsplit " }, { query: "B" }], record: "NM", sleeve: "NM" }), ctx(lotId));
+  assert.equal(r.status, 201);
+  const added = (await j(r)).added;
+  assert.equal(added[0].notes, "Seam split");
+  assert.equal(added[1].notes, "");
+  const long = await addItems(req("POST", { lines: [{ query: "A", notes: "a".repeat(256) }], record: "NM", sleeve: "NM" }), ctx(lotId));
+  assert.equal(long.status, 400);
+  assert.equal((await j(long)).message, "Line 1: Note is longer than 255 characters.");
+  const bad = await addItems(req("POST", { lines: [{ query: "A", notes: 5 }], record: "NM", sleeve: "NM" }), ctx(lotId));
+  assert.equal((await j(bad)).message, "Line 1: Note must be text.");
+});

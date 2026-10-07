@@ -1,5 +1,6 @@
 // POST /api/sessions/:id/items: add 1-500 lines to a lot, then wake the lookup worker.
 import { errorJson, isObject, MAX_BULK_BODY, parseId, parseQuery, parseYear, readJson, withSettings } from "../../../../../lib/collection/http.ts";
+import { parseNote } from "../../../../../lib/collection/notes.ts";
 import { addItems, getSession } from "../../../../../lib/collection/store.ts";
 import { toItemView } from "../../../../../lib/collection/view.ts";
 import { kickWorker } from "../../../../../lib/collection/worker.ts";
@@ -37,6 +38,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const y = parseYear(raw.year);
       if (!y.ok) return errorJson("bad-request", 400, `Line ${i + 1}: year must be 1890 to 2100.`);
       if (y.value !== null) line.year = y.value;
+    }
+    if (raw.notes !== undefined) {
+      const n = parseNote(raw.notes);
+      if (!n.ok) return errorJson("bad-request", 400, `Line ${i + 1}: ${n.message}`);
+      if (n.value) line.notes = n.value;
     }
     lines.push(line);
   }

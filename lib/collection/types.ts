@@ -63,4 +63,4 @@ export type LookupPatch = {
   error?: string | null;
 };
 
-export type NewLine = { query: string; year?: number };
+export type NewLine = { query: string; year?: number; notes?: string };

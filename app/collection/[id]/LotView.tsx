@@ -16,7 +16,7 @@ import PickPanel from "./PickPanel.tsx";
 import TotalsBar from "./TotalsBar.tsx";
 
 type Filter = "all" | "to-pick" | "problems";
-type Undo = { key: number; label: string; query: string; year: number | null; record: Grade; sleeve: Grade };
+type Undo = { key: number; label: string; query: string; year: number | null; record: Grade; sleeve: Grade; notes: string };
 
 const OFFLINE_RETRY_MS = 5000;
 const UNDO_MS = 6000;
@@ -135,7 +135,7 @@ export default function LotView({ id }: { id: number }) {
       const res = await api(`/api/items/${item.id}`, "DELETE");
       if (!res.ok && res.status !== 404) return setNotice(`Could not remove: ${res.message}`);
       setData((d) => (d ? { ...d, items: d.items.filter((i) => i.id !== item.id) } : d));
-      setUndo({ key: Date.now(), label: item.release?.title ?? item.query, query: item.query, year: item.year, record: item.record, sleeve: item.sleeve });
+      setUndo({ key: Date.now(), label: item.release?.title ?? item.query, query: item.query, year: item.year, record: item.record, sleeve: item.sleeve, notes: item.notes });
       refresh();
     },
     [refresh],
@@ -145,7 +145,7 @@ export default function LotView({ id }: { id: number }) {
     if (!undo) return;
     const u = undo;
     setUndo(null);
-    const line = u.year ? { query: u.query, year: u.year } : { query: u.query };
+    const line = { query: u.query, ...(u.year ? { year: u.year } : {}), ...(u.notes ? { notes: u.notes } : {}) };
     const res = await api(`/api/sessions/${id}/items`, "POST", { lines: [line], record: u.record, sleeve: u.sleeve });
     if (!res.ok) setNotice(`Could not undo: ${res.message}`);
     refresh();

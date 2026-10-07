@@ -1,7 +1,7 @@
 // PATCH/DELETE /api/items/:id
 import { errorJson, isObject, MAX_BODY, parseId, parseYear, readJson, withSettings } from "../../../../lib/collection/http.ts";
 import { deleteItem, getItem, getSession, pickRelease, setItemPick, updateItemFields } from "../../../../lib/collection/store.ts";
-import { cleanNote, NOTE_MAX } from "../../../../lib/collection/notes.ts";
+import { parseNote } from "../../../../lib/collection/notes.ts";
 import { hideExpired, toItemView } from "../../../../lib/collection/view.ts";
 import { kickWorker } from "../../../../lib/collection/worker.ts";
 import { getDb } from "../../../../lib/db.ts";
@@ -39,10 +39,9 @@ export async function PATCH(request: Request, { params }: Ctx): Promise<Response
     fields.year = y.value;
   }
   if (b.notes !== undefined) {
-    if (typeof b.notes !== "string") return errorJson("bad-request", 400, "Note must be text.");
-    const notes = cleanNote(b.notes);
-    if (notes.length > NOTE_MAX) return errorJson("bad-request", 400, `Note is longer than ${NOTE_MAX} characters.`);
-    fields.notes = notes;
+    const n = parseNote(b.notes);
+    if (!n.ok) return errorJson("bad-request", 400, n.message);
+    fields.notes = n.value;
   }
   let releaseId: number | undefined;
   if (b.releaseId !== undefined) {

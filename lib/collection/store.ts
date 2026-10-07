@@ -122,13 +122,13 @@ export function addItems(
   now: number,
 ): ItemRow[] {
   const ins = db.prepare(
-    "INSERT INTO items (session_id, query, year, record_grade, sleeve_grade, status, created_at) VALUES (?, ?, ?, ?, ?, 'pending', ?)",
+    "INSERT INTO items (session_id, query, year, record_grade, sleeve_grade, status, created_at, notes) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)",
   );
   const ids: number[] = [];
   db.exec("BEGIN");
   try {
     for (const l of lines) {
-      ids.push(Number(ins.run(sessionId, l.query, l.year ?? null, grades.record, grades.sleeve, now).lastInsertRowid));
+      ids.push(Number(ins.run(sessionId, l.query, l.year ?? null, grades.record, grades.sleeve, now, l.notes ?? "").lastInsertRowid));
     }
     db.exec("COMMIT");
   } catch (e) {
