@@ -18,7 +18,9 @@ export const DISCOGS_GRADE: Record<Grade, string> = {
   P: "Poor (P)",
 };
 
-const COLUMNS = ["release_id", "price", "media_condition", "sleeve_condition", "status", "external_id", "private_notes"];
+const COLUMNS = [
+  "release_id", "price", "media_condition", "sleeve_condition", "comments", "status", "external_id", "private_notes",
+];
 const LISTING_STATUS = "Draft";
 
 /** A row's listing (release and sell price at its own grades), or null when it can't be listed. */
@@ -53,6 +55,7 @@ export function toDiscogsCsv(lotName: string, items: ItemRow[], settings: Settin
         listing.price.toFixed(2),
         DISCOGS_GRADE[item.record],
         DISCOGS_GRADE[item.sleeve],
+        item.notes,
         LISTING_STATUS,
         `mc-${item.id}`,
         notes,
@@ -99,6 +102,8 @@ export type BuySheetRow = {
   suggested: number | null;
   sell: number | null;
   isPick: boolean;
+  /** The row's public condition note; "" when none. */
+  notes: string;
   /** Null when priced; otherwise why there is no value. */
   statusLabel: string | null;
 };
@@ -132,6 +137,7 @@ export function buySheetRows(items: ItemRow[], settings: Settings, inputs: Offer
       suggested: market?.suggested ?? null,
       sell: priced?.sell.price ?? null,
       isPick: isPickRow(item, inputs, settings),
+      notes: item.notes,
       statusLabel: market ? STATUS_LABEL[item.status] : (STATUS_LABEL[item.status] ?? "No price"),
     };
   });

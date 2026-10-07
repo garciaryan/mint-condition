@@ -150,7 +150,8 @@ body {
   color: inherit;
 }
 
-/* Buy sheet: the release each row was priced from (paper can't carry a link). */
+/* Buy sheet: the row's condition note, and the release each row was priced from (paper can't carry a link). */
+.sheet-note,
 .sheet-ref {
   display: block;
 }
