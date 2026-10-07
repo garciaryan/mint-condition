@@ -9,7 +9,7 @@ import { relativeTime } from "@/lib/relative-time.ts";
 import type { Grade } from "@/lib/types.ts";
 import DiscogsCredit from "@/app/DiscogsCredit.tsx";
 import GradeSelect from "@/app/GradeSelect.tsx";
-import { money } from "@/app/collection/[id]/api.ts";
+import { money } from "@/lib/collection/client.ts";
 import { ROUTES } from "@/lib/consts.ts";
 
 type LotSummary = {

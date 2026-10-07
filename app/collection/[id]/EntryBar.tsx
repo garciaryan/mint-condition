@@ -9,7 +9,7 @@ import type { Grade } from "@/lib/types.ts";
 import GradeSelect from "@/app/GradeSelect.tsx";
 import ScanButton from "@/app/ScanButton.tsx";
 import { createSerialQueue } from "@/lib/collection/ui.ts";
-import { api } from "@/app/collection/[id]/api.ts";
+import { api } from "@/lib/collection/client.ts";
 import type { ScanAddResult } from "@/app/collection/[id]/Scanner.tsx";
 import PasteList from "@/app/collection/[id]/PasteList.tsx";
 

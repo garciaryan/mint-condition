@@ -7,7 +7,7 @@ import type { SessionRow } from "@/lib/collection/types.ts";
 import { exportHint } from "@/lib/collection/export.ts";
 import { relativeTime } from "@/lib/relative-time.ts";
 import { useDisclosure } from "@/hooks/useDisclosure.ts";
-import { api } from "@/app/collection/[id]/api.ts";
+import { api } from "@/lib/collection/client.ts";
 import { useDialog } from "@/hooks/useDialog.ts";
 import { ROUTES } from "@/lib/consts.ts";
 

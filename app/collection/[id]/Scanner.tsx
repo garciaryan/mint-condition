@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { Grade } from "@/lib/types.ts";
 import { STATUS_INFO, displayStatus } from "@/lib/collection/ui.ts";
 import type { ItemView } from "@/lib/collection/view.ts";
-import { money } from "@/app/collection/[id]/api.ts";
+import { money } from "@/lib/collection/client.ts";
 import { Icon } from "@/app/collection/[id]/ItemRow.tsx";
 import { LOT_CUE_MS } from "@/lib/camera.ts";
 import ScanFrame from "@/app/ScanFrame.tsx";
