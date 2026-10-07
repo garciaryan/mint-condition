@@ -1,5 +1,6 @@
 // CLI: npm run lookup -- <catno|barcode> <year> <recordGrade> <sleeveGrade> [--id <releaseId>]
 // Reads DISCOGS_TOKEN and DISCOGS_USER_AGENT from .env.local (loaded by the npm script).
+import { demand } from "../lib/demand.ts";
 import { DiscogsClient } from "../lib/discogs.ts";
 import { priceRecord } from "../lib/pricing.ts";
 import { loadSettings } from "../lib/settings.ts";
@@ -68,6 +69,7 @@ if (!result) {
 
 const cur = stats.currency ?? settings.discogs.currency;
 console.log(`\nFor sale on Discogs: ${stats.numForSale}, lowest listing: ${stats.lowestPrice ?? "n/a"} ${cur}`);
+console.log(`Want / have  : ${stats.want ?? "?"} / ${stats.have ?? "?"} -> demand: ${demand(stats, settings.demand) ?? "unknown"}`);
 console.log(`Market value : ${result.market.low} - ${result.market.suggested} - ${result.market.high} ${cur} (low / suggested / high)`);
 console.log(`Sell price   : ${result.sell.price} ${cur}${result.sell.aboveLowestListing ? "  (above the cheapest current listing)" : ""}`);
 console.log(`Net on Discogs after the ${settings.sell.discogsFeePercent}% fee: ${result.sell.net} ${cur}`);

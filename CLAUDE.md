@@ -45,6 +45,11 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   Kanit has proportional digits and no `tnum`, so every `font-variant-numeric: tabular-nums` rule also sets
   `font-family: var(--font-numeric)` (system font); `tests/font.test.ts` checks it. Only use the loaded weights.
 - Discogs data is asking prices and suggestions, not confirmed sales. The UI should say so.
+- Pricing calls `/marketplace/price_suggestions/{id}` and `/releases/{id}` (not `/marketplace/stats`, since Phase 10):
+  two calls per record. The release gives copies for sale, lowest listing (a bare number in the account's currency,
+  so prices are labelled with `settings.discogs.currency`), want/have, master and identifiers, kept in `stats_json`.
+  Demand (`lib/demand.ts`): fast = want/have ≥ 1 and ≤ 10 for sale, slow = want/have < 0.3 or ≥ 200 for sale
+  (`settings.json` `demand`, editable); shown as `components/ui/DemandBadge` only next to the Discogs credit.
 - Discogs API terms (`lib/discogs-terms.ts`): no Discogs data shown more than 6 hours old (`MAX_CACHE_HOURS`; lot
   rows past it are hidden by `hideExpired` and re-queued by `requeueExpired` when the lot or buy sheet opens);
   "Data provided by Discogs" linked next to the data (no `nofollow`): the release on the result card and lot rows,
@@ -86,7 +91,7 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   `navLots`) · `NavIcon` (inline SVG icons) · `SiteFooter` (not-affiliated notice) · `ThemeSwitch` (cycles
   System/Light/Dark) · `LogoutButton` (on `/settings`, Account card, only when login is on)
 - **`components/lookup/`:** `Lookup` (form, picker, result card) · `LookupScanner` · `Picker`
-- **`components/scan/`:** `ScanButton`, `ScanFrame` · **`components/ui/`:** `GradeSelect`, `DiscogsCredit`
+- **`components/scan/`:** `ScanButton`, `ScanFrame` · **`components/ui/`:** `GradeSelect`, `DiscogsCredit`, `DemandBadge`
 - **`components/collection/`:** `LotsList`, `LotView`, `LotHeader`, `EntryBar`, `Scanner`, `PasteList`, `PickPanel`,
   `TotalsBar`, `OfferPanel`, `ItemRow`, `PrintButton`
 - **`components/settings/`:** `SettingsForm`, `HelpTip` (ⓘ toggle) · **`components/login/`:** `LoginForm`
@@ -97,7 +102,8 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   pure) · `lookup.ts` lookup flow for the API route · `form.ts` client-side form checks and picker grouping ·
   `auth.ts` (session signing, authMode, limiter, health config) · `password.ts` · `gate.ts` + `middleware.ts` (login
   gate) · `db.ts` + `migrations.ts` (SQLite, versioned) · `setup-fly.ts` (pure) · `session-secret.ts` ·
-  `settings-store.ts` (saved settings over defaults) · `settings-form.ts` (client-safe) · `settings-help.ts` (every
+  `demand.ts` (fast/slow from want/have, pure) · `settings-store.ts` (saved settings over defaults) ·
+  `settings-form.ts` (client-safe) · `settings-help.ts` (every
   field has help, tested; the sleeve grid shares one `SLEEVE_HELP`) · `discogs-client.ts` shared client +
   `getLookupClient()` · `discogs-cache.ts` · `relative-time.ts` · `discogs-terms.ts` · `theme.ts` · `nav.ts` ·
   `camera.ts` · `route-auth.ts` per-route session check
@@ -149,6 +155,10 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   from `lib/collection/notes.ts`, max 255), saved via `PATCH /api/items/:id`; the worker never writes it and lookups
   keep it. Goes to the Discogs CSV `comments` column and the buy sheet; `private_notes` stays the collection name.
   Spec: `docs/superpowers/specs/2026-10-07-condition-notes-design.md`.
+- Phase 10 demand signal (2026-10-07): built on feat/demand-signal; 402 tests passing; migration 6
+  (`sessions.skip_slow`). `/releases/{id}` replaces marketplace stats (live check in the spec). Fast/slow badge and
+  want/have on the result card and lot rows, "N slow" in the totals, "Leave slow sellers out of picks" per collection
+  (stars still win), Demand card on `/settings`. Spec: `docs/superpowers/specs/2026-10-07-demand-signal-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns

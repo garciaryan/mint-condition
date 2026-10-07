@@ -1,6 +1,6 @@
 # Phase 10: Release details and demand signal
 
-Date: 2026-10-07 · Status: approved design, awaiting spec review
+Date: 2026-10-07 · Status: built on feat/demand-signal (live check: Blue Train → 3,357 want / 878 have, fast)
 Roadmap: `docs/ROADMAP.md` (Phase 10). Builds on the collection, offer and Discogs cache specs.
 
 ## Why
