@@ -9,7 +9,7 @@ Today the app calls three Discogs endpoints: `/database/search`, `/marketplace/p
 
 | Phase | Feature | Needs | Migration | New Discogs calls |
 |---|---|---|---|---|
-| 9 | Condition notes | none | yes | none |
+| 9 | Condition notes (**built 2026-10-07**, PR #29) | none | yes | none |
 | 10 | Release details and demand signal | none | yes | `/releases/{id}` (replaces stats) |
 | 11 | Matching by runout in the picker | 10 | no | `/releases/{id}` per candidate, on demand |
 | 12 | Versions of a master | 10 | no | `/masters/{id}/versions` |
@@ -19,7 +19,7 @@ Today the app calls three Discogs endpoints: `/database/search`, `/marketplace/p
 | 8 | Price paid and sold price (already planned) | 15 | yes | `/marketplace/orders` |
 | 16 | Scanning offline at fairs | none | no | none |
 
-Phases 9, 13 and 16 don't depend on anything else, so any of them can move up if a fair is coming. Phase 8 keeps its
+Phases 13 and 16 don't depend on anything else, so either can move up if a fair is coming. Phase 8 keeps its
 original number but is built after 15, because matching orders to listings is what makes sold prices automatic.
 
 ## Rules that apply to every phase
@@ -41,7 +41,10 @@ original number but is built after 15, because matching orders to listings is wh
 
 ---
 
-## Phase 9: Condition notes
+## Phase 9: Condition notes (built)
+
+Built 2026-10-07 (PR #29): migration 5 (`items.notes`), the note editor on lot rows, the CSV `comments` column
+and the buy sheet. Spec: `docs/superpowers/specs/2026-10-07-condition-notes-design.md`.
 
 **Why.** A seam split, ring wear, a promo stamp, a hype sticker, an OBI or a sealed copy changes what a record is
 worth and what goes in the listing. Right now none of it can be written down.
