@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { checkPlan, matchIdentifiers, normalizeRunout, RUNOUT_CHECK_CAP, uncheckedCount } from "../lib/runout.ts";
+import { checkPlan, isExpanded, matchIdentifiers, normalizeRunout, RUNOUT_CHECK_CAP, runoutCounts, searchVisible, toggleExpanded, uncheckedCount } from "../lib/runout.ts";
+import type { RunoutState } from "../lib/runout.ts";
 import type { Identifier } from "../lib/types.ts";
 
 const B: Identifier[] = JSON.parse(readFileSync("tests/fixtures/release-5193282.json", "utf8")).identifiers;
@@ -45,4 +46,32 @@ test("checkPlan: check what's showing and not loaded, up to 25 showing", () => {
 test("uncheckedCount counts showing pressings without loaded runouts", () => {
   assert.equal(uncheckedCount([1, 2, 3], new Set([2])), 2);
   assert.equal(uncheckedCount([], new Set()), 0);
+});
+
+const loadedS = (identifiers: Identifier[]): RunoutState => ({ status: "loaded", identifiers });
+const failed: RunoutState = { status: "error", message: "Discogs is rate-limiting; try again shortly." };
+
+test("while searching, a pressing that failed to load stays visible (with its Retry); loaded ones show when they match", () => {
+  assert.equal(searchVisible(failed, "1577a"), true);
+  assert.equal(searchVisible(loadedS(B), "1577a"), true);
+  assert.equal(searchVisible(loadedS(B), "zzz"), false);
+  assert.equal(searchVisible({ status: "loading" }, "1577a"), false);
+  assert.equal(searchVisible(undefined, "1577a"), false);
+});
+
+test("runoutCounts tells not-tried, failed and loaded apart (a failure is not 'not checked yet')", () => {
+  const states = new Map<number, RunoutState>([[1, loadedS(B)], [2, failed], [3, { status: "loading" }]]);
+  assert.deepEqual(runoutCounts([1, 2, 3, 4, 5], states), { notTried: 2, failed: 1, loaded: 1 });
+});
+
+test("a row auto-opened by a search collapses on the first click, and stays collapsed", () => {
+  const none = new Set<number>();
+  assert.equal(isExpanded(1, none, none, loadedS(B), true), true, "auto-open while searching");
+  const after = toggleExpanded(1, none, none, true);
+  assert.equal(isExpanded(1, after.opened, after.collapsed, loadedS(B), true), false, "one click closes it");
+  const again = toggleExpanded(1, after.opened, after.collapsed, false);
+  assert.equal(isExpanded(1, again.opened, again.collapsed, loadedS(B), true), true);
+  assert.equal(isExpanded(2, none, none, failed, true), true, "failed rows open while searching, to show Retry");
+  assert.equal(isExpanded(1, none, none, loadedS(B), false), false, "closed by default without a search");
+  assert.equal(isExpanded(1, new Set([1]), none, undefined, false), true);
 });

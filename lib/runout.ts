@@ -45,3 +45,58 @@ export function checkPlan(visibleIds: number[], loaded: ReadonlySet<number>): { 
 export function uncheckedCount(visibleIds: number[], loaded: ReadonlySet<number>): number {
   return visibleIds.filter((id) => !loaded.has(id)).length;
 }
+
+/** One pressing's runouts in the picker. */
+export type RunoutState = { status: "loading" } | { status: "loaded"; identifiers: Identifier[] } | { status: "error"; message: string };
+
+/** While a runout query is typed: show matching loaded pressings, and failed ones too so their error and Retry stay
+ * in sight. Loading and untried pressings are counted instead ("N not checked yet"). */
+export function searchVisible(state: RunoutState | undefined, query: string): boolean {
+  if (state?.status === "error") return true;
+  return state?.status === "loaded" && matchIdentifiers(state.identifiers, query).length > 0;
+}
+
+/** Showing pressings never tried, tried and failed, and loaded. A failure isn't "not checked yet". */
+export function runoutCounts(visibleIds: number[], states: ReadonlyMap<number, RunoutState>): { notTried: number; failed: number; loaded: number } {
+  const c = { notTried: 0, failed: 0, loaded: 0 };
+  for (const id of visibleIds) {
+    const s = states.get(id);
+    if (!s) c.notTried++;
+    else if (s.status === "error") c.failed++;
+    else if (s.status === "loaded") c.loaded++;
+  }
+  return c;
+}
+
+/** Whether a row's runouts panel is open. A search opens loaded and failed rows by itself; the owner's own click
+ * (opened / collapsed) always wins. */
+export function isExpanded(
+  id: number,
+  opened: ReadonlySet<number>,
+  collapsed: ReadonlySet<number>,
+  state: RunoutState | undefined,
+  searching: boolean,
+): boolean {
+  if (collapsed.has(id)) return false;
+  if (opened.has(id)) return true;
+  return searching && (state?.status === "loaded" || state?.status === "error");
+}
+
+/** The open/closed sets after the owner clicks a row's Runouts toggle, from what it shows now. */
+export function toggleExpanded(
+  id: number,
+  opened: ReadonlySet<number>,
+  collapsed: ReadonlySet<number>,
+  expandedNow: boolean,
+): { opened: Set<number>; collapsed: Set<number> } {
+  const o = new Set(opened);
+  const c = new Set(collapsed);
+  if (expandedNow) {
+    o.delete(id);
+    c.add(id);
+  } else {
+    c.delete(id);
+    o.add(id);
+  }
+  return { opened: o, collapsed: c };
+}

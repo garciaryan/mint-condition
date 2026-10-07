@@ -161,7 +161,7 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   want/have on the result card and lot rows, "N slow" in the totals, "Leave slow sellers out of cherry-picks" per collection
   (cherry-pick offer only; the whole-collection offer still values them as picks)
   (stars still win), Demand card on `/settings`. Spec: `docs/superpowers/specs/2026-10-07-demand-signal-design.md`.
-- Phase 11 runout matching (2026-10-07): built on feat/runout-match; 429 tests passing; no migration. The shared
+- Phase 11 runout matching (2026-10-07): built on feat/runout-match; 433 tests passing; no migration. The shared
   `Picker` (lookup and lot Pick panel) loads a pressing's identifiers on demand from `GET /api/releases/:id/identifiers`
   (cached `release:<id>`), "Check runouts" for up to 25 showing pressings, and "Runout contains…" filters by a
   letters+digits fragment across all identifiers, highlighted (`lib/runout.ts`). Picking a checked pressing prices

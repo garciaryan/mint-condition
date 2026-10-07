@@ -5,11 +5,10 @@ import type { ReactNode } from "react";
 import { api } from "@/lib/collection/client.ts";
 import { searchUrl } from "@/lib/discogs-terms.ts";
 import { groupCandidates } from "@/lib/form.ts";
-import { checkPlan, matchIdentifiers, normalizeRunout, RUNOUT_CHECK_CAP, uncheckedCount } from "@/lib/runout.ts";
+import { checkPlan, isExpanded, matchIdentifiers, normalizeRunout, RUNOUT_CHECK_CAP, runoutCounts, searchVisible, toggleExpanded } from "@/lib/runout.ts";
+import type { RunoutState } from "@/lib/runout.ts";
 import type { Candidate, Identifier } from "@/lib/types.ts";
 import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";
-
-type RunoutState = { status: "loading" } | { status: "loaded"; identifiers: Identifier[] } | { status: "error"; message: string };
 
 export default function Picker({
   candidates,
@@ -31,7 +30,8 @@ export default function Picker({
   // Runouts: fetched one pressing at a time (GET /api/releases/:id/identifiers, cached server-side), kept only while
   // the picker is open. Discogs data, covered by the credit below.
   const [runouts, setRunouts] = useState<ReadonlyMap<number, RunoutState>>(new Map());
-  const [open, setOpen] = useState<ReadonlySet<number>>(new Set());
+  const [opened, setOpened] = useState<ReadonlySet<number>>(new Set());
+  const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(new Set());
   const [runoutQuery, setRunoutQuery] = useState("");
   const [checking, setChecking] = useState<{ done: number; total: number } | null>(null);
   const abort = useRef<AbortController | null>(null);
@@ -46,18 +46,14 @@ export default function Picker({
   );
   const visibleIds = useMemo(() => groups.flatMap((g) => g.items.map((c) => c.id)), [groups]);
   const plan = checkPlan(visibleIds, loaded);
-  const unchecked = uncheckedCount(visibleIds, loaded);
+  const counts = runoutCounts(visibleIds, runouts);
   const searching = normalizeRunout(runoutQuery) !== "";
-  const identifiersOf = (id: number) => {
-    const s = runouts.get(id);
-    return s?.status === "loaded" ? s.identifiers : null;
-  };
+  // While searching: matching pressings, plus failed ones so their error and Retry stay in sight.
   const shownGroups = searching
     ? groups
-        .map((g) => ({ ...g, items: g.items.filter((c) => matchIdentifiers(identifiersOf(c.id) ?? [], runoutQuery).length > 0) }))
+        .map((g) => ({ ...g, items: g.items.filter((c) => searchVisible(runouts.get(c.id), runoutQuery)) }))
         .filter((g) => g.items.length > 0)
     : groups;
-  const checkedShowing = visibleIds.length - unchecked;
 
   function setOne(id: number, s: RunoutState) {
     if (abort.current?.signal.aborted) return;
@@ -83,16 +79,12 @@ export default function Picker({
     setChecking(null);
   }
 
-  function toggle(id: number) {
-    const opening = !open.has(id);
-    setOpen((s) => {
-      const next = new Set(s);
-      if (opening) next.add(id);
-      else next.delete(id);
-      return next;
-    });
+  function toggle(id: number, expandedNow: boolean) {
+    const next = toggleExpanded(id, opened, collapsed, expandedNow);
+    setOpened(next.opened);
+    setCollapsed(next.collapsed);
     const st = runouts.get(id);
-    if (opening && (!st || st.status === "error")) void load(id);
+    if (!expandedNow && (!st || st.status === "error")) void load(id);
   }
 
   return (
@@ -131,15 +123,15 @@ export default function Picker({
         {checking ? `Checked ${checking.done} of ${checking.total}` : ""}
       </p>
       {plan.overCap && <p className="muted small">Narrow to {RUNOUT_CHECK_CAP} or fewer pressings first (filter or year).</p>}
-      {searching && unchecked > 0 && (
+      {searching && counts.notTried > 0 && (
         <p className="muted small">
-          {unchecked} {unchecked === 1 ? "pressing" : "pressings"} not checked yet
+          {counts.notTried} {counts.notTried === 1 ? "pressing" : "pressings"} not checked yet
         </p>
       )}
       <p className="muted">Pick the one that matches your copy (check the label, country and matrix if you can).</p>
       <DiscogsCredit href={searchUrl(query)} />
       {groups.length === 0 && <p className="muted">Nothing matches that filter.</p>}
-      {searching && groups.length > 0 && shownGroups.length === 0 && checkedShowing > 0 && (
+      {searching && groups.length > 0 && shownGroups.length === 0 && counts.loaded > 0 && (
         <p className="muted">No checked pressing matches that runout.</p>
       )}
       {shownGroups.map((g) => (
@@ -149,7 +141,7 @@ export default function Picker({
           </h3>
           <ul className="candidates">
             {g.items.map((c) => {
-              const shown = open.has(c.id) || (searching && identifiersOf(c.id) !== null);
+              const shown = isExpanded(c.id, opened, collapsed, runouts.get(c.id), searching);
               const panelId = `runouts-${c.id}`;
               return (
                 <li key={c.id}>
@@ -172,7 +164,7 @@ export default function Picker({
                       className="runout-toggle"
                       aria-expanded={shown}
                       aria-controls={panelId}
-                      onClick={() => toggle(c.id)}
+                      onClick={() => toggle(c.id, shown)}
                     >
                       Runouts<span className="sr-only"> for {c.title}</span>
                     </button>

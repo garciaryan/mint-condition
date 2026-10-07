@@ -250,3 +250,12 @@ test("runout matches are marked with tokens; runout toggles are 44px on phones",
   assert.match(css, /\.runout-hit \{[^}]*background: var\(--accent-soft\);[^}]*color: var\(--ink\);/);
   assert.match(phone, /\.runout-toggle \{[^}]*min-height: var\(--control-h\);/);
 });
+
+test("the Picker keeps failed pressings in sight while searching and lets one click collapse an auto-opened row", () => {
+  const picker = readFileSync("components/lookup/Picker.tsx", "utf8");
+  assert.match(picker, /searchVisible\(/);
+  assert.match(picker, /isExpanded\(/);
+  assert.match(picker, /toggleExpanded\(/);
+  assert.match(picker, /runoutCounts\(/);
+  assert.doesNotMatch(picker, /type RunoutState =/, "one RunoutState, from lib/runout.ts");
+});
