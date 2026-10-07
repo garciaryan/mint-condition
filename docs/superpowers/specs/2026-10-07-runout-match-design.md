@@ -62,8 +62,8 @@ export function matchIdentifiers(identifiers: Identifier[], query: string): Runo
 
 - **State:** `runouts: Map<id, { status: "loading" } | { status: "loaded"; identifiers } | { status: "error"; message }>`.
   It lives only while the picker is mounted. An `AbortController` cancels in-flight requests on unmount.
-- **Per pressing:** a "Runouts" toggle button beside the pick button, never nested inside it. Its accessible name is
-  "Runouts for <title>", with `aria-expanded` and `aria-controls`.
+- **Per pressing:** a small "Show runouts" checkbox under the listing (not inside the pick button). Its accessible
+  name is "Show runouts for <title>", with `aria-controls` while open. (Changed from a button beside the title, 2026-10-07.)
   - Opening it fetches the identifiers if they aren't loaded yet.
   - The panel under the row lists each identifier as `type: value (description)`.
   - While loading it shows "Loading runouts…". A pressing with no identifiers shows "No runouts on Discogs".
