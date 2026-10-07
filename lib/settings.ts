@@ -29,7 +29,24 @@ export function parseSettings(raw: unknown): Settings {
     throw new Error(`settings: discogs.cacheHours must be an integer from 0 to ${MAX_CACHE_HOURS}`);
   }
   parseOffer(s.offer);
+  parseDemand(s.demand);
   return s;
+}
+
+function parseDemand(d: Settings["demand"] | undefined): void {
+  if (!d || typeof d !== "object") throw new Error("settings: demand must be an object");
+  for (const key of ["fastWantHave", "slowWantHave"] as const) {
+    if (!isNum(d[key]) || d[key] < 0) throw new Error(`settings: demand.${key} must be >= 0`);
+  }
+  for (const key of ["fastMaxForSale", "slowForSale"] as const) {
+    if (!Number.isInteger(d[key]) || d[key] < 0) throw new Error(`settings: demand.${key} must be a whole number >= 0`);
+  }
+  if (d.fastWantHave <= d.slowWantHave) {
+    throw new Error("settings: demand.fastWantHave must be greater than demand.slowWantHave");
+  }
+  if (d.fastMaxForSale >= d.slowForSale) {
+    throw new Error("settings: demand.fastMaxForSale must be less than demand.slowForSale");
+  }
 }
 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
