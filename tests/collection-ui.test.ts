@@ -216,10 +216,11 @@ test("offer option rows have their own class, so the input widths don't squeeze 
   assert.match(css, /\.offer-option \{[^}]*min-height: var\(--control-h\);/);
 });
 
-test("on phones the open Options panel is as wide as its column, like the inputs", () => {
+test("on phones the open Options panel spans both input columns, so its labels have room", () => {
   const css = readFileSync("app/globals.css", "utf8");
   const phone = css.slice(css.indexOf("@media (max-width: 480px)"));
-  assert.match(phone, /\.offer-options \{[^}]*min-width: 0;[^}]*width: 100%;/);
+  assert.match(phone, /\.offer-inputs \{[^}]*column-gap: 16px;/);
+  assert.match(phone, /\.offer-options \{[^}]*min-width: 0;[^}]*width: calc\(200% \+ 16px\);[^}]*max-width: calc\(100vw - 2 \* var\(--gutter\)\);/);
 });
 
 test("the cherry-pick ladder shows only when some records are picks and some aren't", () => {

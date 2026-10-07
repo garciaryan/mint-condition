@@ -2836,6 +2836,7 @@ kbd {
   .offer-inputs {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
     align-items: end;
   }
 
@@ -2848,10 +2849,11 @@ kbd {
     width: 100%;
   }
 
-  /* The open panel matches its column (and the inputs beside it); the long label wraps. */
+  /* The open panel spans both columns (two columns + the 16px gap), the width of the inputs grid, so labels fit. */
   .offer-options {
     min-width: 0;
-    width: 100%;
+    width: calc(200% + 16px);
+    max-width: calc(100vw - 2 * var(--gutter));
   }
 
   .star {
