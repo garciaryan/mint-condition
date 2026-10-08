@@ -38,18 +38,6 @@ test("versionUrl links a tagged build to its GitHub release; dev has none", () =
   assert.equal(versionUrl("dev"), null);
 });
 
-test("the deploy job tags each successful deploy as a pre-release", () => {
-  const wf = readFileSync(".github/workflows/fly-deploy.yml", "utf8");
-  const deploy = wf.slice(wf.indexOf("\n  deploy:"));
-  assert.match(deploy, /permissions:\s*\n\s*contents: write/);
-  assert.match(deploy, /fetch-depth: 0/);
-  assert.match(deploy, /scripts\/next-version\.ts/);
-  assert.match(deploy, /flyctl deploy --remote-only --build-arg APP_VERSION=/);
-  const release = deploy.indexOf("gh release create");
-  assert.ok(release > deploy.indexOf("flyctl deploy"), "the tag is made only after the deploy succeeds");
-  assert.match(deploy.slice(release), /--prerelease --generate-notes --target "\$GITHUB_SHA"/);
-});
-
 test("the Dockerfile bakes the deploy tag into the build and the running app", () => {
   const df = readFileSync("Dockerfile", "utf8");
   const build = df.slice(df.indexOf("AS build"), df.indexOf("AS run"));

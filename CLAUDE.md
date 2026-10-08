@@ -13,8 +13,11 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   **personal access token** from the user's seller account (needed for `/marketplace/price_suggestions`), stored as a
   Fly secret (`.env.local` for local dev). With no password outside production, login is off; in production, or with
   a bad combination, misconfigured (503 with the reason). Never run more than one machine.
-- Every push to `main` deploys: `.github/workflows/fly-deploy.yml` runs test, typecheck and build, then
-  `flyctl deploy --remote-only` (`FLY_API_TOKEN` repo secret, deploy-scoped, expires 2027-10-04). Keep `main` green.
+- Every push to `main` deploys: `.github/workflows/fly-deploy.yml` runs test, typecheck and build, then builds one
+  image to `ghcr.io/garciaryan/mint-condition:<tag>`, deploys it to the canary (this app, `FLY_API_TOKEN` repo secret,
+  deploy-scoped, expires 2027-10-04), tags the release, and deploys the same image to each shop app in the repo
+  variable `FLY_SHOP_APPS` (`[{app, token}]`, checked by `lib/shops.ts`; one Fly org and deploy-token secret per shop;
+  DEPLOY.md §10, 2026-10-07). Keep `main` green.
 - Versions (2026-10-07): alpha. Each successful deploy is tagged `v<package.json version>-alpha.N` (N from 1 per base,
   `scripts/next-version.ts` + `lib/version.ts`) with a GitHub pre-release (`--generate-notes`); the tag is the
   `APP_VERSION` build arg → `NEXT_PUBLIC_APP_VERSION`, shown by `/api/health` and at the foot of `/settings` ("dev"
@@ -111,11 +114,11 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   `settings-form.ts` (client-safe) · `settings-help.ts` (every
   field has help, tested; the sleeve grid shares one `SLEEVE_HELP`) · `discogs-client.ts` shared client +
   `getLookupClient()` · `discogs-cache.ts` · `relative-time.ts` · `discogs-terms.ts` · `theme.ts` · `nav.ts` ·
-  `camera.ts` · `route-auth.ts` per-route session check · `version.ts` (deploy tags, app version)
+  `camera.ts` · `route-auth.ts` per-route session check · `version.ts` (deploy tags, app version) · `shops.ts` (`FLY_SHOP_APPS` check)
 - **`lib/collection/`:** `types`, `store` (SQLite), `parse` (paste parser), `notes` (condition notes), `view`
   (totals/prices), `ui`, `http`, `worker`, `export` (Discogs CSV, buy sheet rows), `client` (browser fetch helper,
   `money`)
-- **Other:** `tests/` · `scripts/lookup.ts` CLI, `scripts/hash-password.ts`, `scripts/setup-fly.ts` + `scripts/prompt.ts`, `scripts/next-version.ts` (deploy tag)
+- **Other:** `tests/` · `scripts/lookup.ts` CLI, `scripts/hash-password.ts`, `scripts/setup-fly.ts` + `scripts/prompt.ts`, `scripts/next-version.ts` (deploy tag), `scripts/shop-apps.ts`
   · `instrumentation.ts` · `Dockerfile`, `docker-entrypoint.sh`, `fly.toml`, `DEPLOY.md`,
   `.github/workflows/fly-deploy.yml`
 
@@ -176,6 +179,10 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   first open (`format=Vinyl`, oldest first, up to 3 pages, cached `versions:<id>`), marks "This copy" and "Earliest
   listed" (20 a page, opening on this copy's page), says "reissue" or "earliest year listed on Discogs" (never
   "original"), and picking a version re-prices it. Credit links `discogs.com/master/<id>`. Spec: `docs/superpowers/specs/2026-10-07-master-versions-design.md`.
+- Multi-app deploy (2026-10-07): built on feat/multi-app-deploy; 481 tests passing; no app or DB change beyond
+  `setup:fly --app`. Build once to GHCR, canary, release, then shops from `FLY_SHOP_APPS`. Spec:
+  `docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`. Next: Connect Discogs (OAuth) so shops never paste
+  a token.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns
