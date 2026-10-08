@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaultUserAgent, flyCommands, parseAppName, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
+import { appFromArgs, defaultUserAgent, flyCommands, parseAppName, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
 
 test("parseAppName and parseSecretNames", () => {
   assert.equal(parseAppName('# x\napp = "mint-condition"\nprimary_region = "sjc"'), "mint-condition");
@@ -44,4 +44,13 @@ test("flyCommands: replacing a hash stages both changes and applies them in one 
   ]);
   assert.deepEqual(flyCommands("my-app", planSecrets([], { token: "t" })), [["secrets", "import", "-a", "my-app"]]);
   assert.deepEqual(flyCommands("my-app", planSecrets([], {})), []);
+});
+
+test("appFromArgs: --app picks another app, otherwise fly.toml's", () => {
+  const toml = "app = 'mint-condition'";
+  assert.equal(appFromArgs(["--app", "mc-x"], toml), "mc-x");
+  assert.equal(appFromArgs([], toml), "mint-condition");
+  assert.throws(() => appFromArgs(["--app", "MC_X"], toml), /isn't a valid Fly app name/);
+  assert.throws(() => appFromArgs(["--app"], toml), /--app needs a name/);
+  assert.throws(() => appFromArgs([], ""), /Create the app first/);
 });

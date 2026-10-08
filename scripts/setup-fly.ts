@@ -1,9 +1,9 @@
 // npm run setup:fly — sets this app's Fly secrets (Discogs token, User-Agent, login password) without typing
-// `fly secrets`. Values go to `fly secrets import` on stdin, so they never reach shell history, `ps`, or a file.
+// `fly secrets`. `npm run setup:fly -- --app mc-<shop>` sets a shop's app instead of the one in fly.toml. Values go to `fly secrets import` on stdin, so they never reach shell history, `ps`, or a file.
 // Re-run it to change the password or token; Enter keeps whatever is already set.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { defaultUserAgent, flyCommands, parseAppName, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
+import { appFromArgs, defaultUserAgent, flyCommands, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
 import type { Answers } from "../lib/setup-fly.ts";
 import { ask, closePrompt } from "./prompt.ts";
 
@@ -28,11 +28,15 @@ let toml = "";
 try {
   toml = readFileSync("fly.toml", "utf8");
 } catch {}
-const app = parseAppName(toml);
-if (!app) fail("Create the app first: fly launch --copy-config --no-deploy");
+let app = "";
+try {
+  app = appFromArgs(process.argv.slice(2), toml);
+} catch (e) {
+  fail(e instanceof Error ? e.message : String(e));
+}
 
 const listed = run(bin, ["secrets", "list", "-a", app, "--json"]);
-if (listed.status !== 0) fail(`Could not read the secrets of ${app}. Is the app name in fly.toml right?`);
+if (listed.status !== 0) fail(`Could not read the secrets of ${app}. Is the app name right?`);
 const current = parseSecretNames(listed.stdout);
 const has = (name: string) => current.includes(name);
 
