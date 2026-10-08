@@ -87,16 +87,21 @@ fly deploy
 ### Automatic deploys
 
 Every push to `main` runs `.github/workflows/fly-deploy.yml`. It runs `npm test`, `npm run typecheck` and
-`npm run build`, and only if all pass does it run `flyctl deploy --remote-only`. A failing check means nothing is
-deployed; see the run under the repo's **Actions** tab.
+`npm run build`; only if all pass does it build one Docker image, push it to
+`ghcr.io/garciaryan/mint-condition:<tag>`, deploy it to this app (the canary, `flyctl deploy --image`), tag the
+release, and then deploy the same image to every shop app (§10). A failing check means nothing is deployed, and a
+canary that fails its health check means no shop is touched; see the run under the repo's **Actions** tab.
 
 #### Versions and releases
 
 Each successful automatic deploy is tagged `v<base>-alpha.<N>` and gets a GitHub pre-release whose notes list the PRs
-merged since the last one. `<base>` is `version` in `package.json` (plain `x.y.z`, currently `0.1.0`), and `N` counts up
+merged since the last one. The same tag names the image on ghcr.io, so any release can be redeployed by tag. The
+tag is pushed before the image is built, which claims the number: no two runs ever build the same `alpha.N`. `<base>` is `version` in `package.json` (plain `x.y.z`, currently `0.1.0`), and `N` counts up
 from 1 for each base (`scripts/next-version.ts`, logic in `lib/version.ts`). The tag is passed to the image build as
 `APP_VERSION`, so the running app knows it: `/api/health` reports `"version"` and `/settings` shows it at the bottom,
-linked to the release. A failed deploy makes no tag; local builds and manual `fly deploy` say `dev`.
+linked to the release. A run that fails after claiming its number (build, canary or release) leaves a bare tag with
+no release, so release numbers can have gaps; the next run takes the next number. Local builds and manual
+`fly deploy` from source say `dev`.
 
 - **Start a new line** (for example after a phase that changes the database): change `version` in `package.json` to
   `0.2.0` in a PR. The next deploy is `v0.2.0-alpha.1`.
@@ -259,3 +264,56 @@ Set `APP_PASSWORD` in `.env.local` first if the tunnel can be reached by anyone 
 
 For small changes it is also reasonable to merge and check on production, since you are its only user and the
 database only changes through migrations.
+
+## 10. Hosting a shop
+
+Each record shop gets its own Fly app in its own Fly organization: its own URL, database, password, Discogs access and
+rate limit, and its own bill. Every push to `main` deploys the canary (this app) first and then each shop listed in
+the `FLY_SHOP_APPS` repo variable, all from the same image. A shop whose deploy fails keeps running its previous
+version; re-run just that job from the Actions run.
+
+### One-time: make the image public
+
+GHCR makes a new package private, and Fly can't pull a private image. After the first run of the new pipeline (its
+canary will fail to pull the image, leaving this app on its old version), open the repo's **Packages** →
+`mint-condition` → **Package settings** → **Change visibility** → **Public**, then **Re-run failed jobs**. The image
+holds only the public code; secrets are Fly secrets, set at runtime.
+
+### Add a shop
+
+Pick a short lowercase name, e.g. `groove`; the app is `mc-groove`. About 15 minutes:
+
+```sh
+fly orgs create mc-groove                                   # then add a payment method to the org on fly.io
+fly apps create mc-groove --org mc-groove
+fly volumes create mint_data -a mc-groove --region <nearest region> --size 1
+npm run setup:fly -- --app mc-groove                        # password, user agent, Discogs token
+fly deploy --image ghcr.io/garciaryan/mint-condition:<latest tag> -a mc-groove --primary-region <same region> --ha=false
+curl https://mc-groove.fly.dev/api/health                   # "version" is that tag; then log in
+fly tokens create deploy -a mc-groove | gh secret set FLY_TOKEN_GROOVE -R garciaryan/mint-condition
+gh variable set FLY_SHOP_APPS -R garciaryan/mint-condition \
+  --body '[{"app":"mc-groove","token":"FLY_TOKEN_GROOVE"}]'  # the whole list: keep the shops already in it
+```
+
+- The first deploy is by hand, before the shop is listed: `--primary-region` puts the machine next to its volume
+  (`fly.toml` says `sjc`) and `--ha=false` keeps it to one machine (§4). The workflow only updates apps that already
+  have their machine.
+- Read the current list first with `gh variable get FLY_SHOP_APPS -R garciaryan/mint-condition`. Each entry is the
+  app and the name of the secret holding its deploy token. The workflow checks the list before deploying anything
+  (`lib/shops.ts`) and stops the run with a message if an entry is wrong; a token secret that's missing fails only
+  that shop, naming the secret.
+- Until Connect Discogs ships, the shop's own Discogs personal access token is set by `setup:fly`. Never use yours:
+  price data from your seller account is yours, not theirs.
+
+### Roll back one app
+
+```sh
+fly deploy --image ghcr.io/garciaryan/mint-condition:<older tag> -a <app>
+```
+
+The next push to `main` brings it forward again.
+
+### Remove a shop
+
+Take its entry out of `FLY_SHOP_APPS`, run `gh secret delete FLY_TOKEN_<SHOP> -R garciaryan/mint-condition`, then
+either `fly apps destroy <app>` or hand the Fly org over to the shop.

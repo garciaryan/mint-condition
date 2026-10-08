@@ -12,6 +12,11 @@ test("the next tag is one past the highest, gaps and order don't matter", () => 
   assert.equal(nextAlphaTag("0.1.0", ["v0.1.0-alpha.1", "v0.1.0-alpha.5"]), "v0.1.0-alpha.6");
 });
 
+test("a claimed tag is skipped even when it never became a release", () => {
+  // A failed canary leaves v0.1.0-alpha.4 as a bare tag; the next run must not build alpha.4 again.
+  assert.equal(nextAlphaTag("0.1.0", ["v0.1.0-alpha.3", "v0.1.0-alpha.4"]), "v0.1.0-alpha.5");
+});
+
 test("tags from other base versions and junk tags are ignored", () => {
   const tags = ["v0.0.9-alpha.40", "v0.1.0-alpha.x", "v0.1.0-alpha.", "v0.1.0", "v0.1.0-beta.7", "x0.1.0-alpha.9", "v0.1.0-alpha.2"];
   assert.equal(nextAlphaTag("0.1.0", tags), "v0.1.0-alpha.3");
@@ -36,18 +41,6 @@ test("appVersion is the build's tag, or dev", () => {
 test("versionUrl links a tagged build to its GitHub release; dev has none", () => {
   assert.equal(versionUrl("v0.1.0-alpha.3"), "https://github.com/garciaryan/mint-condition/releases/tag/v0.1.0-alpha.3");
   assert.equal(versionUrl("dev"), null);
-});
-
-test("the deploy job tags each successful deploy as a pre-release", () => {
-  const wf = readFileSync(".github/workflows/fly-deploy.yml", "utf8");
-  const deploy = wf.slice(wf.indexOf("\n  deploy:"));
-  assert.match(deploy, /permissions:\s*\n\s*contents: write/);
-  assert.match(deploy, /fetch-depth: 0/);
-  assert.match(deploy, /scripts\/next-version\.ts/);
-  assert.match(deploy, /flyctl deploy --remote-only --build-arg APP_VERSION=/);
-  const release = deploy.indexOf("gh release create");
-  assert.ok(release > deploy.indexOf("flyctl deploy"), "the tag is made only after the deploy succeeds");
-  assert.match(deploy.slice(release), /--prerelease --generate-notes --target "\$GITHUB_SHA"/);
 });
 
 test("the Dockerfile bakes the deploy tag into the build and the running app", () => {

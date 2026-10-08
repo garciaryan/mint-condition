@@ -1,11 +1,26 @@
 // Pure parts of `npm run setup:fly` (scripts/setup-fly.ts): reading fly.toml and the secret list, checking what was
 // typed, and building the `fly secrets import` input. Never logs or returns a value except inside importText.
 import { MIN_PASSWORD_CHARS } from "./auth.ts";
+import { isFlyAppName } from "./shops.ts";
 
 export type Answers = { token?: string; userAgent?: string; password?: string };
 
 export function parseAppName(flyToml: string): string | null {
   return /^app\s*=\s*["']([^"']+)["']/m.exec(flyToml)?.[1] ?? null;
+}
+
+/** The app to set secrets on: `--app <name>` (a shop's app), else the one in fly.toml. */
+export function appFromArgs(argv: string[], flyToml: string): string {
+  const i = argv.indexOf("--app");
+  if (i >= 0) {
+    const name = argv[i + 1];
+    if (!name || name.startsWith("-")) throw new Error("--app needs a name, e.g. --app mc-groove.");
+    if (!isFlyAppName(name)) throw new Error(`"${name}" isn't a valid Fly app name (lowercase letters, digits and dashes).`);
+    return name;
+  }
+  const app = parseAppName(flyToml);
+  if (!app) throw new Error("Create the app first: fly launch --copy-config --no-deploy");
+  return app;
 }
 
 /** Names from `fly secrets list --json` (flyctl has used both Name and name). */
