@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import { DATA_CREDIT, dataExpired, MAX_CACHE_HOURS, releaseUrl } from "@/lib/discogs-terms.ts";
 import { clearsInputs, fieldErrors, movesToResult } from "@/lib/form.ts";
 import { relativeTime } from "@/lib/relative-time.ts";
+import { withArtist } from "@/lib/versions.ts";
 import type { FieldErrors } from "@/lib/form.ts";
 import type { LookupResponse } from "@/lib/lookup.ts";
 import { GRADE_NAMES } from "@/lib/types.ts";
@@ -14,6 +15,8 @@ import DemandBadge from "@/components/ui/DemandBadge.tsx";
 import GradeSelect from "@/components/ui/GradeSelect.tsx";
 import Picker, { Thumb } from "@/components/lookup/Picker.tsx";
 import ScanButton from "@/components/scan/ScanButton.tsx";
+import VersionsPanel from "@/components/lookup/VersionsPanel.tsx";
+import NavIcon from "@/components/layout/NavIcon.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 // Loaded only when the scan icon is pressed, so the camera code and detector stay out of the page bundle.
@@ -325,6 +328,7 @@ export default function Lookup() {
                 busy={repricing}
                 slow={repricing && slow}
                 onRefresh={() => reprice({ fresh: true, focus: true })}
+                onPick={(c) => void price(c.id, c, { focus: true })}
                 onBack={
                   candidates
                     ? () => {
@@ -376,6 +380,7 @@ function ResultCard({
   busy,
   slow,
   onRefresh,
+  onPick,
   onBack,
 }: {
   res: Priced;
@@ -383,6 +388,8 @@ function ResultCard({
   busy: boolean;
   slow: boolean;
   onRefresh: () => void;
+  /** Re-prices another version of the same master, like a pick. */
+  onPick: (c: Candidate) => void;
   onBack?: () => void;
 }) {
   const cur = res.currency;
@@ -425,9 +432,17 @@ function ResultCard({
           </p>
           {res.cached && !expired && (
             <p className="muted small price-age">
-              {res.status === "priced" ? "Prices from" : "Checked"} {relativeTime(res.fetchedAt)} ·{" "}
-              <button type="button" className="link" onClick={onRefresh} disabled={busy}>
-                Refresh prices
+              {res.status === "priced" ? "Prices from" : "Checked"} {relativeTime(res.fetchedAt)}
+              <button
+                type="button"
+                className="icon-button refresh"
+                onClick={onRefresh}
+                disabled={busy}
+                aria-busy={busy}
+                aria-label="Refresh prices"
+                title="Refresh prices"
+              >
+                <NavIcon name="refresh" />
               </button>
             </p>
           )}
@@ -439,6 +454,16 @@ function ResultCard({
           </span>
         )}
       </div>
+      {!expired && res.stats.masterId ? (
+        <VersionsPanel
+          key={res.releaseId}
+          masterId={res.stats.masterId}
+          releaseId={res.releaseId}
+          fallbackYear={release?.year ?? null}
+          busy={busy}
+          onPick={(c) => onPick({ ...c, title: withArtist(release?.title, c.title) })}
+        />
+      ) : null}
 
       {expired ? (
         <div className="notice">

@@ -12,6 +12,9 @@ export const DATA_CREDIT = "Data provided by Discogs";
 
 export const releaseUrl = (id: number): string => `https://www.discogs.com/release/${id}`;
 
+/** The master page: where a release's list of versions comes from. */
+export const masterUrl = (id: number): string => `https://www.discogs.com/master/${id}`;
+
 /** The Discogs search page for a catalog number: where the pressings in a pick list come from. */
 export const searchUrl = (catno: string): string => `https://www.discogs.com/search/?q=${encodeURIComponent(catno)}&type=release`;
 

@@ -12,6 +12,7 @@ import {
   parseReleaseStats,
   sortByYear,
   toCandidate,
+  toVersion,
 } from "../lib/discogs.ts";
 
 function json(body: unknown, init: ResponseInit = {}): Response {
@@ -210,6 +211,50 @@ test("releaseStats asks /releases/{id}; a missing release has nothing for sale",
   const { client, calls } = makeClient(() => new Response("{}", { status: 404 }));
   assert.deepEqual(await client.releaseStats(42), { lowestPrice: null, currency: null, numForSale: 0 });
   assert.equal(calls[0].pathname, "/releases/42");
+});
+
+test("toVersion reads the year from released and maps the fields", () => {
+  const raw = { id: 5193282, title: "Blue Train", label: "Blue Note", catno: "BLP 1577", country: "US", format: "LP, Album, Mono", thumb: "" };
+  assert.deepEqual(toVersion({ ...raw, released: "1958" }), {
+    id: 5193282, title: "Blue Train", year: 1958, country: "US", label: "Blue Note", catno: "BLP 1577", format: "LP, Album, Mono", thumb: null,
+  });
+  assert.equal(toVersion({ ...raw, released: "1972-05-12" }).year, 1972);
+  for (const released of ["0", "", "Unknown", undefined]) assert.equal(toVersion({ ...raw, released }).year, null, String(released));
+  assert.deepEqual(toVersion({ id: 1 }), { id: 1, title: "", year: null, country: null, label: null, catno: null, format: null, thumb: null });
+});
+
+const versionsPage = (page: number, pages: number, items: number, n = 100) =>
+  json({ pagination: { page, pages, items }, versions: Array.from({ length: n }, (_, i) => ({ id: page * 1000 + i, released: "1958" })) });
+
+test("masterVersions sends the vinyl filter and release-date sort", async () => {
+  const { client, calls } = makeClient(() => versionsPage(1, 1, 3, 3));
+  await client.masterVersions(32208);
+  const u = calls[0];
+  assert.equal(u.pathname, "/masters/32208/versions");
+  for (const [k, v] of Object.entries({ format: "Vinyl", sort: "released", sort_order: "asc", per_page: "100", page: "1" })) {
+    assert.equal(u.searchParams.get(k), v, k);
+  }
+});
+
+test("masterVersions follows pages up to 3 and reports the total", async () => {
+  const { client, calls } = makeClient((u) => versionsPage(Number(u.searchParams.get("page")), 5, 412));
+  const { versions, total } = await client.masterVersions(32208);
+  assert.equal(calls.length, 3);
+  assert.equal(versions.length, 300);
+  assert.equal(total, 412);
+});
+
+test("masterVersions stops at the last page", async () => {
+  const { client, calls } = makeClient((u) => versionsPage(Number(u.searchParams.get("page")), 2, 150, 75));
+  const { versions, total } = await client.masterVersions(32208);
+  assert.equal(calls.length, 2);
+  assert.equal(versions.length, 150);
+  assert.equal(total, 150);
+});
+
+test("masterVersions of a missing master is empty", async () => {
+  const { client } = makeClient(() => new Response("{}", { status: 404 }));
+  assert.deepEqual(await client.masterVersions(1), { versions: [], total: 0 });
 });
 
 test("parseReleaseStats reads the live Blue Train release", () => {

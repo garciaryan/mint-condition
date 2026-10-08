@@ -11,8 +11,8 @@ Today the app calls three Discogs endpoints: `/database/search`, `/marketplace/p
 |---|---|---|---|---|
 | 9 | Condition notes (**built 2026-10-07**, PR #29) | none | yes | none |
 | 10 | Release details and demand signal (**built 2026-10-07**, PR #33) | none | yes | `/releases/{id}` (replaces stats) |
-| 11 | Matching by runout in the picker | 10 | no | `/releases/{id}` per candidate, on demand |
-| 12 | Versions of a master | 10 | no | `/masters/{id}/versions` |
+| 11 | Matching by runout in the picker (**built 2026-10-07**, PR #34) | 10 | no | `/releases/{id}` per candidate, on demand |
+| 12 | Versions of a master (**built 2026-10-07**) | 10 | no | `/masters/{id}/versions` |
 | 13 | Boxes and bulk counts | none | yes | none |
 | 14 | Linking my Discogs account: inventory and wantlist | none | yes | `/oauth/identity`, `/users/{u}/inventory`, `/users/{u}/wants` |
 | 15 | Listing a collection on Discogs | 9, 14 | yes | `POST /marketplace/listings` |
@@ -86,7 +86,9 @@ for sale moves in a week. How fast a record sells decides what to cherry-pick.
 **Done when** each priced record shows want/have and a speed badge, the call count per record is written down, and
 the pick toggle changes the offer.
 
-## Phase 11: Matching by runout in the picker
+## Phase 11: Matching by runout in the picker (built)
+
+Built 2026-10-07 (PR #34). Spec: `docs/superpowers/specs/2026-10-07-runout-match-design.md`.
 
 **Why.** A catno and a year often match 20 pressings, and the first press can be worth 10x a repress. At the table
 you identify a pressing by the dead wax, not the jacket.
@@ -104,7 +106,10 @@ you identify a pressing by the dead wax, not the jacket.
 **Done when** a catno with 20+ pressings can be narrowed to one by typing a matrix fragment, and the call count for
 that flow is written down.
 
-## Phase 12: Versions of a master
+## Phase 12: Versions of a master (built)
+
+Built 2026-10-07: vinyl versions only (`format=Vinyl`), on the result card, 1–3 calls when the panel is opened.
+Spec: `docs/superpowers/specs/2026-10-07-master-versions-design.md`.
 
 **Why.** To tell an original from a reissue, and to see where this copy sits among every pressing.
 

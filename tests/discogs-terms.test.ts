@@ -33,6 +33,11 @@ test("Discogs data is credited next to it, with a followed link", () => {
   }
 });
 
+test("masterUrl links to the master page on discogs.com", async () => {
+  const { masterUrl } = await import("../lib/discogs-terms.ts");
+  assert.equal(masterUrl(32208), "https://www.discogs.com/master/32208");
+});
+
 test("searchUrl links the pressing list to the Discogs search for that catalog number", async () => {
   const { searchUrl } = await import("../lib/discogs-terms.ts");
   assert.equal(searchUrl("SD 7208"), "https://www.discogs.com/search/?q=SD%207208&type=release");
@@ -82,4 +87,10 @@ test("runout identifiers (Discogs data) are fetched and shown only in the Picker
   const fetchers = walk("components").filter((f) => src(f).includes("/api/releases/"));
   assert.deepEqual(fetchers, [path.join("components", "lookup", "Picker.tsx")]);
   assert.match(src("components/lookup/Picker.tsx"), /<DiscogsCredit\b/);
+});
+
+test("the versions panel credits the master page, with a followed link", () => {
+  const f = "components/lookup/VersionsPanel.tsx";
+  assert.match(src(f), /<DiscogsCredit href=\{masterUrl\(/);
+  assert.doesNotMatch(src(f), /nofollow/);
 });

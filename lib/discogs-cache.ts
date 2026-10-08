@@ -1,6 +1,7 @@
 // Discogs answers cached in SQLite for settings.discogs.cacheHours, around the shared throttled client.
 // Errors are never cached, and a cache failure never fails a lookup. Server-side only.
 import type { DatabaseSync } from "node:sqlite";
+import type { MasterVersions } from "./discogs.ts";
 import type { LookupClient } from "./lookup.ts";
 import type { Candidate, MarketplaceStats, PriceSuggestions } from "./types.ts";
 
@@ -12,6 +13,10 @@ export type CachedLookupClient = {
   releaseStats(releaseId: number, opts?: FetchOpts): Promise<Fetched<MarketplaceStats>>;
 };
 
+/** Versions of a master, for the result card's panel. Kept apart from LookupClient, which pricing and the worker use. */
+export type VersionsClient = { masterVersions(masterId: number): Promise<MasterVersions> };
+export type CachedVersionsClient = { masterVersions(masterId: number, opts?: FetchOpts): Promise<Fetched<MasterVersions>> };
+
 export function searchKey(query: string, year: number | undefined): string {
   return `search:${query.trim().toLowerCase().replace(/\s+/g, " ")}|${year ?? "-"}`;
 }
@@ -20,13 +25,13 @@ const HOUR_MS = 3_600_000;
 const logError = (what: string, e: unknown) =>
   console.error(`discogs cache: ${what}:`, e instanceof Error ? e.message : "unknown error");
 
-export class CachedClient implements CachedLookupClient {
-  private inner: LookupClient;
+export class CachedClient implements CachedLookupClient, CachedVersionsClient {
+  private inner: LookupClient & VersionsClient;
   private db: () => DatabaseSync;
   private cacheHours: () => number;
   private now: () => number;
 
-  constructor(inner: LookupClient, deps: { db: () => DatabaseSync; cacheHours: () => number; now?: () => number }) {
+  constructor(inner: LookupClient & VersionsClient, deps: { db: () => DatabaseSync; cacheHours: () => number; now?: () => number }) {
     this.inner = inner;
     this.db = deps.db;
     this.cacheHours = deps.cacheHours;
@@ -43,6 +48,10 @@ export class CachedClient implements CachedLookupClient {
 
   releaseStats(releaseId: number, opts: FetchOpts = {}): Promise<Fetched<MarketplaceStats>> {
     return this.cached(`release:${releaseId}`, opts.fresh, () => this.inner.releaseStats(releaseId));
+  }
+
+  masterVersions(masterId: number, opts: FetchOpts = {}): Promise<Fetched<MasterVersions>> {
+    return this.cached(`versions:${masterId}`, opts.fresh, () => this.inner.masterVersions(masterId));
   }
 
   private ttl(): number {
