@@ -1,6 +1,8 @@
 // One Discogs client per server process so its throttle covers every caller (lookup route and queue worker).
 // Kept on globalThis to survive dev reloads. Server-side only.
 import { getDb } from "./db.ts";
+import { discogsAccess } from "./discogs-access.ts";
+import { getConnection } from "./discogs-auth-store.ts";
 import { DiscogsClient } from "./discogs.ts";
 import { CachedClient } from "./discogs-cache.ts";
 import type { CachedLookupClient, CachedVersionsClient } from "./discogs-cache.ts";
@@ -10,8 +12,8 @@ const g = globalThis as typeof globalThis & { __discogsClient?: DiscogsClient };
 
 export function getDiscogsClient(): DiscogsClient {
   g.__discogsClient ??= new DiscogsClient({
-    token: process.env.DISCOGS_TOKEN!.trim(),
-    userAgent: process.env.DISCOGS_USER_AGENT!.trim(),
+    auth: () => discogsAccess(process.env, getConnection(getDb())),
+    userAgent: (process.env.DISCOGS_USER_AGENT ?? "").trim(),
   });
   return g.__discogsClient;
 }

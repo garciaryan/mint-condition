@@ -29,8 +29,10 @@ if (!isGrade(recordArg) || !isGrade(sleeveArg)) {
 }
 
 const settings = loadSettings();
+const token = (process.env.DISCOGS_TOKEN ?? "").trim();
+if (!token) fail("DISCOGS_TOKEN is not set", 1);
 const client = new DiscogsClient({
-  token: process.env.DISCOGS_TOKEN ?? "",
+  auth: () => ({ kind: "token", token }),
   userAgent: process.env.DISCOGS_USER_AGENT ?? "",
 });
 

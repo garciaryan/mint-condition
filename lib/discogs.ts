@@ -1,4 +1,6 @@
 // Minimal Discogs REST client. Server-side only: it holds the personal access token.
+import type { DiscogsAccess } from "./discogs-access.ts";
+import { newNonce, oauthHeader } from "./discogs-oauth.ts";
 import type { Candidate, Grade, Identifier, MarketplaceStats, PriceSuggestions } from "./types.ts";
 
 const BASE = "https://api.discogs.com";
@@ -17,10 +19,12 @@ const SUGGESTION_KEYS: Record<string, Grade> = {
 
 export class DiscogsError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  kind?: "not-connected";
+  constructor(message: string, status: number, kind?: "not-connected") {
     super(message);
     this.name = "DiscogsError";
     this.status = status;
+    if (kind) this.kind = kind;
   }
 }
 
@@ -146,17 +150,20 @@ export function parsePriceSuggestions(body: Record<string, { value?: number } | 
 }
 
 export type ClientOptions = {
-  token: string;
+  /** Called on every request, so connecting or disconnecting applies at once. */
+  auth: () => DiscogsAccess;
   userAgent: string;
   fetchImpl?: typeof fetch;
   /** Minimum gap between requests; Discogs allows 60/min when authenticated. */
   minIntervalMs?: number;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
+  nonce?: () => string;
 };
 
 export class DiscogsClient {
-  private token: string;
+  private auth: () => DiscogsAccess;
+  private nonce: () => string;
   private userAgent: string;
   private fetchImpl: typeof fetch;
   private minIntervalMs: number;
@@ -166,9 +173,9 @@ export class DiscogsClient {
   private queue: Promise<unknown> = Promise.resolve();
 
   constructor(opts: ClientOptions) {
-    if (!opts.token) throw new Error("DISCOGS_TOKEN is not set");
     if (!opts.userAgent) throw new Error("DISCOGS_USER_AGENT is not set (Discogs requires one)");
-    this.token = opts.token;
+    this.auth = opts.auth;
+    this.nonce = opts.nonce ?? newNonce;
     this.userAgent = opts.userAgent;
     this.fetchImpl = opts.fetchImpl ?? fetch;
     this.minIntervalMs = opts.minIntervalMs ?? 1100;
@@ -191,13 +198,32 @@ export class DiscogsClient {
     return next;
   }
 
+  private authorization(access: Exclude<DiscogsAccess, { kind: "none" }>, url: URL): string {
+    if (access.kind === "token") return `Discogs token=${access.token}`;
+    return oauthHeader({
+      method: "GET",
+      url: url.toString(),
+      consumerKey: access.consumerKey,
+      consumerSecret: access.consumerSecret,
+      token: access.token,
+      tokenSecret: access.secret,
+      nonce: this.nonce(),
+      timestamp: Math.floor(this.now() / 1000),
+    });
+  }
+
   private async get<T>(path: string, params: Record<string, string> = {}, retried = false): Promise<T | null> {
     const url = new URL(BASE + path);
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+    const access = this.auth();
+    if (access.kind === "none") {
+      if (access.reason === "not-connected") throw new DiscogsError("Connect your Discogs account to start pricing.", 0, "not-connected");
+      throw new DiscogsError("Discogs isn't set up for this app.", 0);
+    }
     const res = await this.throttled(() =>
       this.fetchImpl(url, {
         headers: {
-          Authorization: `Discogs token=${this.token}`,
+          Authorization: this.authorization(access, url),
           "User-Agent": this.userAgent,
           Accept: "application/vnd.discogs.v2.discogs+json",
         },
@@ -209,7 +235,14 @@ export class DiscogsClient {
       return this.get<T>(path, params, true);
     }
     if (res.status === 404) return null;
-    if (res.status === 401) throw new DiscogsError("Discogs rejected the token (401). Check DISCOGS_TOKEN.", 401);
+    if (res.status === 401) {
+      throw new DiscogsError(
+        access.kind === "oauth"
+          ? "Discogs no longer accepts this app's access. Reconnect Discogs in Settings."
+          : "Discogs rejected the token (401). Check DISCOGS_TOKEN.",
+        401,
+      );
+    }
     if (!res.ok) throw new DiscogsError(`Discogs returned ${res.status} for ${path}`, res.status);
     return (await res.json()) as T;
   }
