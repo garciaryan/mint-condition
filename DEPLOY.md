@@ -272,12 +272,13 @@ rate limit, and its own bill. Every push to `main` deploys the canary (this app)
 the `FLY_SHOP_APPS` repo variable, all from the same image. A shop whose deploy fails keeps running its previous
 version; re-run just that job from the Actions run.
 
-### One-time: make the image public
+### The image must be public
 
-GHCR makes a new package private, and Fly can't pull a private image. After the first run of the new pipeline (its
-canary will fail to pull the image, leaving this app on its old version), open the repo's **Packages** →
-`mint-condition` → **Package settings** → **Change visibility** → **Public**, then **Re-run failed jobs**. The image
-holds only the public code; secrets are Fly secrets, set at runtime.
+Fly pulls `ghcr.io/garciaryan/mint-condition` without credentials, so the package must be public. Pushed from this
+public repo it was public from the first run (checked 2026-10-08: an anonymous pull of `v0.1.0-alpha.2` succeeds). If a
+canary ever fails to pull the image, open the repo's **Packages** → `mint-condition` → **Package settings** and check
+the visibility is **Public**, then **Re-run failed jobs**. The image holds only the public code; secrets are Fly
+secrets, set at runtime.
 
 ### Add a shop
 
