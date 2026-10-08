@@ -16,6 +16,7 @@ import GradeSelect from "@/components/ui/GradeSelect.tsx";
 import Picker, { Thumb } from "@/components/lookup/Picker.tsx";
 import ScanButton from "@/components/scan/ScanButton.tsx";
 import VersionsPanel from "@/components/lookup/VersionsPanel.tsx";
+import NavIcon from "@/components/layout/NavIcon.tsx";
 import { ROUTES } from "@/lib/consts.ts";
 
 // Loaded only when the scan icon is pressed, so the camera code and detector stay out of the page bundle.
@@ -431,9 +432,17 @@ function ResultCard({
           </p>
           {res.cached && !expired && (
             <p className="muted small price-age">
-              {res.status === "priced" ? "Prices from" : "Checked"} {relativeTime(res.fetchedAt)} ·{" "}
-              <button type="button" className="link" onClick={onRefresh} disabled={busy}>
-                Refresh prices
+              {res.status === "priced" ? "Prices from" : "Checked"} {relativeTime(res.fetchedAt)}
+              <button
+                type="button"
+                className="icon-button refresh"
+                onClick={onRefresh}
+                disabled={busy}
+                aria-busy={busy}
+                aria-label="Refresh prices"
+                title="Refresh prices"
+              >
+                <NavIcon name="refresh" />
               </button>
             </p>
           )}

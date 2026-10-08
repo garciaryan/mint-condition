@@ -922,6 +922,35 @@ a {
   margin-top: 12px;
 }
 
+/* Looks like the grade selects but opens the versions list in place (a disclosure, not a menu). */
+.select-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 260px;
+  max-width: 100%;
+  min-height: var(--control-h);
+  padding: 8px 10px;
+  border: 1px solid var(--field-line);
+  border-radius: 6px;
+  background: var(--field-bg);
+  color: var(--ink);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.select-toggle .chevron {
+  flex: none;
+  color: var(--muted);
+  transition: transform var(--dur) var(--ease);
+}
+
+.select-toggle[aria-expanded="true"] .chevron {
+  transform: rotate(180deg);
+}
+
 .versions-panel {
   margin-top: 12px;
   animation: drop-in var(--dur) var(--ease);
@@ -3151,9 +3180,47 @@ kbd {
   margin: 16px 0 0;
 }
 
-/* Age of cached Discogs prices */
+/* Age of cached Discogs prices, with the refresh icon after it */
 .price-age {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   margin: 4px 0 0;
+}
+
+/* A bare icon button (result card refresh): no box, a 44px target around an 18px icon. */
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--control-h);
+  min-height: var(--control-h);
+  margin: -12px 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.icon-button .nav-icon {
+  width: 18px;
+  height: 18px;
+}
+
+@media (hover: hover) {
+  .icon-button:hover:not(:disabled) {
+    background: var(--accent-soft);
+  }
+}
+
+.icon-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.icon-button.refresh[aria-busy="true"] .nav-icon {
+  animation: spin 800ms linear infinite;
 }
 
 .lot-actions .price-age {
