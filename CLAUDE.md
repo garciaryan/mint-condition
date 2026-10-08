@@ -83,14 +83,14 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
 
 - **Routes:** `app/page.tsx` (price a record) · `app/collection/` (lots list), `app/collection/[id]/` (lot),
   `app/collection/[id]/print/` (buy sheet) · `app/settings/` · `app/login/` · `app/api/` (`lookup`, `login|logout|health`,
-  `settings`, `sessions/` incl. `[id]/discogs.csv`, `items/`, `releases/[id]/identifiers`)
+  `settings`, `sessions/` incl. `[id]/discogs.csv`, `items/`, `releases/[id]/identifiers`, `masters/[id]/versions`)
 - **`components/layout/`:** `SiteHeader` (server: reads `mc_theme`/`mc_nav`) + `SiteNav` (fixed left sidebar, expanded
   by default, collapses to an icon rail remembered by `mc_nav` via `lib/nav.ts`; a bottom tab bar at 480px and below;
   Docs and the coffee pill sit at its foot, the footer shows them only on phones and pages without the sidebar) ·
   `NavLinks` (expanded desktop sidebar lists the 3 most recent collections under Collections, then "+N more";
   `navLots`) · `NavIcon` (inline SVG icons) · `SiteFooter` (not-affiliated notice) · `ThemeSwitch` (cycles
   System/Light/Dark) · `LogoutButton` (on `/settings`, Account card, only when login is on)
-- **`components/lookup/`:** `Lookup` (form, picker, result card) · `LookupScanner` · `Picker`
+- **`components/lookup/`:** `Lookup` (form, picker, result card) · `LookupScanner` · `Picker` · `VersionsPanel`
 - **`components/scan/`:** `ScanButton`, `ScanFrame` · **`components/ui/`:** `GradeSelect`, `DiscogsCredit`, `DemandBadge`
 - **`components/collection/`:** `LotsList`, `LotView`, `LotHeader`, `EntryBar`, `Scanner`, `PasteList`, `PickPanel`,
   `TotalsBar`, `OfferPanel`, `ItemRow`, `PrintButton`
@@ -102,7 +102,7 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   pure) · `lookup.ts` lookup flow for the API route · `form.ts` client-side form checks and picker grouping ·
   `auth.ts` (session signing, authMode, limiter, health config) · `password.ts` · `gate.ts` + `middleware.ts` (login
   gate) · `db.ts` + `migrations.ts` (SQLite, versioned) · `setup-fly.ts` (pure) · `session-secret.ts` ·
-  `demand.ts` (fast/slow from want/have, pure) · `runout.ts` (runout matching and highlight, pure) ·
+  `demand.ts` (fast/slow from want/have, pure) · `runout.ts` (runout matching and highlight, pure) · `versions.ts` (master versions: sort, earliest, filter; pure) ·
   `settings-store.ts` (saved settings over defaults) ·
   `settings-form.ts` (client-safe) · `settings-help.ts` (every
   field has help, tested; the sleeve grid shares one `SLEEVE_HELP`) · `discogs-client.ts` shared client +
@@ -166,6 +166,12 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   (cached `release:<id>`), "Check runouts" for up to 25 showing pressings, and "Runout contains…" filters by a
   letters+digits fragment across all identifiers, highlighted (`lib/runout.ts`). Picking a checked pressing prices
   with one call. Spec: `docs/superpowers/specs/2026-10-07-runout-match-design.md`.
+
+- Phase 12 master versions (2026-10-07): built on feat/master-versions; 451 tests passing; no migration. A "Vinyl
+  versions" panel on the result card (only when the release has a master) loads `GET /api/masters/:id/versions` on
+  first open (`format=Vinyl`, oldest first, up to 3 pages, cached `versions:<id>`), marks "This copy" and "Earliest
+  listed", says "reissue" or "earliest year listed on Discogs" (never "original"), and picking a version re-prices it.
+  Credit links `discogs.com/master/<id>`. Spec: `docs/superpowers/specs/2026-10-07-master-versions-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns

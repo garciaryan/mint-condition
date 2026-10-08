@@ -917,6 +917,79 @@ a {
   color: var(--ink);
 }
 
+/* Result card: "Vinyl versions" (components/lookup/VersionsPanel), full card width under the title. */
+.versions {
+  margin-top: 12px;
+}
+
+.versions-panel {
+  margin-top: 12px;
+  animation: drop-in var(--dur) var(--ease);
+}
+
+.versions-summary {
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+
+.versions-summary:empty {
+  display: none;
+}
+
+.versions-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.versions-head input {
+  width: 300px;
+  max-width: 100%;
+}
+
+.version-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Like the demand badge: "Earliest listed" in the accent tint, "This copy" filled. */
+.version-chip {
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.version-chip.current {
+  color: var(--fill-ink);
+  background: var(--fill);
+}
+
+/* This copy's row isn't a button. */
+.candidate.version-current {
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .candidate.version-current:hover {
+    background: none;
+  }
+}
+
+.candidate:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 .candidate-main {
   display: flex;
   flex-direction: column;

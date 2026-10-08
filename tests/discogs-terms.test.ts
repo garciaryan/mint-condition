@@ -88,3 +88,9 @@ test("runout identifiers (Discogs data) are fetched and shown only in the Picker
   assert.deepEqual(fetchers, [path.join("components", "lookup", "Picker.tsx")]);
   assert.match(src("components/lookup/Picker.tsx"), /<DiscogsCredit\b/);
 });
+
+test("the versions panel credits the master page, with a followed link", () => {
+  const f = "components/lookup/VersionsPanel.tsx";
+  assert.match(src(f), /<DiscogsCredit href=\{masterUrl\(/);
+  assert.doesNotMatch(src(f), /nofollow/);
+});
