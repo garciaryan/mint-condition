@@ -39,7 +39,7 @@ jobs:
     if: github.event_name == 'push' && github.repository == 'garciaryan/mint-condition'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # push the tag that claims this run's number
       packages: write # push to ghcr.io
     outputs:
       tag: ${{ steps.version.outputs.tag }}
@@ -65,6 +65,14 @@ jobs:
           echo "shops=$shops" >> "$GITHUB_OUTPUT"
         env:
           FLY_SHOP_APPS: ${{ vars.FLY_SHOP_APPS }}
+      # Claim the number before building: the tag exists from here on, so no later run computes it again and no
+      # image tag is ever overwritten. A run that fails after this leaves a bare tag (built, never released).
+      - name: Claim the tag
+        run: |
+          git tag "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag"
+        env:
+          tag: ${{ steps.version.outputs.tag }}
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -98,8 +106,8 @@ jobs:
     permissions:
       contents: write # create the tag and release
     steps:
-      # The tag means "this image is live on the canary"; set by the image job.
-      - run: gh release create "$TAG" --title "$TAG" --prerelease --generate-notes --target "$GITHUB_SHA"
+      # The image job pushed the tag; the release on it means "this image is live on the canary".
+      - run: gh release create "$TAG" --title "$TAG" --prerelease --generate-notes --verify-tag
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

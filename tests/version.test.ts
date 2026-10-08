@@ -12,6 +12,11 @@ test("the next tag is one past the highest, gaps and order don't matter", () => 
   assert.equal(nextAlphaTag("0.1.0", ["v0.1.0-alpha.1", "v0.1.0-alpha.5"]), "v0.1.0-alpha.6");
 });
 
+test("a claimed tag is skipped even when it never became a release", () => {
+  // A failed canary leaves v0.1.0-alpha.4 as a bare tag; the next run must not build alpha.4 again.
+  assert.equal(nextAlphaTag("0.1.0", ["v0.1.0-alpha.3", "v0.1.0-alpha.4"]), "v0.1.0-alpha.5");
+});
+
 test("tags from other base versions and junk tags are ignored", () => {
   const tags = ["v0.0.9-alpha.40", "v0.1.0-alpha.x", "v0.1.0-alpha.", "v0.1.0", "v0.1.0-beta.7", "x0.1.0-alpha.9", "v0.1.0-alpha.2"];
   assert.equal(nextAlphaTag("0.1.0", tags), "v0.1.0-alpha.3");

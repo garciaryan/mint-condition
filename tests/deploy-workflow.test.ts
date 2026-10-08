@@ -41,7 +41,7 @@ test("the release is tagged only after the canary is live", () => {
   const j = job("release");
   assert.match(j, /needs: \[image, canary\]/);
   assert.match(j, /contents: write/);
-  assert.match(j, /gh release create "\$TAG" --title "\$TAG" --prerelease --generate-notes --target "\$GITHUB_SHA"/);
+  assert.match(j, /gh release create "\$TAG" --title "\$TAG" --prerelease --generate-notes --verify-tag/);
   assert.equal(wf.split("gh release create").length, 2, "no other job creates a release");
 });
 
@@ -76,4 +76,14 @@ test("the shop runbook's first deploy is one machine next to its volume, before 
   assert.match(add, /fly deploy --image ghcr\.io\/garciaryan\/mint-condition:<latest tag> -a mc-groove --primary-region <same region> --ha=false/);
   const first = add.indexOf("fly deploy --image");
   assert.ok(first >= 0 && first < add.indexOf("gh secret set") && first < add.indexOf("gh variable set"), "first deploy comes before the shop is listed");
+});
+
+test("the image job claims its tag before building, so no number is ever built twice", () => {
+  const j = job("image");
+  assert.match(j, /contents: write/);
+  const push = j.indexOf('git push origin "refs/tags/$tag"');
+  assert.ok(push >= 0, "pushes the tag");
+  assert.ok(j.indexOf('git tag "$tag"') < push);
+  assert.ok(j.indexOf("scripts/shop-apps.ts") < push, "a bad shop list stops the run before a number is claimed");
+  assert.ok(push < j.indexOf("docker/build-push-action"), "tag pushed before the image is built");
 });

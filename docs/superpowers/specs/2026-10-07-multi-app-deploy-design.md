@@ -38,6 +38,8 @@ check ──► image ──► canary ──► release
 - **`image`** (needs `check`; `permissions: contents: read, packages: write`):
   - checkout with `fetch-depth: 0`; Node 24;
   - `tag` = `scripts/next-version.ts` (unchanged);
+  - after the shop list passes, push the git tag `<tag>` at `$GITHUB_SHA` (`contents: write`), claiming the number
+    before building, so no two runs ever build the same `alpha.N` (added 2026-10-07; a failed run leaves a bare tag);
   - `shops` = `scripts/shop-apps.ts` (validates `vars.FLY_SHOP_APPS`, prints the JSON list; fails the run on a bad
     value, before anything deploys);
   - log in to `ghcr.io` with `GITHUB_TOKEN`; build the Dockerfile with `--build-arg APP_VERSION=<tag>`; push
@@ -45,8 +47,8 @@ check ──► image ──► canary ──► release
   - outputs `tag`, `image`, `shops`.
 - **`canary`** (needs `image`): `flyctl deploy --image <image>` with the existing `FLY_API_TOKEN` (the app in
   `fly.toml`). `flyctl` waits for the `/api/health` check, so a broken image fails here.
-- **`release`** (needs `canary`; `permissions: contents: write`): `gh release create <tag> --title <tag> --prerelease
-  --generate-notes --target $GITHUB_SHA`, as today. The tag means "this image is live on the canary".
+- **`release`** (needs `image` and `canary`; `permissions: contents: write`): `gh release create <tag> --title <tag>
+  --prerelease --generate-notes --verify-tag` on the tag the image job pushed. The tag means "this image is live on the canary".
 - **`shops`** (needs `image` and `canary`; `if:` the `shops` output isn't `[]`): `strategy.matrix.shop` =
   `fromJSON(needs.image.outputs.shops)`, `fail-fast: false`. Each runs
   `flyctl deploy --image <image> -a ${{ matrix.shop.app }}` with

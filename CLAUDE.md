@@ -18,8 +18,10 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   deploy-scoped, expires 2027-10-04), tags the release, and deploys the same image to each shop app in the repo
   variable `FLY_SHOP_APPS` (`[{app, token}]`, checked by `lib/shops.ts`; one Fly org and deploy-token secret per shop;
   DEPLOY.md §10, 2026-10-07). Keep `main` green.
-- Versions (2026-10-07): alpha. Each successful deploy is tagged `v<package.json version>-alpha.N` (N from 1 per base,
-  `scripts/next-version.ts` + `lib/version.ts`) with a GitHub pre-release (`--generate-notes`); the tag is the
+- Versions (2026-10-07): alpha. Each deploy run claims `v<package.json version>-alpha.N` (N from 1 per base,
+  `scripts/next-version.ts` + `lib/version.ts`) by pushing the git tag before building, so no number is ever built
+  twice; a live canary turns it into a GitHub pre-release (`--generate-notes --verify-tag`), and failed runs leave
+  bare tags (gaps); the tag is the
   `APP_VERSION` build arg → `NEXT_PUBLIC_APP_VERSION`, shown by `/api/health` and at the foot of `/settings` ("dev"
   locally). Bump the base (`0.2.0`) in a PR to start a new line; keep `package.json` `version` plain `x.y.z`.
 - No staging app (retired 2026-10-05; older status lines below mention it). Test migrations against a local copy of
@@ -179,7 +181,7 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   first open (`format=Vinyl`, oldest first, up to 3 pages, cached `versions:<id>`), marks "This copy" and "Earliest
   listed" (20 a page, opening on this copy's page), says "reissue" or "earliest year listed on Discogs" (never
   "original"), and picking a version re-prices it. Credit links `discogs.com/master/<id>`. Spec: `docs/superpowers/specs/2026-10-07-master-versions-design.md`.
-- Multi-app deploy (2026-10-07): built on feat/multi-app-deploy; 484 tests passing; no app or DB change beyond
+- Multi-app deploy (2026-10-07): built on feat/multi-app-deploy; 486 tests passing; no app or DB change beyond
   `setup:fly --app`. Build once to GHCR, canary, release, then shops from `FLY_SHOP_APPS`. Spec:
   `docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`. Next: Connect Discogs (OAuth) so shops never paste
   a token.

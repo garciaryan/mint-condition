@@ -95,11 +95,13 @@ canary that fails its health check means no shop is touched; see the run under t
 #### Versions and releases
 
 Each successful automatic deploy is tagged `v<base>-alpha.<N>` and gets a GitHub pre-release whose notes list the PRs
-merged since the last one. The same tag names the image on ghcr.io, so any release can be redeployed by tag. `<base>` is `version` in `package.json` (plain `x.y.z`, currently `0.1.0`), and `N` counts up
+merged since the last one. The same tag names the image on ghcr.io, so any release can be redeployed by tag. The
+tag is pushed before the image is built, which claims the number: no two runs ever build the same `alpha.N`. `<base>` is `version` in `package.json` (plain `x.y.z`, currently `0.1.0`), and `N` counts up
 from 1 for each base (`scripts/next-version.ts`, logic in `lib/version.ts`). The tag is passed to the image build as
 `APP_VERSION`, so the running app knows it: `/api/health` reports `"version"` and `/settings` shows it at the bottom,
-linked to the release. A failed canary deploy makes no tag (the next run reuses its number and overwrites that
-never-released image); local builds and manual `fly deploy` from source say `dev`.
+linked to the release. A run that fails after claiming its number (build, canary or release) leaves a bare tag with
+no release, so release numbers can have gaps; the next run takes the next number. Local builds and manual
+`fly deploy` from source say `dev`.
 
 - **Start a new line** (for example after a phase that changes the database): change `version` in `package.json` to
   `0.2.0` in a PR. The next deploy is `v0.2.0-alpha.1`.
