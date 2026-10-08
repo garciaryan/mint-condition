@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { earliestYear, filterVersions, sortVersions, thisCopyYear, versionFlag } from "../lib/versions.ts";
+import { earliestYear, filterVersions, sortVersions, thisCopyYear, versionFlag, withArtist } from "../lib/versions.ts";
 import type { Candidate } from "../lib/types.ts";
 
 const v = (id: number, year: number | null, extra: Partial<Candidate> = {}): Candidate => ({
@@ -55,4 +55,13 @@ test("filterVersions matches label, catno, country, format and year, ignoring ca
   assert.deepEqual(ids("mono"), [1]);
   assert.deepEqual(ids("1958"), [1]);
   assert.deepEqual(ids("  "), [1, 2]);
+});
+
+test("withArtist keeps the card's artist on a version's bare title", () => {
+  assert.equal(withArtist("John Coltrane - Blue Train", "Blue Train"), "John Coltrane - Blue Train");
+  assert.equal(withArtist("John Coltrane - Blue Train", "Blue Train (Remastered)"), "John Coltrane - Blue Train (Remastered)");
+  assert.equal(withArtist("Blue Train", "Blue Train"), "Blue Train", "no artist on the card");
+  assert.equal(withArtist(null, "Blue Train"), "Blue Train");
+  assert.equal(withArtist("John Coltrane - Blue Train", "John Coltrane - Blue Train"), "John Coltrane - Blue Train", "already has one");
+  assert.equal(withArtist("John Coltrane - Blue Train", ""), "John Coltrane - Blue Train", "no title: keep the card's");
 });

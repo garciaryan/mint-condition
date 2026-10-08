@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import { DATA_CREDIT, dataExpired, MAX_CACHE_HOURS, releaseUrl } from "@/lib/discogs-terms.ts";
 import { clearsInputs, fieldErrors, movesToResult } from "@/lib/form.ts";
 import { relativeTime } from "@/lib/relative-time.ts";
+import { withArtist } from "@/lib/versions.ts";
 import type { FieldErrors } from "@/lib/form.ts";
 import type { LookupResponse } from "@/lib/lookup.ts";
 import { GRADE_NAMES } from "@/lib/types.ts";
@@ -451,7 +452,7 @@ function ResultCard({
           releaseId={res.releaseId}
           fallbackYear={release?.year ?? null}
           busy={busy}
-          onPick={onPick}
+          onPick={(c) => onPick({ ...c, title: withArtist(release?.title, c.title) })}
         />
       ) : null}
 

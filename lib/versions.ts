@@ -36,3 +36,12 @@ export function filterVersions(vs: Candidate[], text: string): Candidate[] {
     [c.label, c.catno, c.country, c.format, c.year === null ? null : String(c.year)].some((f) => f?.toLowerCase().includes(q)),
   );
 }
+
+/** Search titles read "Artist - Title" but versions carry only the title; a picked version keeps the card's artist. */
+export function withArtist(cardTitle: string | null | undefined, versionTitle: string): string {
+  if (!versionTitle) return cardTitle ?? "";
+  const at = cardTitle?.indexOf(" - ") ?? -1;
+  if (!cardTitle || at < 0) return versionTitle;
+  const artist = cardTitle.slice(0, at + 3);
+  return versionTitle.startsWith(artist) ? versionTitle : artist + versionTitle;
+}
