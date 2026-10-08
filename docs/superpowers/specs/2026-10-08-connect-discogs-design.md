@@ -129,13 +129,13 @@ export function discogsAccess(env, connection: Connection | null): DiscogsAccess
   `{ kind: "not-connected", message: "Connect your Discogs account to start pricing." }` (HTTP 409);
   `setup` → today's `missing-env` (500), naming the missing variables, never values. `LookupErrorKind` gains
   `not-connected`. Used by `/api/lookup`, `/api/releases/:id/identifiers`, `/api/masters/:id/versions`.
-- `toErrorResponse`: a 401 under OAuth gives the Reconnect message (kind `bad-token`).
-- **`POST /api/discogs/connect`** (session; same-origin via the gate): needs consumer vars (else 503 JSON
-  `setup`); token mode → `303 /settings`. Gets a request token with `callbackUrl(host, x-forwarded-proto)`,
+- `toErrorResponse`: a 401 under OAuth gives the Reconnect message (kind `reconnect`, 502).
+- **`POST /api/discogs/connect`** (session; same-origin via the gate): needs consumer vars (else, or on a
+  database error, `303 /settings?discogs=error`, the missing names logged server-side); token mode → `303 /settings`. Gets a request token with `callbackUrl(host, x-forwarded-proto)`,
   `savePending`, → `303 https://www.discogs.com/oauth/authorize?oauth_token=…`. A Discogs error → `303
   /settings?discogs=error`.
 - **`GET /api/discogs/callback`** (session): `denied` → `303 /settings?discogs=denied`; `takePending(oauth_token)`
-  null → `?discogs=error`; else access token exchange, `/oauth/identity`, `saveConnection`, `kickWorker()`,
+  null → `?discogs=error`; else access token exchange, `/oauth/identity`, `saveConnection`, `resumeQueue()` + `kickWorker()`,
   `303 /settings?discogs=connected`. Any Discogs failure → `?discogs=error`, nothing saved.
 - **`POST /api/discogs/disconnect`** (session; same-origin): `clearConnection` → `303 /settings?discogs=disconnected`.
 - The connect and callback calls use `fetch` directly, not the shared throttle: 1-3 calls per one-off connect (a

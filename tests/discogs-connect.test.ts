@@ -6,6 +6,8 @@ import { openDb } from "../lib/db.ts";
 import { getConnection, saveConnection, savePending, PENDING_MAX_MS } from "../lib/discogs-auth-store.ts";
 import { ConnectSetupError, finishConnect, startConnect } from "../lib/discogs-connect.ts";
 import type { ConnectDeps } from "../lib/discogs-connect.ts";
+import { addItems, createSession, getItem } from "../lib/collection/store.ts";
+import { __resetWorkerForTests, isQueuePaused } from "../lib/collection/worker.ts";
 import { POST as connectRoute } from "../app/api/discogs/connect/route.ts";
 import { GET as callbackRoute } from "../app/api/discogs/callback/route.ts";
 import { POST as disconnectRoute } from "../app/api/discogs/disconnect/route.ts";
@@ -257,16 +259,37 @@ test("connect route: 303 to authorize with a callback from host and x-forwarded-
   assert.equal(pendingRow()?.pending_token, "rt");
 });
 
-test("connect route: missing consumer vars is 503 JSON missing-env naming them", async () => {
+test("connect route: missing consumer vars 303s to discogs=error and logs the names, never values", async () => {
   routeSetup();
   delete env.DISCOGS_CONSUMER_KEY;
-  const r = await connectRoute(new Request("http://x/api/discogs/connect", { method: "POST", headers: headers(true, { host: "x" }) }));
-  assert.equal(r.status, 503);
-  const body = await r.json();
-  assert.equal(body.status, "error");
-  assert.equal(body.kind, "missing-env");
-  assert.match(body.message, /DISCOGS_CONSUMER_KEY/);
-  assert.doesNotMatch(body.message, /"cs"|\bcs\b/);
+  const logged: string[] = [];
+  const warn = console.warn;
+  console.warn = (...a: unknown[]) => void logged.push(a.map(String).join(" "));
+  try {
+    const r = await connectRoute(new Request("http://x/api/discogs/connect", { method: "POST", headers: headers(true, { host: "x" }) }));
+    assert.equal(r.status, 303);
+    assert.equal(r.headers.get("location"), "/settings?discogs=error");
+  } finally {
+    console.warn = warn;
+  }
+  assert.match(logged.join("\n"), /DISCOGS_CONSUMER_KEY/);
+  assert.doesNotMatch(logged.join("\n"), /\bcs\b|\bck\b/);
+  assert.equal(calls.length, 0);
+});
+
+test("connect route: a database error 303s to discogs=error", async () => {
+  routeSetup();
+  delete g.__mintDb;
+  const prevDir = env.DATA_DIR;
+  env.DATA_DIR = "/dev/null/nope";
+  try {
+    const r = await connectRoute(new Request("http://x/api/discogs/connect", { method: "POST", headers: headers(true, { host: "x" }) }));
+    assert.equal(r.status, 303);
+    assert.equal(r.headers.get("location"), "/settings?discogs=error");
+  } finally {
+    if (prevDir === undefined) delete env.DATA_DIR; else env.DATA_DIR = prevDir;
+    delete g.__mintDb;
+  }
 });
 
 test("callback route: success saves the connection and 303s to discogs=connected", async () => {
@@ -278,6 +301,33 @@ test("callback route: success saves the connection and 303s to discogs=connected
   assert.equal(getConnection(db)?.username, "groovyrecords");
   const text = await r.text();
   assert.doesNotMatch(text, /\bat\b|\bas\b/);
+});
+
+test("callback route: a successful connect resumes a paused queue and kicks the worker", async () => {
+  routeSetup();
+  const w = globalThis as unknown as { __mintWorker?: { loop: Promise<void> | null; paused: boolean } };
+  __resetWorkerForTests();
+  const s = createSession(db, { name: "L", defaultRecord: "NM", defaultSleeve: "NM" }, 100);
+  const [item] = addItems(db, s.id, [{ query: "A" }], { record: "VG+", sleeve: "VG" }, 100);
+  w.__mintWorker!.paused = true; // as after a revoked connection's 401
+  const prevClient = g.__discogsClient;
+  g.__discogsClient = {
+    async searchByCatno() { return [{ id: 7, title: "T", year: 1970, country: "US", label: "L", catno: "A", format: "LP", thumb: null }]; },
+    async priceSuggestions() { return { "VG+": 20 }; },
+    async releaseStats() { return { lowestPrice: 9, currency: "USD", numForSale: 4 }; },
+  };
+  try {
+    savePending(db, "rt", "rs", Date.now() - 1000);
+    const r = await callbackRoute(new Request("http://x/api/discogs/callback?oauth_token=rt&oauth_verifier=v", { headers: headers(true) }));
+    assert.equal(r.headers.get("location"), "/settings?discogs=connected");
+    assert.equal(isQueuePaused(), false);
+    assert.ok(w.__mintWorker?.loop, "the worker was kicked");
+    await w.__mintWorker!.loop;
+    assert.equal(getItem(db, item.id)?.status, "priced");
+  } finally {
+    g.__discogsClient = prevClient;
+    __resetWorkerForTests();
+  }
 });
 
 test("callback route: denied 303s to discogs=denied", async () => {

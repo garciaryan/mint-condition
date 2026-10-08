@@ -46,3 +46,12 @@ test("lot page shows the not-connected notice", () => {
   const s = src("app/collection/[id]/page.tsx");
   assert.ok(s.includes("Not connected to Discogs: records will be priced once you connect."));
 });
+test("Lookup's ErrorCard titles the reconnect case Reconnect Discogs", () => {
+  assert.match(src("components/lookup/Lookup.tsx"), /reconnect: "Reconnect Discogs"/);
+});
+test("home passes connectShown so a not-connected lookup doesn't add a second ConnectCard", () => {
+  assert.match(src("app/page.tsx"), /<Lookup connectShown=\{state === "not-connected"\} \/>/);
+  const l = src("components/lookup/Lookup.tsx");
+  assert.match(l, /export default function Lookup\(\{ connectShown = false \}/);
+  assert.match(l, /view\.res\.kind === "not-connected" && !connectShown && <ConnectCard \/>/);
+});
