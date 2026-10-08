@@ -106,8 +106,8 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
 - **`components/scan/`:** `ScanButton`, `ScanFrame` · **`components/ui/`:** `GradeSelect`, `DiscogsCredit`, `DemandBadge`
 - **`components/collection/`:** `LotsList`, `LotView`, `LotHeader`, `EntryBar`, `Scanner`, `PasteList`, `PickPanel`,
   `TotalsBar`, `OfferPanel`, `ItemRow`, `PrintButton`
-- **`components/settings/`:** `SettingsForm`, `HelpTip` (ⓘ toggle), `DiscogsCard` (Account card: connect/disconnect),
-  `DiscogsNotice` · **`components/login/`:** `LoginForm`
+- **`components/settings/`:** `SettingsForm`, `HelpTip` (ⓘ toggle), `AccountCard` (one card at the foot of
+  `/settings`: `DiscogsSection` connect/disconnect, then Log out when login is on), `DiscogsNotice` · **`components/login/`:** `LoginForm`
 - **`hooks/`:** `useBarcodeCamera` (camera loop), `useDisclosure` (+ `lib/disclosure.ts`: lot Actions, help tips),
   `useFadeOut`, `useDialog`
 - **`lib/`:** `types.ts` grades and shared types · `settings.ts` loader/validator · `discogs.ts` API client (throttled,

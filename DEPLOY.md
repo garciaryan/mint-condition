@@ -305,7 +305,7 @@ gh variable set FLY_SHOP_APPS -R garciaryan/mint-condition \
   that shop, naming the secret.
 - `setup:fly --app` asks for the Discogs consumer key and secret (hidden; Enter keeps a current one). They belong to
   your one registered Discogs application, "Mint Condition", the same for every shop. The shop's first visit is: log
-  in, then press **Connect Discogs** in the Discogs account card on Settings and approve on discogs.com. Its prices
+  in, then press **Connect Discogs** in the Account card on Settings (its Discogs section) and approve on discogs.com. Its prices
   then come from its own seller account, stored in its own database; no token of yours is involved.
 - If the shop app still has `DISCOGS_TOKEN` set, it uses that token and Connect Discogs doesn't appear; `setup:fly
   --app` warns about it. Remove it with `fly secrets unset DISCOGS_TOKEN -a <app>`.

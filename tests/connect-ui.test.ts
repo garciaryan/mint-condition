@@ -4,8 +4,8 @@ import { readFileSync } from "node:fs";
 
 const src = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 
-test("DiscogsCard has every state's copy and the forms", () => {
-  const s = src("components/settings/DiscogsCard.tsx").replace(/\s+/g, " ");
+test("DiscogsSection has every state's copy and the forms", () => {
+  const s = src("components/settings/DiscogsSection.tsx").replace(/\s+/g, " ");
   for (const t of [
     "Using a personal access token",
     "Connect your Discogs account so this app can look up records and your seller account&apos;s price suggestions. You&apos;ll approve it on discogs.com and come straight back.",
@@ -31,10 +31,18 @@ test("DiscogsNotice has the notices", () => {
     "replaceState",
   ]) assert.ok(s.includes(t), t);
 });
-test("settings page renders the card before Account", () => {
-  const s = src("app/settings/page.tsx");
-  assert.ok(s.includes("<DiscogsCard"));
-  assert.ok(s.indexOf("<DiscogsCard") < s.indexOf('id="account-heading"'));
+test("Settings has one Account card: Discogs, then Log out only when login is on", () => {
+  const page = src("app/settings/page.tsx");
+  assert.match(page, /<AccountCard /);
+  assert.doesNotMatch(page, /<DiscogsCard|<LogoutButton|account-heading/);
+  const card = src("components/settings/AccountCard.tsx");
+  assert.match(card, /className="card account"/);
+  assert.match(card, /<h2 id="account-heading">Account<\/h2>/);
+  assert.ok(card.indexOf("<DiscogsSection") < card.indexOf("<LogoutButton"), "Discogs comes before Log out");
+  assert.match(card, /\{loggedIn && \(/);
+  const section = src("components/settings/DiscogsSection.tsx");
+  assert.match(section, /<h3[^>]*>Discogs<\/h3>/);
+  assert.doesNotMatch(section, /className="card/, "the section has no card of its own");
 });
 test("home and Lookup use ConnectCard", () => {
   assert.match(src("app/page.tsx"), /<ConnectCard/);

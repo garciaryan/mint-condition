@@ -3158,9 +3158,15 @@ kbd {
   display: none;
 }
 
-/* Account sits apart from the form, not under its Save buttons. */
+/* Account sits apart from the form, not under its Save buttons. Its sections (Discogs, Login) are split by a rule. */
 .card.account {
   margin-top: 32px;
+}
+
+.account-section + .account-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
 }
 
 @media (max-width: 768px) {

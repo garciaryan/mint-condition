@@ -71,5 +71,6 @@ test("the footer's Docs and coffee links hide beside the sidebar but stay on pho
 test("Log out lives on the settings page, shown only when login is on", () => {
   const page = readFileSync("app/settings/page.tsx", "utf8");
   assert.match(page, /authMode\(process\.env\)\.mode === "on"/);
-  assert.match(page, /<LogoutButton \/>/);
+  assert.match(page, /<AccountCard [^>]*loggedIn=\{loggedIn\}/);
+  assert.match(readFileSync("components/settings/AccountCard.tsx", "utf8"), /\{loggedIn && \([\s\S]*<LogoutButton \/>/);
 });

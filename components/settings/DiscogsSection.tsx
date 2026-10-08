@@ -2,10 +2,11 @@ import type { DiscogsState } from "@/lib/discogs-state.ts";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
-export default function DiscogsCard({ state, username, connectedAt }: DiscogsState) {
+/** The Discogs part of the Settings Account card: how this app reaches Discogs, and Connect / Disconnect. */
+export default function DiscogsSection({ state, username, connectedAt }: DiscogsState) {
   return (
-    <section className="card discogs-account" aria-labelledby="discogs-heading">
-      <h2 id="discogs-heading">Discogs account</h2>
+    <div className="account-section" aria-labelledby="discogs-heading">
+      <h3 id="discogs-heading">Discogs</h3>
       {state === "token" && <p>Using a personal access token (<code>DISCOGS_TOKEN</code>).</p>}
       {state === "not-connected" && (
         <>
@@ -41,6 +42,6 @@ export default function DiscogsCard({ state, username, connectedAt }: DiscogsSta
       )}
       {state === "setup" && <p>Discogs isn&apos;t set up for this app (missing consumer key or token).</p>}
       <p className="muted small">This app only reads from Discogs. It doesn&apos;t list, buy or message for you.</p>
-    </section>
+    </div>
   );
 }
