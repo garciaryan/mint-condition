@@ -1,6 +1,6 @@
 # Connect Discogs (OAuth 1.0a)
 
-Date: 2026-10-08 · Status: designed, branch `feat/connect-discogs`
+Date: 2026-10-08 · Status: building on `feat/connect-discogs`. Live check 2026-10-08: with the registered "Mint Condition" application, request_token accepted a per-request `oauth_callback` for both `https://mint-condition.fly.dev/api/discogs/callback` and `http://localhost:3000/api/discogs/callback` (200, `oauth_callback_confirmed=true`), so one registration serves every shop; the HMAC-SHA1 signing (lib/discogs-oauth.ts) is accepted by Discogs. Checks 3 (API calls signed with an access token) run in Task 9
 Second of two sub-projects for hosting record shops; the first is the multi-app deploy
 (`docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`). Phase 14 (inventory and wantlist) will reuse this
 connection.
