@@ -8,7 +8,7 @@ import { httpStatus } from "../lib/lookup.ts";
 import type { MarketplaceStats } from "../lib/types.ts";
 import { GET as identifiers } from "../app/api/releases/[id]/identifiers/route.ts";
 
-const KEYS = ["APP_PASSWORD_HASH", "SESSION_SECRET", "DISCOGS_TOKEN", "DISCOGS_USER_AGENT"];
+const KEYS = ["APP_PASSWORD_HASH", "SESSION_SECRET", "DISCOGS_TOKEN", "DISCOGS_USER_AGENT", "DISCOGS_CONSUMER_KEY", "DISCOGS_CONSUMER_SECRET"];
 const saved = { ...process.env };
 const env = process.env as Record<string, string | undefined>;
 const g = globalThis as unknown as Record<string, unknown>;
@@ -81,4 +81,19 @@ test("missing env is reported, not thrown", async () => {
   delete env.DISCOGS_TOKEN;
   const r = await get("9");
   assert.equal((await r.json()).kind, "missing-env");
+});
+
+test("consumer vars without a connection give not-connected (409)", async () => {
+  delete env.DISCOGS_TOKEN;
+  env.DISCOGS_CONSUMER_KEY = "ck";
+  env.DISCOGS_CONSUMER_SECRET = "cs";
+  try {
+    const r = await get("5193282");
+    assert.equal(r.status, 409);
+    assert.equal((await r.json()).kind, "not-connected");
+    assert.equal(calls, 0);
+  } finally {
+    delete env.DISCOGS_CONSUMER_KEY;
+    delete env.DISCOGS_CONSUMER_SECRET;
+  }
 });

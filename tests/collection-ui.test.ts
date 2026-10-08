@@ -264,3 +264,26 @@ test("the Picker keeps failed pressings in sight while searching and lets one cl
   assert.match(picker, /runoutCounts\(/);
   assert.doesNotMatch(picker, /type RunoutState =/, "one RunoutState, from lib/runout.ts");
 });
+
+import { pausedText, queueLine } from "../lib/collection/ui.ts";
+test("queueLine: looking up with a spinner, paused, or waiting for a Discogs connection without one", () => {
+  const q = { pending: 3, paused: false, etaSeconds: 10 };
+  assert.deepEqual(queueLine(q, "connected"), { text: "Looking up · 3 left · ~10 sec", spinner: true });
+  assert.deepEqual(queueLine({ ...q, paused: true }, "token"), { text: "Paused · 3 waiting", spinner: false });
+  assert.deepEqual(queueLine(q, "not-connected"), { text: "Waiting for Discogs connection · 3 left", spinner: false });
+  assert.equal(queueLine({ ...q, pending: 0 }, "connected"), null);
+});
+test("pausedText: token mode says fix the token; an OAuth app says reconnect", () => {
+  assert.equal(pausedText("token"), "Discogs rejected the token. Fix the token, then press Retry.");
+  for (const s of ["connected", "not-connected", "setup"] as const)
+    assert.equal(pausedText(s), "Discogs no longer accepts this app's access. Reconnect Discogs in Settings, then press Retry.");
+});
+test("lot page passes the Discogs state through LotView to TotalsBar", () => {
+  const page = readFileSync(new URL("../app/collection/[id]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /<LotView[^>]*discogs=\{state\}/);
+  const lot = readFileSync(new URL("../components/collection/LotView.tsx", import.meta.url), "utf8");
+  assert.match(lot, /<TotalsBar[^>]*discogs=\{discogs\}/);
+  const bar = readFileSync(new URL("../components/collection/TotalsBar.tsx", import.meta.url), "utf8");
+  assert.ok(bar.includes("queueLine(") && bar.includes("pausedText("));
+  assert.ok(!bar.includes("Fix the token"));
+});

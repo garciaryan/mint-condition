@@ -84,14 +84,30 @@ test("clientIp prefers Fly-Client-IP, then the first X-Forwarded-For entry, then
   assert.equal(clientIp(new Headers()), "local");
 });
 test("configStatus reports presence and the secret's source, never values", () => {
-  const s = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u", APP_PASSWORD: "twelve chars ok", SESSION_SECRET: "zzz", SESSION_SECRET_SOURCE: "file" });
-  assert.deepEqual(s, { ok: true, vars: { DISCOGS_TOKEN: true, DISCOGS_USER_AGENT: true, password: true, SESSION_SECRET: true }, sessionSecretSource: "file" });
+  const s = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u", APP_PASSWORD: "twelve chars ok", SESSION_SECRET: "zzz", SESSION_SECRET_SOURCE: "file" }, "token");
+  assert.deepEqual(s, { ok: true, vars: { DISCOGS_TOKEN: true, DISCOGS_USER_AGENT: true, DISCOGS_CONSUMER_KEY: false, DISCOGS_CONSUMER_SECRET: false, password: true, SESSION_SECRET: true }, sessionSecretSource: "file" });
   // Health is public: it says a password is set, not whether it's plain or hashed.
-  assert.deepEqual(configStatus({ APP_PASSWORD_HASH: "h", SESSION_SECRET: "s" }).vars, configStatus({ APP_PASSWORD: "twelve chars ok", SESSION_SECRET: "s" }).vars);
+  assert.deepEqual(configStatus({ APP_PASSWORD_HASH: "h", SESSION_SECRET: "s" }, "token").vars, configStatus({ APP_PASSWORD: "twelve chars ok", SESSION_SECRET: "s" }, "token").vars);
   assert.doesNotMatch(JSON.stringify(s), /twelve|zzz/);
-  const off = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u" });
+  const off = configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u" }, "token");
   assert.equal(off.ok, true);
   assert.equal(off.sessionSecretSource, null);
-  assert.equal(configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u", SESSION_SECRET: "s", APP_PASSWORD_HASH: "h" }).sessionSecretSource, "env");
-  assert.equal(configStatus({ NODE_ENV: "production", DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u" }).ok, false);
+  assert.equal(configStatus({ DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u", SESSION_SECRET: "s", APP_PASSWORD_HASH: "h" }, "token").sessionSecretSource, "env");
+  assert.equal(configStatus({ NODE_ENV: "production", DISCOGS_TOKEN: "t", DISCOGS_USER_AGENT: "u" }, "token").ok, false);
+});
+
+test("configStatus: ok is false only for discogs setup (plus password/session rules)", () => {
+  const base = { DISCOGS_USER_AGENT: "u", DISCOGS_CONSUMER_KEY: "k", DISCOGS_CONSUMER_SECRET: "s" };
+  const s = configStatus(base, "not-connected");
+  assert.equal(s.ok, true);
+  assert.equal(s.vars.DISCOGS_CONSUMER_KEY, true);
+  assert.equal(s.vars.DISCOGS_CONSUMER_SECRET, true);
+  assert.equal(configStatus(base, "connected").ok, true);
+  assert.equal(configStatus({}, "setup").ok, false);
+  assert.equal(configStatus({ NODE_ENV: "production", ...base }, "not-connected").ok, false);
+});
+test("safeNext keeps the Discogs callback with its query, so login returns there", () => {
+  assert.equal(safeNext("/api/discogs/callback?oauth_token=a&oauth_verifier=b"), "/api/discogs/callback?oauth_token=a&oauth_verifier=b");
+  for (const bad of ["//evil.com/api/discogs/callback?oauth_token=a", "http://evil.com/api/discogs/callback?oauth_token=a"])
+    assert.equal(safeNext(bad), "/", bad);
 });

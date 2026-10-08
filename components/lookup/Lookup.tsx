@@ -1,5 +1,6 @@
 "use client";
 
+import ConnectCard from "@/components/lookup/ConnectCard.tsx";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
@@ -35,7 +36,8 @@ type View =
 
 type Busy = null | "search" | "price";
 
-export default function Lookup() {
+/** `connectShown`: the page already shows a ConnectCard, so a not-connected lookup must not add a second one. */
+export default function Lookup({ connectShown = false }: { connectShown?: boolean }) {
   const [catno, setCatno] = useState("");
   const [year, setYear] = useState("");
   const [record, setRecord] = useState<Grade>("VG+");
@@ -68,7 +70,10 @@ export default function Lookup() {
   useEffect(() => {
     if (!movesToResult({ pending: focusNext.current, scannerOpen: scanning })) return;
     focusNext.current = false;
-    const heading = outputRef.current?.querySelector<HTMLElement>("[data-focus]");
+    const notConnected = view.kind === "error" && view.res.kind === "not-connected";
+    const heading =
+      outputRef.current?.querySelector<HTMLElement>("[data-focus]") ??
+      (notConnected ? document.querySelector<HTMLElement>(".connect-card [data-focus]") : null);
     if (!heading) return;
     heading.focus({ preventScroll: true });
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -206,7 +211,9 @@ export default function Lookup() {
               ? view.res.status === "priced"
                 ? "Prices updated."
                 : "No price data for this release."
-              : "";
+              : view.kind === "error" && view.res.kind === "not-connected"
+                ? view.res.message
+                : "";
   const repricing = busy === "price" && view.kind === "result";
 
   return (
@@ -317,7 +324,8 @@ export default function Lookup() {
                 </p>
               </div>
             )}
-            {view.kind === "error" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
+            {view.kind === "error" && view.res.kind === "not-connected" && !connectShown && <ConnectCard />}
+            {view.kind === "error" && view.res.kind !== "not-connected" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
             {view.kind === "candidates" && (
               <Picker candidates={view.candidates} query={searchedKey?.split("|")[0] ?? catno} year={view.year} onPick={(c) => void price(c.id, c, { focus: true, clear: true })} />
             )}
@@ -350,9 +358,11 @@ function ErrorCard({ res, onRetry }: { res: LookupError; onRetry: () => void }) 
   const titles: Record<typeof res.kind, string> = {
     "bad-request": "Check the form",
     "missing-env": "Setup needed",
+    "not-connected": "Discogs not connected",
     settings: "Settings problem",
     database: "Database unavailable",
     "bad-token": "Discogs rejected the token",
+    reconnect: "Reconnect Discogs",
     "rate-limited": "Rate-limited by Discogs",
     upstream: "Lookup failed",
     auth: "Signed out",

@@ -2,6 +2,8 @@
 // No network of its own; the Discogs client is passed in.
 import { demand } from "./demand.ts";
 import type { Demand } from "./demand.ts";
+import { setupMissing } from "./discogs-access.ts";
+import type { DiscogsAccess } from "./discogs-access.ts";
 import { DiscogsError } from "./discogs.ts";
 import type { CachedLookupClient } from "./discogs-cache.ts";
 import { priceRecord } from "./pricing.ts";
@@ -23,7 +25,7 @@ export type LookupRequest = {
 /** When the prices came from Discogs (the older of suggestions and stats), and whether that was before this lookup. */
 type Age = { fetchedAt: number; cached: boolean };
 
-export type LookupErrorKind = "bad-request" | "missing-env" | "settings" | "database" | "bad-token" | "rate-limited" | "upstream" | "auth" | "forbidden";
+export type LookupErrorKind = "bad-request" | "missing-env" | "not-connected" | "settings" | "database" | "bad-token" | "reconnect" | "rate-limited" | "upstream" | "auth" | "forbidden";
 
 export type LookupResponse =
   | { status: "candidates"; candidates: Candidate[] }
@@ -83,14 +85,29 @@ export function parseLookupRequest(body: unknown): Parsed {
   return { ok: true, value: { catno, year, record, sleeve, releaseId, ...(b.fresh === true ? { fresh: true } : {}) } };
 }
 
-/** Names of required env vars that are unset. Never returns their values. */
-export function missingEnv(env: Record<string, string | undefined>): string[] {
-  return ["DISCOGS_TOKEN", "DISCOGS_USER_AGENT"].filter((k) => !env[k]?.trim());
+const NOT_CONNECTED = "Connect your Discogs account to start pricing.";
+
+/** The error to return when Discogs can't be called yet, or null when it can. Names missing settings, never values. */
+export function discogsReady(access: DiscogsAccess, env: Record<string, string | undefined>): Extract<LookupResponse, { status: "error" }> | null {
+  if (access.kind !== "none") return null;
+  if (access.reason === "not-connected") return { status: "error", kind: "not-connected", message: NOT_CONNECTED };
+  const missing = setupMissing(env).join(" and ");
+  return {
+    status: "error",
+    kind: "missing-env",
+    message:
+      env.NODE_ENV === "production"
+        ? `Missing ${missing}. Set it with fly secrets set and redeploy.`
+        : `Missing ${missing}. Copy .env.example to .env.local, fill it in, and restart the dev server.`,
+  };
 }
 
 /** Maps a thrown error to a response the page can explain. */
 export function toErrorResponse(e: unknown): Extract<LookupResponse, { status: "error" }> {
   if (e instanceof DiscogsError) {
+    if (e.kind === "not-connected") return { status: "error", kind: "not-connected", message: NOT_CONNECTED };
+    if (e.status === 0) return { status: "error", kind: "missing-env", message: e.message };
+    if (e.status === 401 && e.kind === "reconnect") return { status: "error", kind: "reconnect", message: e.message };
     if (e.status === 401) {
       return { status: "error", kind: "bad-token", message: "Discogs rejected the token. Check DISCOGS_TOKEN in .env.local and restart the dev server." };
     }
@@ -105,7 +122,7 @@ export function toErrorResponse(e: unknown): Extract<LookupResponse, { status: "
 /** HTTP status for a response; data outcomes are 200, errors map to the closest code. */
 export function httpStatus(res: LookupResponse): number {
   if (res.status !== "error") return 200;
-  return { "bad-request": 400, "missing-env": 500, settings: 500, database: 500, "bad-token": 502, "rate-limited": 429, upstream: 502, auth: 401, forbidden: 403 }[res.kind];
+  return { "bad-request": 400, "missing-env": 500, "not-connected": 409, settings: 500, database: 500, "bad-token": 502, reconnect: 502, "rate-limited": 429, upstream: 502, auth: 401, forbidden: 403 }[res.kind];
 }
 
 /**

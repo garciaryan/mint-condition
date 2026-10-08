@@ -3,7 +3,7 @@
 // Re-run it to change the password or token; Enter keeps whatever is already set.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { appFromArgs, defaultUserAgent, flyCommands, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
+import { appFromArgs, defaultUserAgent, flyCommands, parseSecretNames, passwordError, planSecrets, secretValueError, tokenWinsWarning } from "../lib/setup-fly.ts";
 import type { Answers } from "../lib/setup-fly.ts";
 import { ask, closePrompt } from "./prompt.ts";
 
@@ -40,7 +40,7 @@ if (listed.status !== 0) fail(`Could not read the secrets of ${app}. Is the app 
 const current = parseSecretNames(listed.stdout);
 const has = (name: string) => current.includes(name);
 
-console.log(`Setting secrets for ${app}. Typing is hidden for the token and password.\n`);
+console.log(`Setting secrets for ${app}. Typing is hidden for the keys, token and password.\n`);
 
 /** Asks until the answer passes `check`; Enter returns undefined (keep) when something is already set. */
 async function prompt(question: string, keep: boolean, hidden: boolean, check: (v: string) => string | null): Promise<string | undefined> {
@@ -58,7 +58,17 @@ async function prompt(question: string, keep: boolean, hidden: boolean, check: (
 }
 
 const answers: Answers = {};
-answers.token = await prompt("Discogs personal access token", has("DISCOGS_TOKEN"), true, secretValueError);
+const isShop = process.argv.slice(2).includes("--app");
+if (isShop) {
+  // No auto-unset: removing a working token is the owner's call.
+  const warning = tokenWinsWarning(current, app);
+  if (warning) console.log(`Warning: ${warning}\n`);
+  // A shop connects its own Discogs account in the app (Connect Discogs), through the owner's registered application.
+  answers.consumerKey = await prompt("Discogs consumer key", has("DISCOGS_CONSUMER_KEY"), true, secretValueError);
+  answers.consumerSecret = await prompt("Discogs consumer secret", has("DISCOGS_CONSUMER_SECRET"), true, secretValueError);
+} else {
+  answers.token = await prompt("Discogs personal access token", has("DISCOGS_TOKEN"), true, secretValueError);
+}
 const contact = await prompt("Contact for the Discogs User-Agent (email or URL)", has("DISCOGS_USER_AGENT"), false, (v) =>
   secretValueError(defaultUserAgent(v)),
 );
@@ -98,4 +108,8 @@ for (const args of flyCommands(app, plan)) {
 }
 console.log(`Set: ${plan.set.join(", ")}`);
 if (plan.unset.length) console.log(`Removed: ${plan.unset.join(", ")}`);
-console.log("Next: fly deploy --ha=false (first deploy only; setting secrets restarts a running app).");
+console.log(
+  isShop
+    ? `Next: first deploy by image (DEPLOY.md section 10; setting secrets restarts a running app), then log in and press Connect Discogs on /settings.`
+    : "Next: fly deploy --ha=false (first deploy only; setting secrets restarts a running app).",
+);

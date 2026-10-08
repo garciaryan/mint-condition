@@ -131,7 +131,7 @@ export function clientIp(headers: Headers): string {
   return xff || "local";
 }
 
-export function configStatus(env: Env): {
+export function configStatus(env: Env, discogs: "token" | "connected" | "not-connected" | "setup"): {
   ok: boolean;
   vars: Record<string, boolean>;
   sessionSecretSource: "env" | "file" | null;
@@ -139,12 +139,14 @@ export function configStatus(env: Env): {
   const vars: Record<string, boolean> = {
     DISCOGS_TOKEN: !!set(env.DISCOGS_TOKEN),
     DISCOGS_USER_AGENT: !!set(env.DISCOGS_USER_AGENT),
+    DISCOGS_CONSUMER_KEY: !!set(env.DISCOGS_CONSUMER_KEY),
+    DISCOGS_CONSUMER_SECRET: !!set(env.DISCOGS_CONSUMER_SECRET),
     // Public endpoint: whether a password is set, not which kind (plain or hashed).
     password: !!(set(env.APP_PASSWORD) || set(env.APP_PASSWORD_HASH)),
     SESSION_SECRET: !!set(env.SESSION_SECRET),
   };
   const mode = authMode(env).mode;
-  const ok = vars.DISCOGS_TOKEN && vars.DISCOGS_USER_AGENT && mode !== "misconfigured";
+  const ok = discogs !== "setup" && mode !== "misconfigured";
   const sessionSecretSource = !vars.SESSION_SECRET ? null : env.SESSION_SECRET_SOURCE === "file" ? "file" : "env";
   return { ok, vars, sessionSecretSource };
 }

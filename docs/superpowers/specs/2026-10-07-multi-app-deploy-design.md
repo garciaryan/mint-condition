@@ -1,6 +1,6 @@
 # Multi-app deploy: one image, every shop's app
 
-Date: 2026-10-07 · Status: designed, branch `feat/multi-app-deploy`
+Date: 2026-10-07 · Status: built and merged (PR #37). Live 2026-10-08: first run deployed the canary as v0.1.0-alpha.2 (the GHCR image was public from the start); with a throwaway mc-test-shop listed, PR #38's run deployed the canary and mc-test-shop on v0.1.0-alpha.3; the test shop was then removed
 Follows version tags (PR #36: `v<base>-alpha.N`, `lib/version.ts`, `scripts/next-version.ts`). First of two
 sub-projects for hosting record shops; the second is "Connect Discogs" (OAuth), its own spec.
 

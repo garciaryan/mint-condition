@@ -3,7 +3,7 @@
 import { MIN_PASSWORD_CHARS } from "./auth.ts";
 import { isFlyAppName } from "./shops.ts";
 
-export type Answers = { token?: string; userAgent?: string; password?: string };
+export type Answers = { token?: string; consumerKey?: string; consumerSecret?: string; userAgent?: string; password?: string };
 
 export function parseAppName(flyToml: string): string | null {
   return /^app\s*=\s*["']([^"']+)["']/m.exec(flyToml)?.[1] ?? null;
@@ -61,6 +61,8 @@ export function defaultUserAgent(contact: string): string {
 export function planSecrets(current: string[], answers: Answers): { importText: string; set: string[]; unset: string[] } {
   const pairs: [string, string | undefined][] = [
     ["DISCOGS_TOKEN", answers.token],
+    ["DISCOGS_CONSUMER_KEY", answers.consumerKey],
+    ["DISCOGS_CONSUMER_SECRET", answers.consumerSecret],
     ["DISCOGS_USER_AGENT", answers.userAgent],
     ["APP_PASSWORD", answers.password],
   ];
@@ -83,4 +85,10 @@ export function flyCommands(app: string, plan: { set: string[]; unset: string[] 
     ["secrets", "unset", ...plan.unset, "-a", app, "--stage"],
     ["secrets", "deploy", "-a", app],
   ];
+}
+
+/** DISCOGS_TOKEN wins over Connect Discogs, so a shop app that still has one never shows Connect. Names only. */
+export function tokenWinsWarning(current: string[], app: string): string | null {
+  if (!current.includes("DISCOGS_TOKEN")) return null;
+  return `This app has DISCOGS_TOKEN set, so it will use that token and Connect Discogs won't appear. Remove it with fly secrets unset DISCOGS_TOKEN -a ${app} to use Connect Discogs.`;
 }

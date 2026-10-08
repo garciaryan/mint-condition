@@ -47,6 +47,11 @@ ALTER TABLE items    ADD COLUMN pick           INTEGER;   -- null = automatic, 1
 ALTER TABLE items ADD COLUMN refresh INTEGER NOT NULL DEFAULT 0;  -- 1 = the next lookup for this row skips the cache`,
   `ALTER TABLE items ADD COLUMN notes TEXT NOT NULL DEFAULT '';  -- public listing comment; '' = none`,
   `ALTER TABLE sessions ADD COLUMN skip_slow INTEGER NOT NULL DEFAULT 0;  -- 1 = automatic picks leave out slow sellers`,
+  `CREATE TABLE discogs_auth (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  token TEXT, secret TEXT, username TEXT, connected_at INTEGER,   -- the shop's OAuth access; token NULL = not connected
+  pending_token TEXT, pending_secret TEXT, pending_at INTEGER     -- a sign-in in progress (request token), ms epoch
+);`,
 ];
 
 export function migrate(db: DatabaseSync, steps: string[]): number {

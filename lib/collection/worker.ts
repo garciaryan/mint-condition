@@ -2,10 +2,11 @@
 // Writes only lookup columns (via applyLookup), never grades, year or query. Server-side only.
 import type { DatabaseSync } from "node:sqlite";
 import { getDb } from "../db.ts";
+import { discogsAccess } from "../discogs-access.ts";
+import { getConnection } from "../discogs-auth-store.ts";
 import { DiscogsError } from "../discogs.ts";
 import type { CachedLookupClient } from "../discogs-cache.ts";
 import { getLookupClient } from "../discogs-client.ts";
-import { missingEnv } from "../lookup.ts";
 import type { Candidate } from "../types.ts";
 import { applyLookup, claimNextPending, countClaimable, releaseClaim, resetWorking, touchSession } from "./store.ts";
 import type { ItemRow, LookupPatch } from "./types.ts";
@@ -59,6 +60,10 @@ async function priceRelease(client: CachedLookupClient, item: ItemRow, id: numbe
   return { status, ...extra, suggestions: suggestions ?? null, stats: st.value, pricedAt: Math.min(sugg.fetchedAt, st.fetchedAt) };
 }
 
+/** Discogs can't be called at all yet (not connected, or not set up). Throws out of processItem. */
+const isNotReady = (e: unknown): boolean => e instanceof DiscogsError && (e.kind === "not-connected" || e.status === 0);
+
+/** Prices one row. Throws only when Discogs is not connected or not set up, so the row can stay pending. */
 export async function processItem(client: CachedLookupClient, item: ItemRow, _now: number): Promise<LookupPatch & { pauseQueue?: true }> {
   try {
     if (item.releaseId !== null) return await priceRelease(client, item, item.releaseId, {});
@@ -70,14 +75,17 @@ export async function processItem(client: CachedLookupClient, item: ItemRow, _no
     const only = found[0];
     return await priceRelease(client, item, only.id, { releaseId: only.id, release: only, candidates: null });
   } catch (e) {
+    // Not connected (or not set up) is no fault of this row: the caller leaves it pending.
+    if (isNotReady(e)) throw e;
     if (e instanceof DiscogsError && e.status === 401) {
-      return { status: "error", error: "Discogs rejected the token", pauseQueue: true };
+      // A revoked OAuth connection says to reconnect; a token-mode 401 keeps the short message.
+      return { status: "error", error: e.kind === "reconnect" ? e.message.slice(0, 200) : "Discogs rejected the token", pauseQueue: true };
     }
     return { status: "error", error: (e instanceof Error ? e.message : "Unexpected error").slice(0, 200) };
   }
 }
 
-/** Resolves true when the loop ended because of an unexpected error. */
+/** Resolves true when the loop must not re-kick itself: an unexpected error, or Discogs not connected or set up. */
 async function runLoop(db: DatabaseSync, client: CachedLookupClient, nowFn: () => number): Promise<boolean> {
   let claimed: number | null = null;
   try {
@@ -86,7 +94,16 @@ async function runLoop(db: DatabaseSync, client: CachedLookupClient, nowFn: () =
       if (!item) return false;
       claimed = item.id;
       const started = nowFn();
-      const patch = await processItem(client, item, started);
+      let patch: Awaited<ReturnType<typeof processItem>>;
+      try {
+        patch = await processItem(client, item, started);
+      } catch (e) {
+        if (!isNotReady(e)) throw e;
+        // Disconnected mid-queue: leave this row (and the rest) pending until a connect kicks the worker again.
+        releaseClaim(db, item.id);
+        claimed = null;
+        return true;
+      }
       const recent = state().recentMs;
       recent.push(Math.max(0, nowFn() - started));
       if (recent.length > RECENT) recent.shift();
@@ -113,8 +130,8 @@ export function kickWorker(deps: WorkerDeps = {}): Promise<void> {
   const s = state();
   if (s.loop) return s.loop;
   if (s.paused) return Promise.resolve();
-  if (!deps.client && missingEnv(process.env).length > 0) return Promise.resolve();
   const db = deps.db ?? getDb();
+  if (!deps.client && discogsAccess(process.env, getConnection(db)).kind === "none") return Promise.resolve();
   const ping = deps.keepAlive ?? defaultKeepAlive();
   const timer = ping ? setInterval(ping, deps.keepAliveMs ?? KEEP_ALIVE_MS) : null;
   timer?.unref?.();
@@ -139,7 +156,6 @@ export const resumeQueue = (): void => {
 };
 
 export function startWorkerOnBoot(): void {
-  if (missingEnv(process.env).length > 0) return;
   resetWorking(getDb());
   void kickWorker();
 }

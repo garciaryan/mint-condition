@@ -6,12 +6,14 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
 
 ## Decisions already made
 - Hosted on Fly.io (one machine, SQLite on a volume at `/data`; it suspends when idle rather than stopping, since a
-  cold boot showed a blank page for ~4.5 s, 2026-10-07), single-password login, no OAuth. The password is
+  cold boot showed a blank page for ~4.5 s, 2026-10-07), single-password login (no OAuth for login). The password is
   `APP_PASSWORD` (plain, min 12) or `APP_PASSWORD_HASH` (scrypt), never both. `SESSION_SECRET` comes from the env or,
   when unset, `DATA_DIR/session-secret`, made once at boot by `lib/session-secret.ts` (`instrumentation.ts`); env
-  wins. `npm run setup:fly` sets the Fly secrets via `fly secrets import` on stdin (2026-10-05). Discogs access uses a
-  **personal access token** from the user's seller account (needed for `/marketplace/price_suggestions`), stored as a
-  Fly secret (`.env.local` for local dev). With no password outside production, login is off; in production, or with
+  wins. `npm run setup:fly` sets the Fly secrets via `fly secrets import` on stdin (2026-10-05). Discogs access: an app uses
+  `DISCOGS_TOKEN` (a personal access token from a seller account, needed for `/marketplace/price_suggestions`; Fly
+  secret, `.env.local` for local dev) if set, else the Connect Discogs OAuth connection (`DISCOGS_CONSUMER_KEY`/
+  `DISCOGS_CONSUMER_SECRET` Fly secrets, connection in SQLite table `discogs_auth`, migration 7); one registered
+  Discogs application serves every shop (2026-10-08). With no password outside production, login is off; in production, or with
   a bad combination, misconfigured (503 with the reason). Never run more than one machine.
 - Every push to `main` deploys: `.github/workflows/fly-deploy.yml` runs test, typecheck and build, then builds one
   image to `ghcr.io/garciaryan/mint-condition:<tag>`, deploys it to the canary (this app, `FLY_API_TOKEN` repo secret,
@@ -92,18 +94,20 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
 
 - **Routes:** `app/page.tsx` (price a record) · `app/collection/` (lots list), `app/collection/[id]/` (lot),
   `app/collection/[id]/print/` (buy sheet) · `app/settings/` · `app/login/` · `app/api/` (`lookup`, `login|logout|health`,
-  `settings`, `sessions/` incl. `[id]/discogs.csv`, `items/`, `releases/[id]/identifiers`, `masters/[id]/versions`)
+  `settings`, `sessions/` incl. `[id]/discogs.csv`, `items/`, `releases/[id]/identifiers`, `masters/[id]/versions`,
+  `discogs/connect|callback|disconnect`)
 - **`components/layout/`:** `SiteHeader` (server: reads `mc_theme`/`mc_nav`) + `SiteNav` (fixed left sidebar, expanded
   by default, collapses to an icon rail remembered by `mc_nav` via `lib/nav.ts`; a bottom tab bar at 480px and below;
   Docs and the coffee pill sit at its foot, the footer shows them only on phones and pages without the sidebar) ·
   `NavLinks` (expanded desktop sidebar lists the 3 most recent collections under Collections, then "+N more";
   `navLots`) · `NavIcon` (inline SVG icons) · `SiteFooter` (not-affiliated notice) · `ThemeSwitch` (cycles
   System/Light/Dark) · `LogoutButton` (on `/settings`, Account card, only when login is on)
-- **`components/lookup/`:** `Lookup` (form, picker, result card) · `LookupScanner` · `Picker` · `VersionsPanel`
+- **`components/lookup/`:** `Lookup` (form, picker, result card) · `LookupScanner` · `Picker` · `VersionsPanel` · `ConnectCard` (Connect Discogs prompt)
 - **`components/scan/`:** `ScanButton`, `ScanFrame` · **`components/ui/`:** `GradeSelect`, `DiscogsCredit`, `DemandBadge`
 - **`components/collection/`:** `LotsList`, `LotView`, `LotHeader`, `EntryBar`, `Scanner`, `PasteList`, `PickPanel`,
   `TotalsBar`, `OfferPanel`, `ItemRow`, `PrintButton`
-- **`components/settings/`:** `SettingsForm`, `HelpTip` (ⓘ toggle) · **`components/login/`:** `LoginForm`
+- **`components/settings/`:** `SettingsForm`, `HelpTip` (ⓘ toggle), `DiscogsCard` (Account card: connect/disconnect),
+  `DiscogsNotice` · **`components/login/`:** `LoginForm`
 - **`hooks/`:** `useBarcodeCamera` (camera loop), `useDisclosure` (+ `lib/disclosure.ts`: lot Actions, help tips),
   `useFadeOut`, `useDialog`
 - **`lib/`:** `types.ts` grades and shared types · `settings.ts` loader/validator · `discogs.ts` API client (throttled,
@@ -111,6 +115,8 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   pure) · `lookup.ts` lookup flow for the API route · `form.ts` client-side form checks and picker grouping ·
   `auth.ts` (session signing, authMode, limiter, health config) · `password.ts` · `gate.ts` + `middleware.ts` (login
   gate) · `db.ts` + `migrations.ts` (SQLite, versioned) · `setup-fly.ts` (pure) · `session-secret.ts` ·
+  `discogs-oauth.ts` (OAuth 1.0a signing and calls) · `discogs-auth-store.ts` (`discogs_auth` row) ·
+  `discogs-access.ts` (token or connection) · `discogs-connect.ts` (connect/callback flow) · `discogs-state.ts` ·
   `demand.ts` (fast/slow from want/have, pure) · `runout.ts` (runout matching and highlight, pure) · `versions.ts` (master versions: sort, earliest, filter; pure) ·
   `settings-store.ts` (saved settings over defaults) ·
   `settings-form.ts` (client-safe) · `settings-help.ts` (every
@@ -183,8 +189,11 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   "original"), and picking a version re-prices it. Credit links `discogs.com/master/<id>`. Spec: `docs/superpowers/specs/2026-10-07-master-versions-design.md`.
 - Multi-app deploy (2026-10-07): built on feat/multi-app-deploy; 486 tests passing; no app or DB change beyond
   `setup:fly --app`. Build once to GHCR, canary, release, then shops from `FLY_SHOP_APPS`. Spec:
-  `docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`. Next: Connect Discogs (OAuth) so shops never paste
-  a token.
+  `docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`.
+- Connect Discogs (2026-10-08): built on feat/connect-discogs; 575 tests passing; migration 7 (`discogs_auth`). A shop
+  logs in, then presses Connect Discogs on `/settings` (OAuth 1.0a through the owner's one application); `setup:fly
+  --app` asks for the consumer key and secret instead of the token. Connect and callback use `fetch` directly (1-3
+  calls per one-off connect, not throttled). Spec: `docs/superpowers/specs/2026-10-08-connect-discogs-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns
