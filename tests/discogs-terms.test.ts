@@ -33,6 +33,11 @@ test("Discogs data is credited next to it, with a followed link", () => {
   }
 });
 
+test("masterUrl links to the master page on discogs.com", async () => {
+  const { masterUrl } = await import("../lib/discogs-terms.ts");
+  assert.equal(masterUrl(32208), "https://www.discogs.com/master/32208");
+});
+
 test("searchUrl links the pressing list to the Discogs search for that catalog number", async () => {
   const { searchUrl } = await import("../lib/discogs-terms.ts");
   assert.equal(searchUrl("SD 7208"), "https://www.discogs.com/search/?q=SD%207208&type=release");
