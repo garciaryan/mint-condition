@@ -18,3 +18,17 @@ test("health names where the session secret comes from, never its value", async 
     }
   }
 });
+
+test("health reports the running version", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const saved = env.NEXT_PUBLIC_APP_VERSION;
+  try {
+    env.NEXT_PUBLIC_APP_VERSION = "v0.1.0-alpha.4";
+    assert.equal((await (await GET()).json()).version, "v0.1.0-alpha.4");
+    delete env.NEXT_PUBLIC_APP_VERSION;
+    assert.equal((await (await GET()).json()).version, "dev");
+  } finally {
+    if (saved === undefined) delete env.NEXT_PUBLIC_APP_VERSION;
+    else env.NEXT_PUBLIC_APP_VERSION = saved;
+  }
+});

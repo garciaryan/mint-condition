@@ -15,6 +15,10 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
   a bad combination, misconfigured (503 with the reason). Never run more than one machine.
 - Every push to `main` deploys: `.github/workflows/fly-deploy.yml` runs test, typecheck and build, then
   `flyctl deploy --remote-only` (`FLY_API_TOKEN` repo secret, deploy-scoped, expires 2027-10-04). Keep `main` green.
+- Versions (2026-10-07): alpha. Each successful deploy is tagged `v<package.json version>-alpha.N` (N from 1 per base,
+  `scripts/next-version.ts` + `lib/version.ts`) with a GitHub pre-release (`--generate-notes`); the tag is the
+  `APP_VERSION` build arg → `NEXT_PUBLIC_APP_VERSION`, shown by `/api/health` and at the foot of `/settings` ("dev"
+  locally). Bump the base (`0.2.0`) in a PR to start a new line; keep `package.json` `version` plain `x.y.z`.
 - No staging app (retired 2026-10-05; older status lines below mention it). Test migrations against a local copy of
   the production database (`DATA_DIR=data/prod-copy npm run dev`, DEPLOY.md §9) before merging to `main`.
 - Never expose `DISCOGS_TOKEN` to the browser. All Discogs calls go through Next route handlers or server actions.
@@ -107,11 +111,11 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   `settings-form.ts` (client-safe) · `settings-help.ts` (every
   field has help, tested; the sleeve grid shares one `SLEEVE_HELP`) · `discogs-client.ts` shared client +
   `getLookupClient()` · `discogs-cache.ts` · `relative-time.ts` · `discogs-terms.ts` · `theme.ts` · `nav.ts` ·
-  `camera.ts` · `route-auth.ts` per-route session check
+  `camera.ts` · `route-auth.ts` per-route session check · `version.ts` (deploy tags, app version)
 - **`lib/collection/`:** `types`, `store` (SQLite), `parse` (paste parser), `notes` (condition notes), `view`
   (totals/prices), `ui`, `http`, `worker`, `export` (Discogs CSV, buy sheet rows), `client` (browser fetch helper,
   `money`)
-- **Other:** `tests/` · `scripts/lookup.ts` CLI, `scripts/hash-password.ts`, `scripts/setup-fly.ts` + `scripts/prompt.ts`
+- **Other:** `tests/` · `scripts/lookup.ts` CLI, `scripts/hash-password.ts`, `scripts/setup-fly.ts` + `scripts/prompt.ts`, `scripts/next-version.ts` (deploy tag)
   · `instrumentation.ts` · `Dockerfile`, `docker-entrypoint.sh`, `fly.toml`, `DEPLOY.md`,
   `.github/workflows/fly-deploy.yml`
 
