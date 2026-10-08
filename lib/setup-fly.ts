@@ -3,7 +3,7 @@
 import { MIN_PASSWORD_CHARS } from "./auth.ts";
 import { isFlyAppName } from "./shops.ts";
 
-export type Answers = { token?: string; userAgent?: string; password?: string };
+export type Answers = { token?: string; consumerKey?: string; consumerSecret?: string; userAgent?: string; password?: string };
 
 export function parseAppName(flyToml: string): string | null {
   return /^app\s*=\s*["']([^"']+)["']/m.exec(flyToml)?.[1] ?? null;
@@ -61,6 +61,8 @@ export function defaultUserAgent(contact: string): string {
 export function planSecrets(current: string[], answers: Answers): { importText: string; set: string[]; unset: string[] } {
   const pairs: [string, string | undefined][] = [
     ["DISCOGS_TOKEN", answers.token],
+    ["DISCOGS_CONSUMER_KEY", answers.consumerKey],
+    ["DISCOGS_CONSUMER_SECRET", answers.consumerSecret],
     ["DISCOGS_USER_AGENT", answers.userAgent],
     ["APP_PASSWORD", answers.password],
   ];

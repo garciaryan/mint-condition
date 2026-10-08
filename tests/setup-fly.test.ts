@@ -54,3 +54,11 @@ test("appFromArgs: --app picks another app, otherwise fly.toml's", () => {
   assert.throws(() => appFromArgs(["--app"], toml), /--app needs a name/);
   assert.throws(() => appFromArgs([], ""), /Create the app first/);
 });
+
+test("planSecrets: consumer answers set both names and never DISCOGS_TOKEN", () => {
+  const plan = planSecrets(["DISCOGS_TOKEN"], { consumerKey: "ck", consumerSecret: "cs" });
+  assert.deepEqual(plan.set, ["DISCOGS_CONSUMER_KEY", "DISCOGS_CONSUMER_SECRET"]);
+  assert.equal(plan.importText, "DISCOGS_CONSUMER_KEY=ck\nDISCOGS_CONSUMER_SECRET=cs\n");
+  assert.deepEqual(planSecrets([], { consumerKey: "ck" }).set, ["DISCOGS_CONSUMER_KEY"]);
+  assert.deepEqual(planSecrets([], { token: "t" }).set, ["DISCOGS_TOKEN"]);
+});

@@ -138,7 +138,8 @@ export function discogsAccess(env, connection: Connection | null): DiscogsAccess
   null → `?discogs=error`; else access token exchange, `/oauth/identity`, `saveConnection`, `kickWorker()`,
   `303 /settings?discogs=connected`. Any Discogs failure → `?discogs=error`, nothing saved.
 - **`POST /api/discogs/disconnect`** (session; same-origin): `clearConnection` → `303 /settings?discogs=disconnected`.
-- The three routes go through the shared throttle (each is one call; the callback is two).
+- The connect and callback calls use `fetch` directly, not the shared throttle: 1-3 calls per one-off connect (a
+  recorded decision).
 
 ## Worker
 

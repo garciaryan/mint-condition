@@ -288,7 +288,7 @@ Pick a short lowercase name, e.g. `groove`; the app is `mc-groove`. About 15 min
 fly orgs create mc-groove                                   # then add a payment method to the org on fly.io
 fly apps create mc-groove --org mc-groove
 fly volumes create mint_data -a mc-groove --region <nearest region> --size 1
-npm run setup:fly -- --app mc-groove                        # password, user agent, Discogs token
+npm run setup:fly -- --app mc-groove                        # password, user agent, Discogs consumer key/secret
 fly deploy --image ghcr.io/garciaryan/mint-condition:<latest tag> -a mc-groove --primary-region <same region> --ha=false
 curl https://mc-groove.fly.dev/api/health                   # "version" is that tag; then log in
 fly tokens create deploy -a mc-groove | gh secret set FLY_TOKEN_GROOVE -R garciaryan/mint-condition
@@ -303,8 +303,14 @@ gh variable set FLY_SHOP_APPS -R garciaryan/mint-condition \
   app and the name of the secret holding its deploy token. The workflow checks the list before deploying anything
   (`lib/shops.ts`) and stops the run with a message if an entry is wrong; a token secret that's missing fails only
   that shop, naming the secret.
-- Until Connect Discogs ships, the shop's own Discogs personal access token is set by `setup:fly`. Never use yours:
-  price data from your seller account is yours, not theirs.
+- `setup:fly --app` asks for the Discogs consumer key and secret (hidden; Enter keeps a current one). They belong to
+  your one registered Discogs application, "Mint Condition", the same for every shop. The shop's first visit is: log
+  in, then press **Connect Discogs** in the Account card on Settings and approve on discogs.com. Its prices then come
+  from its own seller account, stored in its own database; no token of yours is involved.
+- One-time, for the first shop: register the application at discogs.com → Settings → Developers → Create an
+  Application (name "Mint Condition"), and keep the consumer key and secret for `setup:fly`.
+- Local test of the flow: put `DISCOGS_CONSUMER_KEY` and `DISCOGS_CONSUMER_SECRET` in `.env.local`, leave
+  `DISCOGS_TOKEN` out, run `npm run dev` and use Connect Discogs on http://localhost:3000.
 
 ### Roll back one app
 
