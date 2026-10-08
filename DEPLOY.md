@@ -286,14 +286,16 @@ fly orgs create mc-groove                                   # then add a payment
 fly apps create mc-groove --org mc-groove
 fly volumes create mint_data -a mc-groove --region <nearest region> --size 1
 npm run setup:fly -- --app mc-groove                        # password, user agent, Discogs token
+fly deploy --image ghcr.io/garciaryan/mint-condition:<latest tag> -a mc-groove --primary-region <same region> --ha=false
+curl https://mc-groove.fly.dev/api/health                   # "version" is that tag; then log in
 fly tokens create deploy -a mc-groove | gh secret set FLY_TOKEN_GROOVE -R garciaryan/mint-condition
 gh variable set FLY_SHOP_APPS -R garciaryan/mint-condition \
   --body '[{"app":"mc-groove","token":"FLY_TOKEN_GROOVE"}]'  # the whole list: keep the shops already in it
-fly deploy --image ghcr.io/garciaryan/mint-condition:<latest tag> -a mc-groove --primary-region <same region>
-curl https://mc-groove.fly.dev/api/health                   # "version" is that tag; then log in
 ```
 
-- `--primary-region` puts the first machine next to its volume (`fly.toml` says `sjc`).
+- The first deploy is by hand, before the shop is listed: `--primary-region` puts the machine next to its volume
+  (`fly.toml` says `sjc`) and `--ha=false` keeps it to one machine (§4). The workflow only updates apps that already
+  have their machine.
 - Read the current list first with `gh variable get FLY_SHOP_APPS -R garciaryan/mint-condition`. Each entry is the
   app and the name of the secret holding its deploy token. The workflow checks the list before deploying anything
   (`lib/shops.ts`) and stops the run with a message if an entry is wrong; a token secret that's missing fails only

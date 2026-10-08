@@ -58,8 +58,11 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "image=ghcr.io/garciaryan/mint-condition:$tag" >> "$GITHUB_OUTPUT"
       # Checked before anything deploys: a typo in the variable stops the run here.
+      # Assigned first: inside echo's arguments, the script's exit status would be lost.
       - id: shops
-        run: echo "shops=$(node --experimental-strip-types --no-warnings scripts/shop-apps.ts)" >> "$GITHUB_OUTPUT"
+        run: |
+          shops=$(node --experimental-strip-types --no-warnings scripts/shop-apps.ts)
+          echo "shops=$shops" >> "$GITHUB_OUTPUT"
         env:
           FLY_SHOP_APPS: ${{ vars.FLY_SHOP_APPS }}
       - uses: docker/setup-buildx-action@v3
@@ -74,6 +77,7 @@ jobs:
           push: true
           tags: ${{ steps.version.outputs.image }}
           build-args: APP_VERSION=${{ steps.version.outputs.tag }}
+          provenance: false # a plain image manifest; Fly's pull doesn't need the attestation index
 
   canary:
     name: Deploy canary

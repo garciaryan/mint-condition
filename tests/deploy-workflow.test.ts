@@ -59,3 +59,21 @@ test("every shop deploys the same image after the canary, each with its own toke
 test("nothing builds on Fly any more", () => {
   assert.doesNotMatch(wf, /--remote-only/);
 });
+
+test("a bad FLY_SHOP_APPS fails the image step (assigned first, so bash -e sees the script's exit)", () => {
+  const j = job("image");
+  assert.match(j, /shops=\$\(node --experimental-strip-types --no-warnings scripts\/shop-apps\.ts\)\n\s*echo "shops=\$shops" >> "\$GITHUB_OUTPUT"/);
+  assert.doesNotMatch(j, /echo "shops=\$\(/);
+});
+
+test("the image is a plain manifest Fly can pull (no provenance attestation)", () => {
+  assert.match(job("image"), /provenance: false/);
+});
+
+test("the shop runbook's first deploy is one machine next to its volume, before the workflow knows the shop", () => {
+  const deploy = readFileSync("DEPLOY.md", "utf8");
+  const add = deploy.slice(deploy.indexOf("### Add a shop"), deploy.indexOf("### Roll back one app"));
+  assert.match(add, /fly deploy --image ghcr\.io\/garciaryan\/mint-condition:<latest tag> -a mc-groove --primary-region <same region> --ha=false/);
+  const first = add.indexOf("fly deploy --image");
+  assert.ok(first >= 0 && first < add.indexOf("gh secret set") && first < add.indexOf("gh variable set"), "first deploy comes before the shop is listed");
+});
