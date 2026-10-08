@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { coverageText, etaText } from "@/lib/collection/ui.ts";
+import { coverageText, pausedText, queueLine, type DiscogsMode } from "@/lib/collection/ui.ts";
 import type { QueueState, Totals } from "@/lib/collection/view.ts";
 import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";
 import { money } from "@/lib/collection/client.ts";
@@ -12,15 +12,18 @@ export default function TotalsBar({
   offline,
   currency,
   onResume,
+  discogs,
 }: {
   totals: Totals;
   queue: QueueState;
   offline: string | null;
   currency: string;
   onResume: () => void;
+  discogs: DiscogsMode;
 }) {
   const [open, setOpen] = useState(false);
-  const working = queue.pending > 0 && !queue.paused;
+  const line = queueLine(queue, discogs);
+  const working = line?.spinner ?? false;
 
   return (
     <section className={`card totals${open ? " open" : ""}`} aria-label="Collection totals">
@@ -58,10 +61,10 @@ export default function TotalsBar({
         </div>
         <div className="cov">
           <b>{coverageText(totals)}</b>
-          {queue.pending > 0 && (
+          {line && (
             <span className="queue-line">
-              {working && <span className="spinner" aria-hidden="true" />}
-              {queue.paused ? `Paused · ${queue.pending} waiting` : `Looking up · ${queue.pending} left · ~${etaText(queue.etaSeconds)}`}
+              {line.spinner && <span className="spinner" aria-hidden="true" />}
+              {line.text}
             </span>
           )}
           <DiscogsCredit />
@@ -78,7 +81,7 @@ export default function TotalsBar({
       </div>
       {queue.paused && (
         <p className="totals-paused" role="alert">
-          <span aria-hidden="true">⚠ </span>Discogs rejected the token. Fix the token, then press Retry.
+          <span aria-hidden="true">⚠ </span>{pausedText(discogs)}
           {" "}
           <button type="button" className="link" onClick={onResume}>
             Retry

@@ -52,6 +52,27 @@ export function etaText(seconds: number): string {
   return seconds < 60 ? `${Math.max(1, Math.round(seconds))} sec` : `${Math.round(seconds / 60)} min`;
 }
 
+/** The Discogs connection state the lot page renders with (from lib/discogs-state.ts). */
+export type DiscogsMode = "token" | "connected" | "not-connected" | "setup";
+
+/** The totals queue line: null with nothing queued; no spinner while paused or waiting for a Discogs connection. */
+export function queueLine(
+  queue: { pending: number; paused: boolean; etaSeconds: number },
+  discogs: DiscogsMode,
+): { text: string; spinner: boolean } | null {
+  if (queue.pending <= 0) return null;
+  if (queue.paused) return { text: `Paused · ${queue.pending} waiting`, spinner: false };
+  if (discogs === "not-connected") return { text: `Waiting for Discogs connection · ${queue.pending} left`, spinner: false };
+  return { text: `Looking up · ${queue.pending} left · ~${etaText(queue.etaSeconds)}`, spinner: true };
+}
+
+/** The paused banner after a 401: a token app fixes the token, an OAuth app reconnects. */
+export function pausedText(discogs: DiscogsMode): string {
+  return discogs === "token"
+    ? "Discogs rejected the token. Fix the token, then press Retry."
+    : "Discogs no longer accepts this app's access. Reconnect Discogs in Settings, then press Retry.";
+}
+
 /** "23 records" or "23 records, 1 line skipped: line 4" for the paste preview. */
 export function pasteSummary(count: number, skippedLines: number[]): string {
   const base = `${count} ${count === 1 ? "record" : "records"}`;

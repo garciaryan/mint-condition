@@ -21,7 +21,7 @@ export default async function LotPage({ params }: { params: Promise<{ id: string
             Not connected to Discogs: records will be priced once you connect. <Link href={ROUTES.settings}>Settings</Link>
           </div>
         )}
-        <LotView id={Number(id)} />
+        <LotView id={Number(id)} discogs={state} />
       </main>
     </>
   );

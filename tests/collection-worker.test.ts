@@ -308,3 +308,41 @@ test("kickWorker leaves items pending while not connected, and prices them once 
     if (prevClient === undefined) delete g.__discogsClient; else g.__discogsClient = prevClient;
   }
 });
+
+test("a revoked OAuth connection (401 reconnect) records the reconnect message and pauses", async () => {
+  const { db, items } = setup(["A", "B"]);
+  const msg = "Discogs no longer accepts this app's access. Reconnect Discogs in Settings.";
+  await kickWorker({ db, client: fake({ search: () => { throw new DiscogsError(msg, 401, "reconnect"); } }).client });
+  assert.equal(isQueuePaused(), true);
+  assert.equal(getItem(db, items[0].id)!.error, msg);
+  assert.equal(getItem(db, items[1].id)!.status, "pending");
+});
+
+test("not connected mid-queue stops the loop and leaves every row pending; a kick after connecting prices them", async () => {
+  const { db, items } = setup(["A", "B"]);
+  let connected = false;
+  const f = fake({
+    search: () => {
+      if (!connected) throw new DiscogsError("Connect your Discogs account to start pricing.", 0, "not-connected");
+      return [cand(5)];
+    },
+  });
+  await kickWorker({ db, client: f.client });
+  assert.equal(f.calls.length, 1);
+  for (const it of items) {
+    const r = getItem(db, it.id)!;
+    assert.equal(r.status, "pending");
+    assert.equal(r.error, null);
+  }
+  assert.equal(isQueuePaused(), false);
+  connected = true;
+  await kickWorker({ db, client: f.client });
+  for (const it of items) assert.equal(getItem(db, it.id)!.status, "priced");
+});
+
+test("a setup error (status 0) also leaves rows pending", async () => {
+  const { db, items } = setup(["A"]);
+  await kickWorker({ db, client: fake({ search: () => { throw new DiscogsError("Discogs isn't set up for this app.", 0); } }).client });
+  assert.equal(getItem(db, items[0].id)!.status, "pending");
+  assert.equal(isQueuePaused(), false);
+});

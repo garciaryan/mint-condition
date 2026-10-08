@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { pollDelayMs } from "@/lib/collection/ui.ts";
+import { pollDelayMs, type DiscogsMode } from "@/lib/collection/ui.ts";
 import type { ItemView } from "@/lib/collection/view.ts";
 import type { Grade } from "@/lib/types.ts";
 import { api } from "@/lib/collection/client.ts";
@@ -22,7 +22,7 @@ type Undo = { key: number; label: string; query: string; year: number | null; re
 const OFFLINE_RETRY_MS = 5000;
 const UNDO_MS = 6000;
 
-export default function LotView({ id }: { id: number }) {
+export default function LotView({ id, discogs }: { id: number; discogs: DiscogsMode }) {
   const router = useRouter();
   const valid = Number.isInteger(id) && id > 0;
   const [data, setData] = useState<LotData | null>(null);
@@ -201,7 +201,7 @@ export default function LotView({ id }: { id: number }) {
   return (
     <>
       <LotHeader session={session} oldestPricedAt={oldestPricedAt} exportCounts={exportCounts} onChanged={refresh} onDeleted={() => router.push(ROUTES.collections)} onError={setNotice} />
-      <TotalsBar totals={totals} queue={queue} offline={offline} currency={currency} onResume={resume} />
+      <TotalsBar totals={totals} queue={queue} offline={offline} currency={currency} onResume={resume} discogs={discogs} />
       <OfferPanel offer={offer} session={session} currency={currency} onChanged={refresh} />
       <EntryBar
         key={session.id}
