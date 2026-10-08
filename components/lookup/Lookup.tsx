@@ -1,5 +1,6 @@
 "use client";
 
+import ConnectCard from "@/components/lookup/ConnectCard.tsx";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
@@ -317,7 +318,8 @@ export default function Lookup() {
                 </p>
               </div>
             )}
-            {view.kind === "error" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
+            {view.kind === "error" && view.res.kind === "not-connected" && <ConnectCard />}
+            {view.kind === "error" && view.res.kind !== "not-connected" && <ErrorCard res={view.res} onRetry={() => retry.current?.()} />}
             {view.kind === "candidates" && (
               <Picker candidates={view.candidates} query={searchedKey?.split("|")[0] ?? catno} year={view.year} onPick={(c) => void price(c.id, c, { focus: true, clear: true })} />
             )}

@@ -2,13 +2,20 @@ import { authMode } from "@/lib/auth.ts";
 import { appVersion, versionUrl } from "@/lib/version.ts";
 import LogoutButton from "@/components/layout/LogoutButton.tsx";
 import SiteHeader from "@/components/layout/SiteHeader.tsx";
+import DiscogsCard from "@/components/settings/DiscogsCard.tsx";
+import DiscogsNotice from "@/components/settings/DiscogsNotice.tsx";
+import { getDb } from "@/lib/db.ts";
+import { discogsState } from "@/lib/discogs-state.ts";
 import SettingsForm from "@/components/settings/SettingsForm.tsx";
 
 export const metadata = { title: "Settings - Mint Condition" };
 // SiteHeader and Log out read cookies and env at request time; never prerender at build.
 export const dynamic = "force-dynamic";
 
-export default function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ discogs?: string | string[] }> }) {
+  const { discogs } = await searchParams;
+  const notice = Array.isArray(discogs) ? discogs[0] : discogs;
+  const discogsInfo = discogsState(process.env, getDb);
   const loggedIn = authMode(process.env).mode === "on";
   const version = appVersion(process.env);
   const versionHref = versionUrl(version);
@@ -22,7 +29,9 @@ export default function SettingsPage() {
             <p>Tune sell, local and offer prices. Changes apply to new lookups and every collection.</p>
           </div>
         </header>
+        {notice && <DiscogsNotice value={notice} username={discogsInfo.username} />}
         <SettingsForm />
+        <DiscogsCard {...discogsInfo} />
         {loggedIn && (
           <section className="card account" aria-labelledby="account-heading">
             <h2 id="account-heading">Account</h2>
