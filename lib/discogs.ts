@@ -19,8 +19,8 @@ const SUGGESTION_KEYS: Record<string, Grade> = {
 
 export class DiscogsError extends Error {
   status: number;
-  kind?: "not-connected";
-  constructor(message: string, status: number, kind?: "not-connected") {
+  kind?: "not-connected" | "reconnect";
+  constructor(message: string, status: number, kind?: "not-connected" | "reconnect") {
     super(message);
     this.name = "DiscogsError";
     this.status = status;
@@ -241,6 +241,7 @@ export class DiscogsClient {
           ? "Discogs no longer accepts this app's access. Reconnect Discogs in Settings."
           : "Discogs rejected the token (401). Check DISCOGS_TOKEN.",
         401,
+        access.kind === "oauth" ? "reconnect" : undefined,
       );
     }
     if (!res.ok) throw new DiscogsError(`Discogs returned ${res.status} for ${path}`, res.status);

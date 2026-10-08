@@ -107,6 +107,7 @@ export function toErrorResponse(e: unknown): Extract<LookupResponse, { status: "
   if (e instanceof DiscogsError) {
     if (e.kind === "not-connected") return { status: "error", kind: "not-connected", message: NOT_CONNECTED };
     if (e.status === 0) return { status: "error", kind: "missing-env", message: e.message };
+    if (e.status === 401 && e.kind === "reconnect") return { status: "error", kind: "bad-token", message: e.message };
     if (e.status === 401) {
       return { status: "error", kind: "bad-token", message: "Discogs rejected the token. Check DISCOGS_TOKEN in .env.local and restart the dev server." };
     }

@@ -354,3 +354,10 @@ test("401 under oauth asks to reconnect; under token keeps the token message", a
   const t = makeClient(() => new Response("", { status: 401 }));
   await assert.rejects(t.client.priceSuggestions(1), /Check DISCOGS_TOKEN/);
 });
+
+test("the oauth 401 carries kind reconnect; the token 401 has no kind", async () => {
+  const o = makeClient(() => new Response("", { status: 401 }), () => oauth);
+  await assert.rejects(o.client.priceSuggestions(1), (e: unknown) => e instanceof DiscogsError && e.kind === "reconnect");
+  const t = makeClient(() => new Response("", { status: 401 }));
+  await assert.rejects(t.client.priceSuggestions(1), (e: unknown) => e instanceof DiscogsError && e.kind === undefined);
+});

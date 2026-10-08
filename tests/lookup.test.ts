@@ -240,3 +240,9 @@ test("a priced lookup says how fast the record sells", async () => {
   assert.equal(res.status, "priced");
   if (res.status === "priced") assert.equal(res.demand, "fast");
 });
+
+test("toErrorResponse: a reconnect 401 keeps its message; a plain 401 keeps the DISCOGS_TOKEN text", () => {
+  const msg = "Discogs no longer accepts this app's access. Reconnect Discogs in Settings.";
+  assert.deepEqual(toErrorResponse(new DiscogsError(msg, 401, "reconnect")), { status: "error", kind: "bad-token", message: msg });
+  assert.match(toErrorResponse(new DiscogsError("x", 401)).message, /DISCOGS_TOKEN/);
+});
