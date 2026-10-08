@@ -106,6 +106,36 @@ export function toCandidate(r: SearchResult): Candidate {
   };
 }
 
+/** A version from /masters/{id}/versions. `released` is a year or a full date ("1972-05-12"), sometimes "0". */
+type VersionResult = {
+  id: number;
+  title?: string;
+  released?: string;
+  country?: string;
+  label?: string;
+  catno?: string;
+  format?: string;
+  thumb?: string;
+};
+
+/** A master's vinyl versions; `total` counts all of them, even past the pages fetched. */
+export type MasterVersions = { versions: Candidate[]; total: number };
+
+/** A version in the same shape as a search candidate, so picking one prices it the same way. */
+export function toVersion(r: VersionResult): Candidate {
+  const y = Number(r.released?.slice(0, 4));
+  return {
+    id: r.id,
+    title: r.title ?? "",
+    year: Number.isInteger(y) && y > 0 ? y : null,
+    country: r.country || null,
+    label: r.label || null,
+    catno: r.catno || null,
+    format: r.format || null,
+    thumb: r.thumb || null,
+  };
+}
+
 export function parsePriceSuggestions(body: Record<string, { value?: number } | undefined>): PriceSuggestions {
   const out: PriceSuggestions = {};
   for (const [key, grade] of Object.entries(SUGGESTION_KEYS)) {
@@ -219,6 +249,25 @@ export class DiscogsClient {
     if (!body) return null;
     const parsed = parsePriceSuggestions(body);
     return Object.keys(parsed).length > 0 ? parsed : null;
+  }
+
+  /**
+   * A master's vinyl versions, oldest first (Discogs sorts by release date), following pages up to `maxPages` (100
+   * each). The earliest years are always on the first page, so the "earliest listed" mark holds for big masters.
+   */
+  async masterVersions(masterId: number, maxPages = 3): Promise<MasterVersions> {
+    const versions: Candidate[] = [];
+    let total = 0;
+    for (let page = 1; page <= maxPages; page++) {
+      const body = await this.get<{ versions?: VersionResult[]; pagination?: { pages?: number; items?: number } }>(
+        `/masters/${masterId}/versions`,
+        { format: "Vinyl", sort: "released", sort_order: "asc", per_page: "100", page: String(page) },
+      );
+      versions.push(...(body?.versions ?? []).map(toVersion));
+      total = body?.pagination?.items ?? versions.length;
+      if (page >= (body?.pagination?.pages ?? 1)) break;
+    }
+    return { versions, total };
   }
 
   /** Copies for sale, lowest listing, want/have, master and identifiers from /releases/{id}. Replaces

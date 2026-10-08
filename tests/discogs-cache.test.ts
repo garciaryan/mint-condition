@@ -4,6 +4,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { openDb } from "../lib/db.ts";
 import { DiscogsError } from "../lib/discogs.ts";
 import { CachedClient, searchKey } from "../lib/discogs-cache.ts";
+import type { VersionsClient } from "../lib/discogs-cache.ts";
 import type { LookupClient } from "../lib/lookup.ts";
 import type { Candidate, MarketplaceStats, PriceSuggestions } from "../lib/types.ts";
 
@@ -20,7 +21,7 @@ let sugg: PriceSuggestions | null;
 let found: Candidate[];
 let c: CachedClient;
 
-const inner: LookupClient = {
+const inner: LookupClient & VersionsClient = {
   async searchByCatno(q, y) {
     calls.push(`search:${q}:${y}`);
     if (fail) throw fail;
@@ -35,6 +36,11 @@ const inner: LookupClient = {
     calls.push(`release:${id}`);
     if (fail) throw fail;
     return STATS;
+  },
+  async masterVersions(id) {
+    calls.push(`versions:${id}`);
+    if (fail) throw fail;
+    return { versions: [cand(id)], total: 1 };
   },
 };
 const count = (k: string) => calls.filter((x) => x === k).length;
@@ -174,4 +180,15 @@ test("release details are cached under release:<id>", async () => {
   await c.releaseStats(7);
   const keys = (db.prepare("select key from discogs_cache").all() as { key: string }[]).map((r) => r.key);
   assert.deepEqual(keys, ["release:7"]);
+});
+
+test("master versions are cached under versions:<id>; fresh refetches", async () => {
+  const first = await c.masterVersions(32208);
+  const again = await c.masterVersions(32208);
+  assert.equal(count("versions:32208"), 1);
+  assert.deepEqual(again, first);
+  const keys = (db.prepare("select key from discogs_cache").all() as { key: string }[]).map((r) => r.key);
+  assert.deepEqual(keys, ["versions:32208"]);
+  await c.masterVersions(32208, { fresh: true });
+  assert.equal(count("versions:32208"), 2);
 });
