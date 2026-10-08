@@ -1,5 +1,6 @@
 # Runs tests, typecheck and build on every PR to main and every push to main; deploys to Fly.io only on pushes to
-# main. PRs from forks get no secrets.
+# main. PRs from forks get no secrets. Each successful deploy is tagged vx.y.z-alpha.N (x.y.z from package.json) and
+# gets a GitHub pre-release with notes from the merged PRs (DEPLOY.md, "Versions and releases").
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
 name: Fly Deploy
@@ -32,10 +33,25 @@ jobs:
     # Only pushes to main on this repo deploy; PRs and forks just run the checks.
     if: github.event_name == 'push' && github.repository == 'garciaryan/mint-condition'
     runs-on: ubuntu-latest
-    concurrency: deploy-group # one deploy at a time; the app runs a single machine
+    concurrency: deploy-group # one deploy at a time, so two deploys never take the same tag
+    permissions:
+      contents: write # create the tag and release
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # all tags, to number this deploy
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - id: version
+        run: echo "tag=$(node --experimental-strip-types --no-warnings scripts/next-version.ts)" >> "$GITHUB_OUTPUT"
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      - run: flyctl deploy --remote-only --build-arg APP_VERSION=${{ steps.version.outputs.tag }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      # Only reached when the deploy succeeded, so every tag is something that ran in production.
+      - name: Tag the release
+        run: gh release create "$TAG" --title "$TAG" --prerelease --generate-notes --target "$GITHUB_SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}

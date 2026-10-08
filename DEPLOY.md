@@ -90,6 +90,18 @@ Every push to `main` runs `.github/workflows/fly-deploy.yml`. It runs `npm test`
 `npm run build`, and only if all pass does it run `flyctl deploy --remote-only`. A failing check means nothing is
 deployed; see the run under the repo's **Actions** tab.
 
+#### Versions and releases
+
+Each successful automatic deploy is tagged `v<base>-alpha.<N>` and gets a GitHub pre-release whose notes list the PRs
+merged since the last one. `<base>` is `version` in `package.json` (plain `x.y.z`, currently `0.1.0`), and `N` counts up
+from 1 for each base (`scripts/next-version.ts`, logic in `lib/version.ts`). The tag is passed to the image build as
+`APP_VERSION`, so the running app knows it: `/api/health` reports `"version"` and `/settings` shows it at the bottom,
+linked to the release. A failed deploy makes no tag; local builds and manual `fly deploy` say `dev`.
+
+- **Start a new line** (for example after a phase that changes the database): change `version` in `package.json` to
+  `0.2.0` in a PR. The next deploy is `v0.2.0-alpha.1`.
+- **Leave alpha** later by changing the `-alpha.` suffix in `lib/version.ts` and the workflow's `--prerelease` flag.
+
 The workflow authenticates with the `FLY_API_TOKEN` repo secret, a Fly deploy token scoped to this app that
 **expires 2027-10-04**. To renew it (or replace a leaked one):
 
@@ -105,7 +117,7 @@ Verify:
 curl https://<app>.fly.dev/api/health
 ```
 
-Expect 200 `{"ok":true,...}`. A 503 means something is wrong: the `config` map shows which variables are `false` (names only, never values), and `db: "error"` means the database check failed (details are in `fly logs`).
+Expect 200 `{"ok":true,...,"version":"v0.1.0-alpha.N"}`. A 503 means something is wrong: the `config` map shows which variables are `false` (names only, never values), and `db: "error"` means the database check failed (details are in `fly logs`).
 
 Post-deploy smoke checklist (replace `<app>` with your app name):
 

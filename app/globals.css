@@ -3180,6 +3180,11 @@ kbd {
   margin: 16px 0 0;
 }
 
+/* Settings: the running version (deploy tag, or dev) under the cards. */
+.app-version {
+  margin: 16px 0 0;
+}
+
 /* Age of cached Discogs prices, with the refresh icon after it */
 .price-age {
   display: flex;

@@ -1,4 +1,5 @@
 import { authMode } from "@/lib/auth.ts";
+import { appVersion, versionUrl } from "@/lib/version.ts";
 import LogoutButton from "@/components/layout/LogoutButton.tsx";
 import SiteHeader from "@/components/layout/SiteHeader.tsx";
 import SettingsForm from "@/components/settings/SettingsForm.tsx";
@@ -9,6 +10,8 @@ export const dynamic = "force-dynamic";
 
 export default function SettingsPage() {
   const loggedIn = authMode(process.env).mode === "on";
+  const version = appVersion(process.env);
+  const versionHref = versionUrl(version);
   return (
     <>
       <SiteHeader />
@@ -26,6 +29,17 @@ export default function SettingsPage() {
             <LogoutButton />
           </section>
         )}
+        <p className="app-version muted small">
+          Version{" "}
+          {versionHref ? (
+            <a href={versionHref} target="_blank" rel="noreferrer">
+              {version}
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          ) : (
+            version
+          )}
+        </p>
       </main>
     </>
   );
