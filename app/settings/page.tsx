@@ -1,8 +1,7 @@
 import { authMode } from "@/lib/auth.ts";
 import { appVersion, versionUrl } from "@/lib/version.ts";
-import LogoutButton from "@/components/layout/LogoutButton.tsx";
 import SiteHeader from "@/components/layout/SiteHeader.tsx";
-import DiscogsCard from "@/components/settings/DiscogsCard.tsx";
+import AccountCard from "@/components/settings/AccountCard.tsx";
 import DiscogsNotice from "@/components/settings/DiscogsNotice.tsx";
 import { getDb } from "@/lib/db.ts";
 import { discogsState } from "@/lib/discogs-state.ts";
@@ -31,13 +30,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </header>
         {notice && <DiscogsNotice value={notice} username={discogsInfo.username} />}
         <SettingsForm />
-        <DiscogsCard {...discogsInfo} />
-        {loggedIn && (
-          <section className="card account" aria-labelledby="account-heading">
-            <h2 id="account-heading">Account</h2>
-            <LogoutButton />
-          </section>
-        )}
+        <AccountCard discogs={discogsInfo} loggedIn={loggedIn} />
         <p className="app-version muted small">
           Version{" "}
           {versionHref ? (

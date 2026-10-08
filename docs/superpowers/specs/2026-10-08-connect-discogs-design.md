@@ -160,7 +160,7 @@ export function discogsAccess(env, connection: Connection | null): DiscogsAccess
 
 ## UI
 
-### Settings: "Discogs account" card (`components/settings/DiscogsCard.tsx`, server component, above Account)
+### Settings: Discogs section of the Account card (`components/settings/DiscogsSection.tsx` in `AccountCard.tsx`, server components; one card since 2026-10-08, Discogs then Login)
 
 | State | Shows |
 |---|---|
