@@ -70,7 +70,7 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
 - Released as self-hosted, MIT-licensed (`LICENSE`): each person runs their own copy (locally or their own Fly app)
   with their own Discogs token and IP rate limit; there is no shared public instance. The workflow runs the checks on PRs
   and pushes to `main`; the deploy job only runs on pushes to `main` of `garciaryan/mint-condition`. Once public,
-  ruleset "Protect main": PR required (0 approvals), "Test and build" must pass, no force-push or deletion; admin
+  ruleset "Protect main": PR required with 1 approval (2026-10-07; a new push dismisses it, and the last push must be approved by someone else), "Test and build" must pass, no force-push or deletion; admin
   (the owner) can bypass. Never commit
   secrets; the repo is public.
 
