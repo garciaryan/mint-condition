@@ -22,6 +22,10 @@ const json = (status: 401 | 403 | 503, kind: string, message: string): GateResul
   body: { status: "error", kind, message },
 });
 
+// API paths a browser lands on by navigation (Discogs sends the person back here), so a signed-out GET is sent to
+// login and returns afterwards, like a page.
+const PAGE_LIKE_API = new Set(["/api/discogs/callback"]);
+
 function sameOrigin(origin: string | null, host: string | null): boolean {
   if (!origin || !host) return false;
   try {
@@ -45,6 +49,6 @@ export async function gate(req: GateRequest, env: Record<string, string | undefi
 
   if (await verifySession(req.cookie, auth.secret, now)) return { kind: "pass" };
 
-  if (req.path.startsWith("/api/")) return json(401, "auth", "Signed out. Log in again.");
+  if (req.path.startsWith("/api/") && !(safeMethod && PAGE_LIKE_API.has(req.path))) return json(401, "auth", "Signed out. Log in again.");
   return { kind: "redirect", location: `/login?next=${encodeURIComponent(req.path + req.search)}` };
 }

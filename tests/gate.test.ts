@@ -71,3 +71,13 @@ test("signed out: API gets JSON 401 auth, pages redirect to login with next", as
   assert.deepEqual(api, { kind: "json", status: 401, body: { status: "error", kind: "auth", message: "Signed out. Log in again." } });
   assert.deepEqual(await gate(req({ path: "/", search: "?x=1" }), ON, NOW), { kind: "redirect", location: "/login?next=%2F%3Fx%3D1" });
 });
+test("signed out: GET /api/discogs/callback redirects to login like a page, keeping its query", async () => {
+  const r = await gate(req({ path: "/api/discogs/callback", search: "?oauth_token=a&oauth_verifier=b" }), ON, NOW);
+  assert.equal(r.kind, "redirect");
+  const next = new URL(r.kind === "redirect" ? r.location : "", "http://x").searchParams.get("next");
+  assert.equal(next, "/api/discogs/callback?oauth_token=a&oauth_verifier=b");
+  assert.equal(r.kind === "redirect" && r.location, "/login?next=%2Fapi%2Fdiscogs%2Fcallback%3Foauth_token%3Da%26oauth_verifier%3Db");
+  // other API paths, and non-GET to the callback, stay JSON 401
+  for (const o of [{ path: "/api/discogs/connect", method: "POST", origin: "https://app.fly.dev" }, { path: "/api/discogs/callback", method: "POST", origin: "https://app.fly.dev" }, { path: "/api/discogs/callbackx" }])
+    assert.equal((await gate(req(o), ON, NOW)).kind, "json", o.path);
+});

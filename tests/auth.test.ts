@@ -106,3 +106,8 @@ test("configStatus: ok is false only for discogs setup (plus password/session ru
   assert.equal(configStatus({}, "setup").ok, false);
   assert.equal(configStatus({ NODE_ENV: "production", ...base }, "not-connected").ok, false);
 });
+test("safeNext keeps the Discogs callback with its query, so login returns there", () => {
+  assert.equal(safeNext("/api/discogs/callback?oauth_token=a&oauth_verifier=b"), "/api/discogs/callback?oauth_token=a&oauth_verifier=b");
+  for (const bad of ["//evil.com/api/discogs/callback?oauth_token=a", "http://evil.com/api/discogs/callback?oauth_token=a"])
+    assert.equal(safeNext(bad), "/", bad);
+});
