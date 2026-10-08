@@ -1,9 +1,11 @@
 // GET /api/releases/:id/identifiers: a release's matrix/runout and other identifiers, for the picker's runout
 // matching. Goes through the cached client (release:<id>), so pricing that release afterwards reuses it.
 import { parseId } from "../../../../../lib/collection/http.ts";
+import { discogsAccess } from "../../../../../lib/discogs-access.ts";
+import { getConnection } from "../../../../../lib/discogs-auth-store.ts";
 import { getLookupClient } from "../../../../../lib/discogs-client.ts";
 import { dbUnavailable, getDb } from "../../../../../lib/db.ts";
-import { httpStatus, missingEnv, toErrorResponse } from "../../../../../lib/lookup.ts";
+import { discogsReady, httpStatus, toErrorResponse } from "../../../../../lib/lookup.ts";
 import type { LookupResponse } from "../../../../../lib/lookup.ts";
 import { requireSession } from "../../../../../lib/route-auth.ts";
 import { getSettings } from "../../../../../lib/settings-store.ts";
@@ -19,16 +21,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (denied) return denied;
   const id = parseId((await params).id);
   if (id === null) return fail({ status: "error", kind: "bad-request", message: "Invalid release id." });
-  const missing = missingEnv(process.env);
-  if (missing.length > 0) {
-    return fail({ status: "error", kind: "missing-env", message: `Missing ${missing.join(" and ")}.` });
-  }
   let db;
   try {
     db = getDb();
   } catch (e) {
     return fail({ status: "error", kind: "database", message: dbUnavailable(e) });
   }
+  const notReady = discogsReady(discogsAccess(process.env, getConnection(db)), process.env);
+  if (notReady) return fail(notReady);
   try {
     getSettings(db);
   } catch (e) {

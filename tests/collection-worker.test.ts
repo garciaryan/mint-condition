@@ -1,6 +1,7 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { openDb } from "../lib/db.ts";
+import { saveConnection } from "../lib/discogs-auth-store.ts";
 import { addItems, createSession, deleteItem, getItem, resetWorking, updateItemFields } from "../lib/collection/store.ts";
 import { __resetWorkerForTests, isQueuePaused, kickWorker, msPerItem, processItem, resumeQueue } from "../lib/collection/worker.ts";
 import { DiscogsError } from "../lib/discogs.ts";
@@ -273,4 +274,37 @@ test("msPerItem starts at the throttle estimate and then follows real lookups", 
   await kickWorker({ db, client: fake({}, 0).client, now: () => (t += 100) });
   const avg = msPerItem();
   assert.ok(avg > 0 && avg < 3300, String(avg));
+});
+
+test("kickWorker leaves items pending while not connected, and prices them once connected", async () => {
+  const keys = ["DISCOGS_TOKEN", "DISCOGS_USER_AGENT", "DISCOGS_CONSUMER_KEY", "DISCOGS_CONSUMER_SECRET"];
+  const env = process.env as Record<string, string | undefined>;
+  const saved = keys.map((k) => env[k]);
+  const g = globalThis as unknown as Record<string, unknown>;
+  const { db, items } = setup();
+  const prevDb = g.__mintDb;
+  g.__mintDb = db;
+  delete env.DISCOGS_TOKEN;
+  env.DISCOGS_USER_AGENT = "ua/1";
+  env.DISCOGS_CONSUMER_KEY = "ck";
+  env.DISCOGS_CONSUMER_SECRET = "cs";
+  const prevClient = g.__discogsClient;
+  const calls: string[] = [];
+  g.__discogsClient = {
+    async searchByCatno() { calls.push("search"); return [cand(1)]; },
+    async priceSuggestions() { return SUG; },
+    async releaseStats() { return STATS; },
+  };
+  try {
+    await kickWorker({ db });
+    assert.equal(getItem(db, items[0].id)!.status, "pending");
+    assert.equal(calls.length, 0);
+    saveConnection(db, { token: "t", secret: "s", username: "u", connectedAt: 1 });
+    await kickWorker({ db });
+    assert.equal(getItem(db, items[0].id)!.status, "priced");
+  } finally {
+    keys.forEach((k, i) => (saved[i] === undefined ? delete env[k] : (env[k] = saved[i])));
+    if (prevDb === undefined) delete g.__mintDb; else g.__mintDb = prevDb;
+    if (prevClient === undefined) delete g.__discogsClient; else g.__discogsClient = prevClient;
+  }
 });

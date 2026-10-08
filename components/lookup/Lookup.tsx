@@ -350,6 +350,7 @@ function ErrorCard({ res, onRetry }: { res: LookupError; onRetry: () => void }) 
   const titles: Record<typeof res.kind, string> = {
     "bad-request": "Check the form",
     "missing-env": "Setup needed",
+    "not-connected": "Discogs not connected",
     settings: "Settings problem",
     database: "Database unavailable",
     "bad-token": "Discogs rejected the token",

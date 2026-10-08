@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { setupMissing } from "../lib/discogs-access.ts";
 import { DiscogsError } from "../lib/discogs.ts";
 import { live } from "./helpers/live-client.ts";
 import type { Method } from "./helpers/live-client.ts";
-import { httpStatus, missingEnv, parseLookupRequest, runLookup, toErrorResponse } from "../lib/lookup.ts";
+import { discogsReady, httpStatus, parseLookupRequest, runLookup, toErrorResponse } from "../lib/lookup.ts";
 import type { LookupClient, LookupRequest } from "../lib/lookup.ts";
 import { parseSettings } from "../lib/settings.ts";
 import type { Candidate, MarketplaceStats, PriceSuggestions } from "../lib/types.ts";
@@ -77,10 +78,31 @@ test("parseLookupRequest allows a release id without a catalog number", () => {
   assert.equal(r.value.releaseId, 4095902);
 });
 
-test("missingEnv names unset or blank vars only", () => {
-  assert.deepEqual(missingEnv({}), ["DISCOGS_TOKEN", "DISCOGS_USER_AGENT"]);
-  assert.deepEqual(missingEnv({ DISCOGS_TOKEN: "secret", DISCOGS_USER_AGENT: " " }), ["DISCOGS_USER_AGENT"]);
-  assert.deepEqual(missingEnv({ DISCOGS_TOKEN: "secret", DISCOGS_USER_AGENT: "UA/1" }), []);
+test("discogsReady is null for token and oauth access", () => {
+  assert.equal(discogsReady({ kind: "token", token: "t" }, {}), null);
+  assert.equal(discogsReady({ kind: "oauth", consumerKey: "k", consumerSecret: "s", token: "t", secret: "x", username: "u" }, {}), null);
+});
+
+test("discogsReady: not connected is a 409 with the connect message", () => {
+  const r = discogsReady({ kind: "none", reason: "not-connected" }, {});
+  assert.deepEqual(r, { status: "error", kind: "not-connected", message: "Connect your Discogs account to start pricing." });
+  assert.equal(httpStatus(r!), 409);
+});
+
+test("discogsReady: setup names the missing settings, never values", () => {
+  const r = discogsReady({ kind: "none", reason: "setup" }, { DISCOGS_CONSUMER_KEY: "keyvalue" });
+  assert.equal(r?.kind, "missing-env");
+  assert.match(r!.message, /DISCOGS_TOKEN/);
+  assert.match(r!.message, /DISCOGS_USER_AGENT/);
+  assert.doesNotMatch(r!.message, /keyvalue/);
+  assert.deepEqual(setupMissing({ DISCOGS_TOKEN: "secret", DISCOGS_USER_AGENT: "UA/1" }), []);
+});
+
+test("toErrorResponse maps a not-connected DiscogsError and the setup error", () => {
+  const e = new DiscogsError("x", 0);
+  e.kind = "not-connected";
+  assert.deepEqual(toErrorResponse(e), { status: "error", kind: "not-connected", message: "Connect your Discogs account to start pricing." });
+  assert.equal(toErrorResponse(new DiscogsError("Discogs isn't set up for this app.", 0)).kind, "missing-env");
 });
 
 test("toErrorResponse maps 401 and 429 and never echoes a token", () => {

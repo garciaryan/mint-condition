@@ -4,7 +4,7 @@ import { signSession } from "../lib/auth.ts";
 import { openDb } from "../lib/db.ts";
 import { POST as lookup } from "../app/api/lookup/route.ts";
 
-const KEYS = ["APP_PASSWORD_HASH", "SESSION_SECRET", "DISCOGS_TOKEN", "DISCOGS_USER_AGENT"];
+const KEYS = ["APP_PASSWORD_HASH", "SESSION_SECRET", "DISCOGS_TOKEN", "DISCOGS_USER_AGENT", "DISCOGS_CONSUMER_KEY", "DISCOGS_CONSUMER_SECRET"];
 const saved = { ...process.env };
 const env = process.env as Record<string, string | undefined>;
 // The route reads settings from SQLite; never let a test open ./data/mint.db.
@@ -75,5 +75,21 @@ test("lookup route reports a database that won't open as a database error", asyn
     delete env.DISCOGS_TOKEN;
     delete env.DISCOGS_USER_AGENT;
     g.__mintDb = db;
+  }
+});
+
+test("lookup route with consumer vars and no connection gives not-connected (409)", async () => {
+  env.DISCOGS_USER_AGENT = "dummy/1";
+  env.DISCOGS_CONSUMER_KEY = "ck";
+  env.DISCOGS_CONSUMER_SECRET = "cs";
+  try {
+    const v = await signSession("test-secret", Date.now());
+    const r = await call(`mc_session=${v}`);
+    assert.equal(r.status, 409);
+    assert.equal((await r.json()).kind, "not-connected");
+  } finally {
+    delete env.DISCOGS_USER_AGENT;
+    delete env.DISCOGS_CONSUMER_KEY;
+    delete env.DISCOGS_CONSUMER_SECRET;
   }
 });

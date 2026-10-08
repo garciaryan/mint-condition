@@ -2,10 +2,11 @@
 // Writes only lookup columns (via applyLookup), never grades, year or query. Server-side only.
 import type { DatabaseSync } from "node:sqlite";
 import { getDb } from "../db.ts";
+import { discogsAccess } from "../discogs-access.ts";
+import { getConnection } from "../discogs-auth-store.ts";
 import { DiscogsError } from "../discogs.ts";
 import type { CachedLookupClient } from "../discogs-cache.ts";
 import { getLookupClient } from "../discogs-client.ts";
-import { missingEnv } from "../lookup.ts";
 import type { Candidate } from "../types.ts";
 import { applyLookup, claimNextPending, countClaimable, releaseClaim, resetWorking, touchSession } from "./store.ts";
 import type { ItemRow, LookupPatch } from "./types.ts";
@@ -113,8 +114,8 @@ export function kickWorker(deps: WorkerDeps = {}): Promise<void> {
   const s = state();
   if (s.loop) return s.loop;
   if (s.paused) return Promise.resolve();
-  if (!deps.client && missingEnv(process.env).length > 0) return Promise.resolve();
   const db = deps.db ?? getDb();
+  if (!deps.client && discogsAccess(process.env, getConnection(db)).kind === "none") return Promise.resolve();
   const ping = deps.keepAlive ?? defaultKeepAlive();
   const timer = ping ? setInterval(ping, deps.keepAliveMs ?? KEEP_ALIVE_MS) : null;
   timer?.unref?.();
@@ -139,7 +140,6 @@ export const resumeQueue = (): void => {
 };
 
 export function startWorkerOnBoot(): void {
-  if (missingEnv(process.env).length > 0) return;
   resetWorking(getDb());
   void kickWorker();
 }
