@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/collection/client.ts";
 import { dataExpired, MAX_CACHE_HOURS, masterUrl } from "@/lib/discogs-terms.ts";
-import { earliestYear, filterVersions, sortVersions, thisCopyYear, versionFlag } from "@/lib/versions.ts";
+import { earliestYear, filterVersions, pageOf, paginate, sortVersions, thisCopyYear, versionFlag, VERSIONS_PAGE_SIZE } from "@/lib/versions.ts";
 import type { VersionsResponse } from "@/lib/versions.ts";
 import type { Candidate } from "@/lib/types.ts";
 import DiscogsCredit from "@/components/ui/DiscogsCredit.tsx";
@@ -36,6 +36,8 @@ export default function VersionsPanel({
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<State>({ status: "idle" });
   const [filter, setFilter] = useState("");
+  // null until the user pages: then the list opens on the page holding this copy.
+  const [page, setPage] = useState<number | null>(null);
   const abort = useRef<AbortController | null>(null);
   useEffect(() => () => abort.current?.abort(), []);
 
@@ -93,7 +95,17 @@ export default function VersionsPanel({
               </button>
             </p>
           ) : (
-            <VersionsList data={state.data} releaseId={releaseId} fallbackYear={fallbackYear} filter={filter} setFilter={setFilter} busy={busy} onPick={onPick} />
+            <VersionsList
+              data={state.data}
+              releaseId={releaseId}
+              fallbackYear={fallbackYear}
+              filter={filter}
+              setFilter={setFilter}
+              page={page}
+              setPage={setPage}
+              busy={busy}
+              onPick={onPick}
+            />
           )}
           <DiscogsCredit href={masterUrl(masterId)} />
         </div>
@@ -108,6 +120,8 @@ function VersionsList({
   fallbackYear,
   filter,
   setFilter,
+  page,
+  setPage,
   busy,
   onPick,
 }: {
@@ -116,10 +130,13 @@ function VersionsList({
   fallbackYear: number | null;
   filter: string;
   setFilter: (s: string) => void;
+  page: number | null;
+  setPage: (p: number) => void;
   busy: boolean;
   onPick: (c: Candidate) => void;
 }) {
   const sorted = useMemo(() => sortVersions(data.versions), [data.versions]);
+  const listRef = useRef<HTMLDivElement>(null);
   if (sorted.length === 0) return <p className="muted">No vinyl versions listed on Discogs.</p>;
 
   const earliest = earliestYear(sorted);
@@ -137,6 +154,17 @@ function VersionsList({
   const count =
     data.total > n ? `Showing the first ${n} of ${data.total} vinyl versions` : `${n} vinyl ${n === 1 ? "version" : "versions"}`;
   const shown = filterVersions(sorted, filter);
+  const paged = paginate(shown, page ?? pageOf(shown.findIndex((c) => c.id === releaseId), VERSIONS_PAGE_SIZE), VERSIONS_PAGE_SIZE);
+
+  // A new page keeps the reader's place: back to the top of the list, focus on it.
+  function go(p: number) {
+    setPage(p);
+    const el = listRef.current;
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    el.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
+  }
 
   return (
     <>
@@ -148,7 +176,10 @@ function VersionsList({
         <input
           type="search"
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setPage(1);
+          }}
           placeholder="Filter by label, country, catno, year…"
           aria-label="Filter versions"
         />
@@ -156,43 +187,58 @@ function VersionsList({
       {shown.length === 0 ? (
         <p className="muted">Nothing matches that filter.</p>
       ) : (
-        <ul className="candidates">
-          {shown.map((c) => {
-            const current = c.id === releaseId;
-            const body = (
-              <>
-                <Thumb src={c.thumb} />
-                <span className="candidate-main">
-                  <strong>{[c.label, c.catno].filter(Boolean).join(" · ") || c.title}</strong>
-                  <span className="muted">{c.format ?? "format unknown"}</span>
-                  {(current || (earliest !== null && c.year === earliest)) && (
-                    <span className="version-chips">
-                      {current && <span className="version-chip current">This copy</span>}
-                      {earliest !== null && c.year === earliest && <span className="version-chip">Earliest listed</span>}
-                    </span>
+        <div ref={listRef} tabIndex={-1} className="versions-list" aria-label={`Vinyl versions, page ${paged.page} of ${paged.pages}`}>
+          <ul className="candidates">
+            {paged.items.map((c) => {
+              const current = c.id === releaseId;
+              const body = (
+                <>
+                  <Thumb src={c.thumb} />
+                  <span className="candidate-main">
+                    <strong>{[c.label, c.catno].filter(Boolean).join(" · ") || c.title}</strong>
+                    <span className="muted">{c.format ?? "format unknown"}</span>
+                    {(current || (earliest !== null && c.year === earliest)) && (
+                      <span className="version-chips">
+                        {current && <span className="version-chip current">This copy</span>}
+                        {earliest !== null && c.year === earliest && <span className="version-chip">Earliest listed</span>}
+                      </span>
+                    )}
+                  </span>
+                  <span className="candidate-meta">
+                    <span>{c.country ?? "—"}</span>
+                    <span>{c.year ?? "year ?"}</span>
+                  </span>
+                </>
+              );
+              return (
+                <li key={c.id}>
+                  {current ? (
+                    <div className="candidate version-current" aria-current="true">
+                      {body}
+                    </div>
+                  ) : (
+                    <button type="button" className="candidate" disabled={busy} onClick={() => onPick(c)}>
+                      {body}
+                    </button>
                   )}
-                </span>
-                <span className="candidate-meta">
-                  <span>{c.country ?? "—"}</span>
-                  <span>{c.year ?? "year ?"}</span>
-                </span>
-              </>
-            );
-            return (
-              <li key={c.id}>
-                {current ? (
-                  <div className="candidate version-current" aria-current="true">
-                    {body}
-                  </div>
-                ) : (
-                  <button type="button" className="candidate" disabled={busy} onClick={() => onPick(c)}>
-                    {body}
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
+          {paged.pages > 1 && (
+            <nav className="pager" aria-label="Versions pages">
+              <button type="button" className="secondary" disabled={paged.page <= 1} onClick={() => go(paged.page - 1)}>
+                <span aria-hidden="true">← </span>Previous
+              </button>
+              <span className="muted small" role="status">
+                Page {paged.page} of {paged.pages}
+              </span>
+              <button type="button" className="secondary" disabled={paged.page >= paged.pages} onClick={() => go(paged.page + 1)}>
+                Next<span aria-hidden="true"> →</span>
+              </button>
+            </nav>
+          )}
+        </div>
       )}
     </>
   );

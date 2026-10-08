@@ -167,11 +167,11 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   letters+digits fragment across all identifiers, highlighted (`lib/runout.ts`). Picking a checked pressing prices
   with one call. Spec: `docs/superpowers/specs/2026-10-07-runout-match-design.md`.
 
-- Phase 12 master versions (2026-10-07): built on feat/master-versions; 452 tests passing; no migration. A "Vinyl
+- Phase 12 master versions (2026-10-07): built on feat/master-versions; 456 tests passing; no migration. A "Vinyl
   versions" panel on the result card (only when the release has a master) loads `GET /api/masters/:id/versions` on
   first open (`format=Vinyl`, oldest first, up to 3 pages, cached `versions:<id>`), marks "This copy" and "Earliest
-  listed", says "reissue" or "earliest year listed on Discogs" (never "original"), and picking a version re-prices it.
-  Credit links `discogs.com/master/<id>`. Spec: `docs/superpowers/specs/2026-10-07-master-versions-design.md`.
+  listed" (20 a page, opening on this copy's page), says "reissue" or "earliest year listed on Discogs" (never
+  "original"), and picking a version re-prices it. Credit links `discogs.com/master/<id>`. Spec: `docs/superpowers/specs/2026-10-07-master-versions-design.md`.
 
 ## Phase 3 spec
 1. Single page at `/` with a form: catalog number (text), year (number), record grade and sleeve grade (dropdowns

@@ -45,3 +45,18 @@ export function withArtist(cardTitle: string | null | undefined, versionTitle: s
   const artist = cardTitle.slice(0, at + 3);
   return versionTitle.startsWith(artist) ? versionTitle : artist + versionTitle;
 }
+
+/** Versions shown per page in the panel (the whole list is already fetched; paging is display only). */
+export const VERSIONS_PAGE_SIZE = 20;
+
+/** One page of `items` (1-based, clamped to the pages there are). An empty list is a single empty page. */
+export function paginate<T>(items: T[], page: number, size: number): { items: T[]; page: number; pages: number } {
+  const pages = Math.max(1, Math.ceil(items.length / size));
+  const p = Math.min(Math.max(1, page), pages);
+  return { items: items.slice((p - 1) * size, p * size), page: p, pages };
+}
+
+/** The 1-based page holding `index`; -1 (not found) is page 1. */
+export function pageOf(index: number, size: number): number {
+  return index < 0 ? 1 : Math.floor(index / size) + 1;
+}

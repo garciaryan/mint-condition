@@ -974,6 +974,24 @@ a {
   background: var(--fill);
 }
 
+.versions-list:focus {
+  outline: none;
+}
+
+.versions-list:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Previous · Page N of M · Next under the versions list. */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
 /* This copy's row isn't a button. */
 .candidate.version-current {
   cursor: default;

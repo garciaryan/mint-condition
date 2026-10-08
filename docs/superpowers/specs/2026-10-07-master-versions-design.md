@@ -112,6 +112,17 @@ Props: `masterId`, `releaseId`, `fallbackYear` (the card's `release?.year`), `on
   "These versions are more than 6 hours old." and a "Reload" button. The panel is also not shown while the card's
   figures are expired.
 
+### Pagination (added 2026-10-07, review of PR #35)
+
+- The whole list is still fetched once; it's shown 20 to a page (`VERSIONS_PAGE_SIZE`), so paging costs no calls and
+  the earliest mark and the filter cover every version fetched.
+- `paginate(items, page, size)` → `{ items, page, pages }` (1-based, clamped; an empty list is one empty page) and
+  `pageOf(index, size)` (−1 → page 1) in `lib/versions.ts`, tested.
+- The list opens on the page holding this copy (page 1 when it isn't listed). Typing in the filter goes back to page 1.
+- Under the list, when there's more than one page: "← Previous · Page N of M · Next →" (`role="status"` on the page
+  line, buttons disabled at the ends, 44px). Changing page scrolls the list to its top and focuses it.
+- The page is kept while the panel is closed and reopened, and through grade changes (same release).
+
 ### Switching
 
 - Clicking a row calls Lookup's `price(v.id, v, { focus: true })`: the new release's card replaces the old one
