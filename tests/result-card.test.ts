@@ -21,3 +21,9 @@ test("Vinyl versions looks like a dropdown: a field-styled toggle with a chevron
   assert.match(css, /\.select-toggle \{[^}]*border: 1px solid var\(--field-line\);[^}]*background: var\(--field-bg\);/);
   assert.match(css, /\.select-toggle\[aria-expanded="true"\] \.chevron \{[^}]*transform: rotate\(180deg\)/);
 });
+
+test("hovering the refresh icon changes its colour, not a box behind it", () => {
+  const hover = css.match(/\.icon-button:hover:not\(:disabled\) \{[^}]*\}/)?.[0] ?? "";
+  assert.doesNotMatch(hover, /background/);
+  assert.match(hover, /color: var\(--accent-hover\)/);
+});

@@ -3210,7 +3210,7 @@ kbd {
 
 @media (hover: hover) {
   .icon-button:hover:not(:disabled) {
-    background: var(--accent-soft);
+    color: var(--accent-hover);
   }
 }
 
