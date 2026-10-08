@@ -86,3 +86,9 @@ export function flyCommands(app: string, plan: { set: string[]; unset: string[] 
     ["secrets", "deploy", "-a", app],
   ];
 }
+
+/** DISCOGS_TOKEN wins over Connect Discogs, so a shop app that still has one never shows Connect. Names only. */
+export function tokenWinsWarning(current: string[], app: string): string | null {
+  if (!current.includes("DISCOGS_TOKEN")) return null;
+  return `This app has DISCOGS_TOKEN set, so it will use that token and Connect Discogs won't appear. Remove it with fly secrets unset DISCOGS_TOKEN -a ${app} to use Connect Discogs.`;
+}

@@ -6,7 +6,7 @@ sell price (with the net after the Discogs fee). Collection (bulk buying) tools 
 
 ## Decisions already made
 - Hosted on Fly.io (one machine, SQLite on a volume at `/data`; it suspends when idle rather than stopping, since a
-  cold boot showed a blank page for ~4.5 s, 2026-10-07), single-password login, no OAuth. The password is
+  cold boot showed a blank page for ~4.5 s, 2026-10-07), single-password login (no OAuth for login). The password is
   `APP_PASSWORD` (plain, min 12) or `APP_PASSWORD_HASH` (scrypt), never both. `SESSION_SECRET` comes from the env or,
   when unset, `DATA_DIR/session-secret`, made once at boot by `lib/session-secret.ts` (`instrumentation.ts`); env
   wins. `npm run setup:fly` sets the Fly secrets via `fly secrets import` on stdin (2026-10-05). Discogs access: an app uses
@@ -189,8 +189,7 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
   "original"), and picking a version re-prices it. Credit links `discogs.com/master/<id>`. Spec: `docs/superpowers/specs/2026-10-07-master-versions-design.md`.
 - Multi-app deploy (2026-10-07): built on feat/multi-app-deploy; 486 tests passing; no app or DB change beyond
   `setup:fly --app`. Build once to GHCR, canary, release, then shops from `FLY_SHOP_APPS`. Spec:
-  `docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`. Next: Connect Discogs (OAuth) so shops never paste
-  a token.
+  `docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`.
 - Connect Discogs (2026-10-08): built on feat/connect-discogs; 560 tests passing; migration 7 (`discogs_auth`). A shop
   logs in, then presses Connect Discogs on `/settings` (OAuth 1.0a through the owner's one application); `setup:fly
   --app` asks for the consumer key and secret instead of the token. Connect and callback use `fetch` directly (1-3

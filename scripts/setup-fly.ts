@@ -3,7 +3,7 @@
 // Re-run it to change the password or token; Enter keeps whatever is already set.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { appFromArgs, defaultUserAgent, flyCommands, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
+import { appFromArgs, defaultUserAgent, flyCommands, parseSecretNames, passwordError, planSecrets, secretValueError, tokenWinsWarning } from "../lib/setup-fly.ts";
 import type { Answers } from "../lib/setup-fly.ts";
 import { ask, closePrompt } from "./prompt.ts";
 
@@ -60,6 +60,9 @@ async function prompt(question: string, keep: boolean, hidden: boolean, check: (
 const answers: Answers = {};
 const isShop = process.argv.slice(2).includes("--app");
 if (isShop) {
+  // No auto-unset: removing a working token is the owner's call.
+  const warning = tokenWinsWarning(current, app);
+  if (warning) console.log(`Warning: ${warning}\n`);
   // A shop connects its own Discogs account in the app (Connect Discogs), through the owner's registered application.
   answers.consumerKey = await prompt("Discogs consumer key", has("DISCOGS_CONSUMER_KEY"), true, secretValueError);
   answers.consumerSecret = await prompt("Discogs consumer secret", has("DISCOGS_CONSUMER_SECRET"), true, secretValueError);

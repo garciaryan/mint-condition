@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { appFromArgs, defaultUserAgent, flyCommands, parseAppName, parseSecretNames, passwordError, planSecrets, secretValueError } from "../lib/setup-fly.ts";
 
 test("parseAppName and parseSecretNames", () => {
@@ -61,4 +62,17 @@ test("planSecrets: consumer answers set both names and never DISCOGS_TOKEN", () 
   assert.equal(plan.importText, "DISCOGS_CONSUMER_KEY=ck\nDISCOGS_CONSUMER_SECRET=cs\n");
   assert.deepEqual(planSecrets([], { consumerKey: "ck" }).set, ["DISCOGS_CONSUMER_KEY"]);
   assert.deepEqual(planSecrets([], { token: "t" }).set, ["DISCOGS_TOKEN"]);
+});
+
+import { tokenWinsWarning } from "../lib/setup-fly.ts";
+test("tokenWinsWarning: a shop app with DISCOGS_TOKEN set is warned how to remove it; otherwise nothing", () => {
+  assert.equal(
+    tokenWinsWarning(["DISCOGS_TOKEN", "APP_PASSWORD"], "mc-groovy"),
+    "This app has DISCOGS_TOKEN set, so it will use that token and Connect Discogs won't appear. Remove it with fly secrets unset DISCOGS_TOKEN -a mc-groovy to use Connect Discogs.",
+  );
+  assert.equal(tokenWinsWarning(["APP_PASSWORD"], "mc-groovy"), null);
+});
+test("setup:fly prints the token warning for --app", () => {
+  const s = readFileSync(new URL("../scripts/setup-fly.ts", import.meta.url), "utf8");
+  assert.match(s, /tokenWinsWarning\(current, app\)/);
 });
