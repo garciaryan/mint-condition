@@ -1,6 +1,6 @@
 # Connect Discogs (OAuth 1.0a)
 
-Date: 2026-10-08 · Status: building on `feat/connect-discogs`. Live check 2026-10-08: with the registered "Mint Condition" application, request_token accepted a per-request `oauth_callback` for both `https://mint-condition.fly.dev/api/discogs/callback` and `http://localhost:3000/api/discogs/callback` (200, `oauth_callback_confirmed=true`), so one registration serves every shop; the HMAC-SHA1 signing (lib/discogs-oauth.ts) is accepted by Discogs. Checks 3 (API calls signed with an access token) run in Task 9
+Date: 2026-10-08 · Status: built on `feat/connect-discogs` (575 tests). Live 2026-10-08: request_token accepted per-request callbacks for fly.dev and localhost (one registration serves every shop); migration 7 ran cleanly on a copy of the production DB; the owner ran the full flow on localhost with no `DISCOGS_TOKEN` (Connect, approve on Discogs, price BLP 1577, Vinyl versions, Disconnect) and it worked.
 Second of two sub-projects for hosting record shops; the first is the multi-app deploy
 (`docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`). Phase 14 (inventory and wantlist) will reuse this
 connection.
@@ -145,7 +145,9 @@ export function discogsAccess(env, connection: Connection | null): DiscogsAccess
 
 - `kickWorker` and `startWorkerOnBoot` check `discogsAccess(...).kind !== "none"` instead of `missingEnv`.
   `startWorkerOnBoot` always resets claimed rows; the kick does nothing while not connected, so items stay pending.
-- The callback route kicks the worker after connecting, so a collection scanned before connecting gets priced.
+- The callback route resumes a paused queue and kicks the worker after connecting, so a collection scanned before
+  connecting gets priced. A lookup that finds the app not connected stops the loop and leaves its row pending (no
+  error, no pause).
 
 ## Health and config
 
