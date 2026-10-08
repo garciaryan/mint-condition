@@ -1,6 +1,6 @@
 # Phase 12: Versions of a master
 
-Date: 2026-10-07 · Status: designed, branch `feat/master-versions`
+Date: 2026-10-07 · Status: built on feat/master-versions (live: master 32208 → 199 vinyl versions in 2 calls, repeat is a cache hit; 3 pressings marked 1958; a 1970 copy flagged reissue)
 Roadmap: `docs/ROADMAP.md` (Phase 12). Builds on Phase 10 (`docs/superpowers/specs/2026-10-07-demand-signal-design.md`),
 which stores `masterId` from `/releases/{id}` in `MarketplaceStats`.
 
