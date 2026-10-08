@@ -190,7 +190,7 @@ Folders (`tests/structure.test.ts` keeps them this way; spec `docs/superpowers/s
 - Multi-app deploy (2026-10-07): built on feat/multi-app-deploy; 486 tests passing; no app or DB change beyond
   `setup:fly --app`. Build once to GHCR, canary, release, then shops from `FLY_SHOP_APPS`. Spec:
   `docs/superpowers/specs/2026-10-07-multi-app-deploy-design.md`.
-- Connect Discogs (2026-10-08): built on feat/connect-discogs; 560 tests passing; migration 7 (`discogs_auth`). A shop
+- Connect Discogs (2026-10-08): built on feat/connect-discogs; 575 tests passing; migration 7 (`discogs_auth`). A shop
   logs in, then presses Connect Discogs on `/settings` (OAuth 1.0a through the owner's one application); `setup:fly
   --app` asks for the consumer key and secret instead of the token. Connect and callback use `fetch` directly (1-3
   calls per one-off connect, not throttled). Spec: `docs/superpowers/specs/2026-10-08-connect-discogs-design.md`.

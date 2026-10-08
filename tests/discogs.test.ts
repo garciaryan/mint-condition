@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createHmac } from "node:crypto";
+import { signatureBaseString } from "../lib/discogs-oauth.ts";
 import type { DiscogsAccess } from "../lib/discogs-access.ts";
 import {
   DiscogsClient,
@@ -360,4 +362,30 @@ test("the oauth 401 carries kind reconnect; the token 401 has no kind", async ()
   await assert.rejects(o.client.priceSuggestions(1), (e: unknown) => e instanceof DiscogsError && e.kind === "reconnect");
   const t = makeClient(() => new Response("", { status: 401 }));
   await assert.rejects(t.client.priceSuggestions(1), (e: unknown) => e instanceof DiscogsError && e.kind === undefined);
+});
+
+test("the oauth header the client sends verifies against the exact URL fetch received", async () => {
+  const { client, calls, headers } = makeClient((url) => json(url.pathname.includes("search") ? { results: [], pagination: { pages: 1 } } : {}), () => oauth);
+  await client.searchByCatno("SHVL 804");
+  await client.searchByCatno("077774603720");
+  await client.priceSuggestions(5);
+  assert.ok(calls.length >= 3);
+  calls.forEach((url, i) => {
+    const auth = headers[i].Authorization;
+    const field = (k: string) => decodeURIComponent(auth.match(new RegExp(`${k}="([^"]*)"`))![1]);
+    const base = signatureBaseString({
+      method: "GET",
+      url: url.toString(),
+      consumerKey: "ck",
+      consumerSecret: "cs",
+      token: "acc-tok",
+      tokenSecret: "acc-sec",
+      nonce: field("oauth_nonce"),
+      timestamp: Number(field("oauth_timestamp")),
+    });
+    const expected = createHmac("sha1", "cs&acc-sec").update(base).digest("base64");
+    assert.equal(field("oauth_signature"), expected, url.toString());
+  });
+  assert.ok(calls.some((u) => u.searchParams.get("q") === "SHVL 804" || u.searchParams.get("catno") === "SHVL 804"));
+  assert.ok(calls.some((u) => u.searchParams.get("barcode") !== null));
 });

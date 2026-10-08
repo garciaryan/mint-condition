@@ -95,3 +95,33 @@ test("newNonce is 32 hex chars and varies", () => {
   assert.match(newNonce(), /^[0-9a-f]{32}$/);
   assert.notEqual(newNonce(), newNonce());
 });
+
+// A signed GET as the Discogs client sends it: query parameters join the oauth ones in the base string.
+const search = (url: string): OAuthParams => ({
+  method: "GET",
+  url,
+  consumerKey: "ck",
+  consumerSecret: "cs",
+  token: "at",
+  tokenSecret: "as",
+  nonce: "n",
+  timestamp: 1,
+});
+
+test("base string for a catno search GET, literal (space as %20 or +)", () => {
+  const expected =
+    "GET&https%3A%2F%2Fapi.discogs.com%2Fdatabase%2Fsearch&oauth_consumer_key%3Dck%26oauth_nonce%3Dn%26" +
+    "oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1%26oauth_token%3Dat%26oauth_version%3D1.0%26" +
+    "page%3D1%26per_page%3D100%26q%3DSHVL%2520804%26type%3Drelease";
+  assert.equal(signatureBaseString(search("https://api.discogs.com/database/search?q=SHVL%20804&type=release&per_page=100&page=1")), expected);
+  assert.equal(signatureBaseString(search("https://api.discogs.com/database/search?q=SHVL+804&type=release&per_page=100&page=1")), expected);
+});
+
+test("base string for a barcode search GET, literal", () => {
+  assert.equal(
+    signatureBaseString(search("https://api.discogs.com/database/search?barcode=077774603720&type=release&per_page=100&page=1")),
+    "GET&https%3A%2F%2Fapi.discogs.com%2Fdatabase%2Fsearch&barcode%3D077774603720%26oauth_consumer_key%3Dck%26" +
+      "oauth_nonce%3Dn%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1%26oauth_token%3Dat%26" +
+      "oauth_version%3D1.0%26page%3D1%26per_page%3D100%26type%3Drelease",
+  );
+});
